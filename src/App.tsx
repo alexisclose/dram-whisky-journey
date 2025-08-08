@@ -15,6 +15,7 @@ import Community from "./pages/Community";
 import Quiz from "./pages/Quiz";
 import Certificate from "./pages/Certificate";
 import SiteHeader from "./components/layout/SiteHeader";
+import WhiskyDossier from "./pages/WhiskyDossier";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/university" element={<University />} />
             <Route path="/tasting" element={<Tasting />} />
+            <Route path="/tasting/:id" element={<WhiskyDossier />} />
             <Route path="/community" element={<Community />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/certificate" element={<Certificate />} />

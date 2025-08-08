@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
@@ -45,7 +46,11 @@ const Tasting = () => {
                   </button>
                 ))}
               </div>
-              <Button variant="outline" size="sm" disabled>Open Dossier</Button>
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/tasting/${w.id}`} aria-label={`Open dossier for ${w.distillery} ${w.name}`}>
+                  Open Dossier
+                </Link>
+              </Button>
             </CardFooter>
           </Card>
         ))}
