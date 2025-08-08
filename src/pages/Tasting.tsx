@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import Map from "@/components/Map";
 
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
@@ -19,7 +20,11 @@ const Tasting = () => {
       </Helmet>
 
       <h1 className="text-3xl md:text-4xl font-bold mb-6">The Tasting Journey</h1>
-      <p className="text-muted-foreground mb-6">Map and dossiers coming soon. Start by browsing the set and adding quick ratings.</p>
+      <p className="text-muted-foreground mb-6">Explore the interactive map of Scotland and open dossiers. Add quick ratings below.</p>
+
+      <div className="mb-8 animate-fade-in">
+        <Map />
+      </div>
 
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {WHISKIES.map((w) => (

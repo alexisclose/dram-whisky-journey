@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import FlavorWheel from "@/components/FlavorWheel";
 
 const University = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/university` : "/university";
@@ -47,11 +48,8 @@ const University = () => {
 
       <section>
         <h2 className="text-2xl font-semibold mb-3">The Language of Flavour</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border p-6">
-            <p className="font-medium mb-2">Flavour Wheel</p>
-            <p className="text-sm text-muted-foreground">Interactive flavour wheel coming soon. Explore categories like Smoky, Fruity, Spicy, and Sweet.</p>
-          </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <FlavorWheel />
           <div className="rounded-lg border p-6">
             <p className="font-medium mb-2">Descriptors</p>
             <ul className="text-sm text-muted-foreground grid grid-cols-2 gap-2">
