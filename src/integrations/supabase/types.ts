@@ -14,13 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      tasting_notes: {
+        Row: {
+          created_at: string
+          flavors: string[]
+          id: string
+          note: string | null
+          rating: number | null
+          updated_at: string
+          user_id: string
+          whisky_id: string
+        }
+        Insert: {
+          created_at?: string
+          flavors?: string[]
+          id?: string
+          note?: string | null
+          rating?: number | null
+          updated_at?: string
+          user_id: string
+          whisky_id: string
+        }
+        Update: {
+          created_at?: string
+          flavors?: string[]
+          id?: string
+          note?: string | null
+          rating?: number | null
+          updated_at?: string
+          user_id?: string
+          whisky_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasting_notes_whisky_id_fkey"
+            columns: ["whisky_id"]
+            isOneToOne: false
+            referencedRelation: "whiskies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whiskies: {
+        Row: {
+          abv: number | null
+          created_at: string
+          distillery: string
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          region: string
+        }
+        Insert: {
+          abv?: number | null
+          created_at?: string
+          distillery: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          region: string
+        }
+        Update: {
+          abv?: number | null
+          created_at?: string
+          distillery?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          region?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_flavor_distribution: {
+        Args: { _whisky_id: string }
+        Returns: {
+          flavor: string
+          count: number
+          percentage: number
+        }[]
+      }
+      get_flavor_percentage: {
+        Args: { _whisky_id: string; _flavor: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

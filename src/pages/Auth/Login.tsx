@@ -1,12 +1,25 @@
+
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const Login = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/login` : "/login";
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuthSession();
+
+  if (user) {
+    // Already logged in, send to dashboard
+    navigate("/dashboard");
+  }
+
   return (
     <main className="container mx-auto px-6 py-10">
       <Helmet>
@@ -19,21 +32,41 @@ const Login = () => {
 
       <form
         className="max-w-md space-y-4"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          toast.info("Connect Supabase to enable secure email/password login.");
+          if (loading) return;
+          const formData = new FormData(e.currentTarget as HTMLFormElement);
+          const email = String(formData.get("email") ?? "");
+          const password = String(formData.get("password") ?? "");
+          if (!email || !password) {
+            toast.error("Please enter email and password.");
+            return;
+          }
+          setLoading(true);
+          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          setLoading(false);
+          if (error) {
+            toast.error(error.message);
+            return;
+          }
+          toast.success("Logged in!");
+          navigate("/dashboard");
         }}
       >
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" required placeholder="you@example.com" />
+          <Input id="email" name="email" type="email" required placeholder="you@example.com" />
         </div>
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" required placeholder="••••••••" />
+          <Input id="password" name="password" type="password" required placeholder="••••••••" />
         </div>
-        <Button type="submit" variant="brand" size="lg" className="w-full">Log In</Button>
-        <p className="text-sm text-muted-foreground">No account yet? <Link to="/signup" className="underline">Create one</Link></p>
+        <Button type="submit" variant="brand" size="lg" className="w-full" disabled={loading}>
+          {loading ? "Logging in..." : "Log In"}
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          No account yet? <Link to="/signup" className="underline">Create one</Link>
+        </p>
       </form>
     </main>
   );

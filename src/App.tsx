@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +17,7 @@ import Quiz from "./pages/Quiz";
 import Certificate from "./pages/Certificate";
 import SiteHeader from "./components/layout/SiteHeader";
 import WhiskyDossier from "./pages/WhiskyDossier";
+import MyReviews from "./pages/MyReviews";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,7 @@ const App = () => (
             <Route path="/tasting" element={<Tasting />} />
             <Route path="/tasting/:id" element={<WhiskyDossier />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/reviews" element={<MyReviews />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/certificate" element={<Certificate />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
