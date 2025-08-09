@@ -12,8 +12,8 @@ type TastingNote = {
   id: string;
   whisky_id: string;
   rating: number | null;
-  note: string | null;
-  flavors: string[];
+  notes: string | null; // updated column name
+  tasting_note_flavors?: { flavor_key: string }[]; // nested relation
   created_at: string;
   updated_at: string;
 };
@@ -29,7 +29,16 @@ const MyReviews = () => {
       if (!user) return [] as TastingNote[];
       const { data, error } = await supabase
         .from("tasting_notes")
-        .select("id, whisky_id, rating, note, flavors, created_at, updated_at")
+        .select(`
+          id,
+          whisky_id,
+          rating,
+          notes,
+          created_at,
+          updated_at,
+          tasting_note_flavors ( flavor_key )
+        `)
+        .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as TastingNote[];
@@ -82,42 +91,47 @@ const MyReviews = () => {
             <p className="text-muted-foreground">You haven't added any reviews yet.</p>
           )}
           <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {(data ?? []).map((tn) => (
-              <Card key={tn.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Review</span>
-                    <span className="text-sm text-muted-foreground">
-                      {/* Once whiskies are synced, show the whisky name here */}
-                      {tn.rating !== null ? `Rating: ${tn.rating}/100` : "No rating"}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground space-y-3">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Whisky</div>
-                    <div className="text-foreground break-all">{tn.whisky_id}</div>
-                    <div className="text-xs text-muted-foreground mt-1">Name will appear once master whiskies are synced.</div>
-                  </div>
-                  {tn.note && (
+            {(data ?? []).map((tn) => {
+              const flavors = (tn.tasting_note_flavors ?? []).map((f) => f.flavor_key);
+
+              return (
+                <Card key={tn.id}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Review</span>
+                      <span className="text-sm text-muted-foreground">
+                        {tn.rating !== null ? `Rating: ${tn.rating}/5` : "No rating"}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground space-y-3">
                     <div>
-                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Notes</div>
-                      <div className="text-foreground">{tn.note}</div>
-                    </div>
-                  )}
-                  {tn.flavors?.length > 0 && (
-                    <div>
-                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Flavors</div>
-                      <div className="flex flex-wrap gap-1">
-                        {tn.flavors.map((f) => (
-                          <span key={f} className="px-2 py-0.5 rounded border text-xs">{f}</span>
-                        ))}
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Whisky</div>
+                      <div className="text-foreground break-all">{tn.whisky_id}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Name will appear once master whiskies are synced.
                       </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    {tn.notes && (
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">Notes</div>
+                        <div className="text-foreground">{tn.notes}</div>
+                      </div>
+                    )}
+                    {flavors.length > 0 && (
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">Flavors</div>
+                        <div className="flex flex-wrap gap-1">
+                          {flavors.map((f) => (
+                            <span key={f} className="px-2 py-0.5 rounded border text-xs">{f}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </section>
         </>
       )}
