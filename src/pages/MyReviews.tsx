@@ -12,8 +12,8 @@ type TastingNote = {
   id: string;
   whisky_id: string;
   rating: number | null;
-  notes: string | null; // updated column name
-  tasting_note_flavors?: { flavor_key: string }[]; // nested relation
+  note: string | null; // correct column name
+  flavors?: string[]; // array of flavor keys
   created_at: string;
   updated_at: string;
 };
@@ -33,10 +33,10 @@ const MyReviews = () => {
           id,
           whisky_id,
           rating,
-          notes,
+          note,
+          flavors,
           created_at,
-          updated_at,
-          tasting_note_flavors ( flavor_key )
+          updated_at
         `)
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
@@ -92,7 +92,7 @@ const MyReviews = () => {
           )}
           <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {(data ?? []).map((tn) => {
-              const flavors = (tn.tasting_note_flavors ?? []).map((f) => f.flavor_key);
+              const flavors = tn.flavors ?? [];
 
               return (
                 <Card key={tn.id}>
@@ -112,10 +112,10 @@ const MyReviews = () => {
                         Name will appear once master whiskies are synced.
                       </div>
                     </div>
-                    {tn.notes && (
+                    {tn.note && (
                       <div>
                         <div className="text-xs uppercase tracking-wide text-muted-foreground">Notes</div>
-                        <div className="text-foreground">{tn.notes}</div>
+                        <div className="text-foreground">{tn.note}</div>
                       </div>
                     )}
                     {flavors.length > 0 && (

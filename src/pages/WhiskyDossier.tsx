@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { WHISKIES } from "@/data/whiskies";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { toast } from "sonner";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
@@ -56,12 +60,118 @@ const WhiskyDossier = () => {
   const whiskyId = Number(id);
   const whisky = WHISKIES.find((w) => w.id === whiskyId);
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting/${whiskyId}` : "/tasting/${whiskyId}";
+  const { user } = useAuthSession();
+  const queryClient = useQueryClient();
 
   const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
   const [rating, setRating] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
 
-  const community = useMemo(() => DEFAULT_COMMUNITY, []);
+  // Get the actual whisky from database by matching distillery and name
+  const { data: dbWhisky } = useQuery({
+    queryKey: ["whisky", whisky?.distillery, whisky?.name],
+    queryFn: async () => {
+      if (!whisky) return null;
+      const { data, error } = await supabase
+        .from("whiskies")
+        .select("id")
+        .eq("distillery", whisky.distillery)
+        .eq("name", whisky.name)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!whisky,
+  });
+
+  // Load existing user note
+  const { data: existingNote } = useQuery({
+    queryKey: ["user-note", dbWhisky?.id, user?.id],
+    queryFn: async () => {
+      if (!dbWhisky?.id || !user) return null;
+      const { data, error } = await supabase
+        .from("tasting_notes")
+        .select("*")
+        .eq("whisky_id", dbWhisky.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!dbWhisky?.id && !!user,
+  });
+
+  // Load community flavor distribution
+  const { data: communityFlavors } = useQuery({
+    queryKey: ["community-flavors", dbWhisky?.id],
+    queryFn: async () => {
+      if (!dbWhisky?.id) return [];
+      const { data, error } = await supabase.rpc("get_flavor_distribution", {
+        _whisky_id: dbWhisky.id,
+      });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!dbWhisky?.id,
+  });
+
+  // Set form values from existing note
+  useEffect(() => {
+    if (existingNote) {
+      setSelectedFlavors(existingNote.flavors || []);
+      setRating(existingNote.rating);
+      setNotes(existingNote.note || "");
+    }
+  }, [existingNote]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !dbWhisky?.id) throw new Error("Missing required data");
+      
+      const noteData = {
+        user_id: user.id,
+        whisky_id: dbWhisky.id,
+        rating,
+        note: notes || null,
+        flavors: selectedFlavors,
+      };
+
+      if (existingNote) {
+        const { error } = await supabase
+          .from("tasting_notes")
+          .update(noteData)
+          .eq("id", existingNote.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("tasting_notes")
+          .insert(noteData);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success("Tasting note saved!");
+      queryClient.invalidateQueries({ queryKey: ["user-note"] });
+      queryClient.invalidateQueries({ queryKey: ["community-flavors"] });
+      queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+    },
+    onError: (error) => {
+      console.error("Save error:", error);
+      toast.error("Failed to save tasting note");
+    },
+  });
+
+  const community = useMemo(() => {
+    if (communityFlavors?.length) {
+      const flavorMap: Record<string, number> = {};
+      communityFlavors.forEach((f: any) => {
+        flavorMap[f.flavor] = f.percentage;
+      });
+      return flavorMap;
+    }
+    return DEFAULT_COMMUNITY;
+  }, [communityFlavors]);
+
   const topFlavors = useMemo(() =>
     Object.entries(community)
       .sort((a, b) => b[1] - a[1])
@@ -204,8 +314,22 @@ const WhiskyDossier = () => {
               </div>
             </CardContent>
             <CardFooter className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Saving your palate and rating will be enabled after Supabase is connected.</p>
-              <Button variant="outline" disabled>Save</Button>
+              {!user ? (
+                <p className="text-sm text-muted-foreground">
+                  <Link to="/login" className="underline">Log in</Link> to save your tasting notes.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {existingNote ? "Update your saved note" : "Save your first note for this whisky"}
+                </p>
+              )}
+              <Button 
+                variant="outline" 
+                disabled={!user || saveMutation.isPending}
+                onClick={() => saveMutation.mutate()}
+              >
+                {saveMutation.isPending ? "Saving..." : existingNote ? "Update" : "Save"}
+              </Button>
             </CardFooter>
           </Card>
         </article>
