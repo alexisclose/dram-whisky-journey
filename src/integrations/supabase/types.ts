@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_codes: {
+        Row: {
+          code: string
+          created_at: string
+          is_active: boolean
+          name: string | null
+          set_code: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_active?: boolean
+          name?: string | null
+          set_code: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_active?: boolean
+          name?: string | null
+          set_code?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -82,6 +106,27 @@ export type Database = {
           },
         ]
       }
+      user_sets: {
+        Row: {
+          activated_at: string
+          id: string
+          set_code: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          id?: string
+          set_code: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          id?: string
+          set_code?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       whiskies: {
         Row: {
           abv: number | null
@@ -92,6 +137,7 @@ export type Database = {
           lng: number | null
           name: string
           region: string
+          set_code: string
         }
         Insert: {
           abv?: number | null
@@ -102,6 +148,7 @@ export type Database = {
           lng?: number | null
           name: string
           region: string
+          set_code?: string
         }
         Update: {
           abv?: number | null
@@ -112,6 +159,7 @@ export type Database = {
           lng?: number | null
           name?: string
           region?: string
+          set_code?: string
         }
         Relationships: []
       }
