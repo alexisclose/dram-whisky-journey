@@ -1,5 +1,4 @@
 import { Helmet } from "react-helmet-async";
-import { WHISKIES } from "@/data/whiskies";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
@@ -10,52 +9,57 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
+import { useActiveSet } from "@/context/ActiveSetContext";
+
+type WhiskyRow = {
+  id: string;
+  distillery: string;
+  name: string;
+  region: string | null;
+  abv: number | null;
+  lat: number | null;
+  lng: number | null;
+};
 
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
-  const [ratings, setRatings] = useState<Record<number, number>>({});
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
+  const { activeSet } = useActiveSet();
 
-  const { data: dbWhiskies } = useQuery({
-    queryKey: ["db-whiskies"],
+  const [ratings, setRatings] = useState<Record<string, number>>({});
+
+  const { data: whiskies } = useQuery({
+    queryKey: ["db-whiskies", activeSet],
     queryFn: async () => {
-      const { data, error } = await supabase.from("whiskies").select("id, distillery, name");
+      const { data, error } = await supabase
+        .from("whiskies")
+        .select("id, distillery, name, region, abv, lat, lng, set_code")
+        .eq("set_code", activeSet);
       if (error) throw error;
-      return (data || []) as { id: string; distillery: string; name: string }[];
+      return (data || []) as WhiskyRow[];
     },
   });
 
-  const idMap = useMemo(() => {
-    const map = new Map<number, string>();
-    if (dbWhiskies) {
-      WHISKIES.forEach((w) => {
-        const match = dbWhiskies.find((d) => d.distillery === w.distillery && d.name === w.name);
-        if (match) map.set(w.id, match.id);
-      });
-    }
-    return map;
-  }, [dbWhiskies]);
+  const whiskyIds = useMemo(() => (whiskies ? whiskies.map((w) => w.id) : []), [whiskies]);
 
   const { data: userRatings } = useQuery({
-    queryKey: ["user-ratings", user?.id, Array.from(idMap.values()).join(",")],
+    queryKey: ["user-ratings", user?.id, whiskyIds.join(",")],
     queryFn: async () => {
-      if (!user || idMap.size === 0) return {} as Record<number, number>;
-      const ids = Array.from(idMap.values()) as string[];
+      if (!user || whiskyIds.length === 0) return {} as Record<string, number>;
       const { data, error } = await supabase
         .from("tasting_notes")
         .select("whisky_id, rating")
         .eq("user_id", user.id)
-        .in("whisky_id", ids);
+        .in("whisky_id", whiskyIds);
       if (error) throw error;
-      const byLocalId: Record<number, number> = {};
+      const byId: Record<string, number> = {};
       (data || []).forEach((row: any) => {
-        const entry = Array.from(idMap.entries()).find(([, uuid]) => uuid === row.whisky_id);
-        if (entry && row.rating != null) byLocalId[entry[0]] = row.rating;
+        if (row.rating != null) byId[row.whisky_id] = row.rating;
       });
-      return byLocalId;
+      return byId;
     },
-    enabled: !!user && idMap.size > 0,
+    enabled: !!user && whiskyIds.length > 0,
   });
 
   useEffect(() => {
@@ -63,16 +67,13 @@ const Tasting = () => {
   }, [userRatings]);
 
   const saveRating = useMutation({
-    mutationFn: async ({ localId, n }: { localId: number; n: number }) => {
+    mutationFn: async ({ whiskyId, n }: { whiskyId: string; n: number }) => {
       if (!user) throw new Error("Please log in to save ratings.");
-      const uuid = idMap.get(localId);
-      if (!uuid) throw new Error("Whisky mapping not found.");
-
       const { data: existing, error: selErr } = await supabase
         .from("tasting_notes")
         .select("id")
         .eq("user_id", user.id)
-        .eq("whisky_id", uuid)
+        .eq("whisky_id", whiskyId)
         .maybeSingle();
       if (selErr) throw selErr;
 
@@ -85,12 +86,12 @@ const Tasting = () => {
       } else {
         const { error } = await supabase
           .from("tasting_notes")
-          .insert({ user_id: user.id, whisky_id: uuid, rating: n, flavors: [] });
+          .insert({ user_id: user.id, whisky_id: whiskyId, rating: n, flavors: [] });
         if (error) throw error;
       }
     },
     onSuccess: (_data, variables) => {
-      setRatings((r) => ({ ...r, [variables.localId]: variables.n }));
+      setRatings((r) => ({ ...r, [variables.whiskyId]: variables.n }));
       toast.success("Rating saved");
       queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
     },
@@ -115,16 +116,16 @@ const Tasting = () => {
       </div>
 
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {WHISKIES.map((w) => (
+        {whiskies?.map((w) => (
           <Card key={w.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{w.distillery} — {w.name}</span>
-                <span className="text-sm text-muted-foreground">{w.region}</span>
+                <span className="text-sm text-muted-foreground">{w.region || ""}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              ABV {w.abv}% · Lat {w.lat.toFixed(2)} · Lng {w.lng.toFixed(2)}
+              ABV {w.abv ?? "?"}% · Lat {typeof w.lat === "number" ? w.lat.toFixed(2) : "—"} · Lng {typeof w.lng === "number" ? w.lng.toFixed(2) : "—"}
             </CardContent>
             <CardFooter className="flex items-center justify-between">
               <div className="flex items-center gap-1">
@@ -138,7 +139,7 @@ const Tasting = () => {
                         toast.info("Log in to save your rating");
                         return;
                       }
-                      saveRating.mutate({ localId: w.id, n });
+                      saveRating.mutate({ whiskyId: w.id, n });
                     }}
                   >
                     <Star className="h-5 w-5" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />

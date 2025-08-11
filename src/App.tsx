@@ -18,6 +18,8 @@ import Certificate from "./pages/Certificate";
 import SiteHeader from "./components/layout/SiteHeader";
 import WhiskyDossier from "./pages/WhiskyDossier";
 import MyReviews from "./pages/MyReviews";
+import Activate from "./pages/Activate";
+import { ActiveSetProvider } from "./context/ActiveSetContext";
 
 const queryClient = new QueryClient();
 
@@ -28,22 +30,25 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <SiteHeader />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/university" element={<University />} />
-            <Route path="/tasting" element={<Tasting />} />
-            <Route path="/tasting/:id" element={<WhiskyDossier />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/reviews" element={<MyReviews />} />
-            <Route path="/quiz" element={<Quiz />} />
-            <Route path="/certificate" element={<Certificate />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <ActiveSetProvider>
+            <SiteHeader />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/activate" element={<Activate />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/university" element={<University />} />
+              <Route path="/tasting" element={<Tasting />} />
+              <Route path="/tasting/:id" element={<WhiskyDossier />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/reviews" element={<MyReviews />} />
+              <Route path="/quiz" element={<Quiz />} />
+              <Route path="/certificate" element={<Certificate />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ActiveSetProvider>
         </BrowserRouter>
       </TooltipProvider>
     </HelmetProvider>
