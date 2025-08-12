@@ -13,7 +13,6 @@ import { Star, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
-import { WHISKIES } from "@/data/whiskies";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
@@ -58,9 +57,8 @@ const DEFAULT_COMMUNITY: Record<string, number> = {
 
 const WhiskyDossier = () => {
   const { id } = useParams();
-  const whiskyId = Number(id);
-  const whisky = WHISKIES.find((w) => w.id === whiskyId);
-  const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting/${whiskyId}` : "/tasting/${whiskyId}";
+  const whiskyId = (id as string) || "";
+  const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting/${whiskyId}` : `/tasting/${whiskyId}`;
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
 
@@ -68,22 +66,22 @@ const WhiskyDossier = () => {
   const [rating, setRating] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
 
-  // Get the actual whisky from database by matching distillery and name
-  const { data: dbWhisky } = useQuery({
-    queryKey: ["whisky", whisky?.distillery, whisky?.name],
+  // Load whisky details from database by ID
+  const { data: dbWhisky, isLoading: whiskyLoading } = useQuery({
+    queryKey: ["whisky-by-id", whiskyId],
     queryFn: async () => {
-      if (!whisky) return null;
+      if (!whiskyId) return null;
       const { data, error } = await supabase
         .from("whiskies")
-        .select("id")
-        .eq("distillery", whisky.distillery)
-        .eq("name", whisky.name)
-        .single();
+        .select("id, distillery, name, region, abv, lat, lng")
+        .eq("id", whiskyId)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
-    enabled: !!whisky,
+    enabled: !!whiskyId,
   });
+  const whisky = dbWhisky;
 
   // Load existing user note
   const { data: existingNote } = useQuery({
