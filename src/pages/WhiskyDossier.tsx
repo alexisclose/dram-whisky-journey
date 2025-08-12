@@ -13,6 +13,7 @@ import { Star, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
+import { WHISKIES } from "@/data/whiskies";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
