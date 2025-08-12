@@ -51,6 +51,31 @@ const MyReviews = () => {
     },
   });
 
+  const { data: wishlist, isLoading: wlLoading, error: wlError } = useQuery({
+    queryKey: ["my-wishlist", user?.id],
+    queryFn: async () => {
+      if (!user) return [] as any[];
+      const { data: rows, error } = await supabase
+        .from("wishlists")
+        .select("whisky_id, id, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const ids = (rows ?? []).map((r: any) => r.whisky_id);
+      if (ids.length === 0) return [] as any[];
+      const { data: whiskies, error: werr } = await supabase
+        .from("whiskies")
+        .select("id, distillery, name, region")
+        .in("id", ids);
+      if (werr) throw werr;
+      const map = new Map((whiskies ?? []).map((w: any) => [w.id, w]));
+      return (rows ?? [])
+        .map((r: any) => ({ id: r.id, created_at: r.created_at, whisky: map.get(r.whisky_id) }))
+        .filter((x: any) => x.whisky);
+    },
+    enabled: !!user && !loading,
+  });
+
   const empty = useMemo(() => (data ?? []).length === 0, [data]);
 
   return (
@@ -85,6 +110,32 @@ const MyReviews = () => {
 
       {user && (
         <>
+          <section className="mb-10">
+            <h2 className="text-xl font-semibold mb-3">My Wishlist</h2>
+            {wlLoading && <p className="text-muted-foreground">Loading wishlist…</p>}
+            {wlError && <p className="text-destructive">Failed to load wishlist.</p>}
+            {!wlLoading && (wishlist?.length ?? 0) === 0 && (
+              <p className="text-muted-foreground">Your wishlist is empty.</p>
+            )}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {(wishlist ?? []).map((item: any) => (
+                <Card key={item.id}>
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      {item.whisky.distillery} — {item.whisky.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground flex items-center justify-between">
+                    <span>{item.whisky.region}</span>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/tasting/${item.whisky.id}`}>Open dossier</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
           {isLoading && <p className="text-muted-foreground">Loading your reviews…</p>}
           {error && <p className="text-destructive">Failed to load reviews.</p>}
           {!isLoading && empty && (

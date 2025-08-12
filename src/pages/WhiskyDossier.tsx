@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, ArrowLeft } from "lucide-react";
+import { Star, ArrowLeft, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
@@ -114,6 +114,52 @@ const WhiskyDossier = () => {
     enabled: !!dbWhisky?.id,
   });
 
+  // Load wishlist status
+  const { data: wishlistEntry } = useQuery({
+    queryKey: ["wishlist-entry", dbWhisky?.id, user?.id],
+    queryFn: async () => {
+      if (!dbWhisky?.id || !user) return null;
+      const { data, error } = await supabase
+        .from("wishlists")
+        .select("*")
+        .eq("whisky_id", dbWhisky.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!dbWhisky?.id && !!user,
+  });
+
+  const toggleWishlist = useMutation({
+    mutationFn: async () => {
+      if (!user || !dbWhisky?.id) throw new Error("Missing required data");
+      if (wishlistEntry) {
+        const { error } = await supabase
+          .from("wishlists")
+          .delete()
+          .eq("id", wishlistEntry.id);
+        if (error) throw error;
+        return "removed" as const;
+      } else {
+        const { error } = await supabase
+          .from("wishlists")
+          .insert({ user_id: user.id, whisky_id: dbWhisky.id });
+        if (error) throw error;
+        return "added" as const;
+      }
+    },
+    onSuccess: (action) => {
+      toast.success(action === "added" ? "Added to wishlist" : "Removed from wishlist");
+      queryClient.invalidateQueries({ queryKey: ["wishlist-entry"] });
+      queryClient.invalidateQueries({ queryKey: ["my-wishlist"] });
+    },
+    onError: (error) => {
+      console.error("Wishlist update error:", error);
+      toast.error("Failed to update wishlist");
+    },
+  });
+
   // Set form values from existing note
   useEffect(() => {
     if (existingNote) {
@@ -212,11 +258,31 @@ const WhiskyDossier = () => {
         </script>
       </Helmet>
 
-      <header className="mb-6 flex items-center gap-3">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/tasting" aria-label="Back to Tasting Journey"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Link>
-        </Button>
-        <h1 className="text-3xl md:text-4xl font-bold">Whisky Dossier — {title}</h1>
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/tasting" aria-label="Back to Tasting Journey"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Link>
+          </Button>
+          <h1 className="text-3xl md:text-4xl font-bold">Whisky Dossier — {title}</h1>
+        </div>
+        {user ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toggleWishlist.mutate()}
+            disabled={toggleWishlist.isPending}
+            aria-label={wishlistEntry ? "In wishlist" : "Add to wishlist"}
+          >
+            <Heart className="mr-2 h-4 w-4" fill={wishlistEntry ? "currentColor" : "none"} />
+            {wishlistEntry ? "In wishlist" : "Add to wishlist"}
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/login" aria-label="Log in to add to wishlist">
+              <Heart className="mr-2 h-4 w-4" /> Log in to wishlist
+            </Link>
+          </Button>
+        )}
       </header>
 
       <section className="grid gap-6 lg:grid-cols-3">
