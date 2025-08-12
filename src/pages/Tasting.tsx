@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
 import { useActiveSet } from "@/context/ActiveSetContext";
-
 type WhiskyRow = {
   id: string;
   distillery: string;
@@ -20,38 +19,40 @@ type WhiskyRow = {
   lat: number | null;
   lng: number | null;
 };
-
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
-  const { user } = useAuthSession();
+  const {
+    user
+  } = useAuthSession();
   const queryClient = useQueryClient();
-  const { activeSet } = useActiveSet();
-
+  const {
+    activeSet
+  } = useActiveSet();
   const [ratings, setRatings] = useState<Record<string, number>>({});
-
-  const { data: whiskies } = useQuery({
+  const {
+    data: whiskies
+  } = useQuery({
     queryKey: ["db-whiskies", activeSet],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("whiskies")
-        .select("id, distillery, name, region, abv, lat, lng, set_code")
-        .eq("set_code", activeSet);
+      const {
+        data,
+        error
+      } = await supabase.from("whiskies").select("id, distillery, name, region, abv, lat, lng, set_code").eq("set_code", activeSet);
       if (error) throw error;
       return (data || []) as WhiskyRow[];
-    },
+    }
   });
-
-  const whiskyIds = useMemo(() => (whiskies ? whiskies.map((w) => w.id) : []), [whiskies]);
-
-  const { data: userRatings } = useQuery({
+  const whiskyIds = useMemo(() => whiskies ? whiskies.map(w => w.id) : [], [whiskies]);
+  const {
+    data: userRatings
+  } = useQuery({
     queryKey: ["user-ratings", user?.id, whiskyIds.join(",")],
     queryFn: async () => {
       if (!user || whiskyIds.length === 0) return {} as Record<string, number>;
-      const { data, error } = await supabase
-        .from("tasting_notes")
-        .select("whisky_id, rating")
-        .eq("user_id", user.id)
-        .in("whisky_id", whiskyIds);
+      const {
+        data,
+        error
+      } = await supabase.from("tasting_notes").select("whisky_id, rating").eq("user_id", user.id).in("whisky_id", whiskyIds);
       if (error) throw error;
       const byId: Record<string, number> = {};
       (data || []).forEach((row: any) => {
@@ -59,49 +60,59 @@ const Tasting = () => {
       });
       return byId;
     },
-    enabled: !!user && whiskyIds.length > 0,
+    enabled: !!user && whiskyIds.length > 0
   });
-
   useEffect(() => {
     if (userRatings) setRatings(userRatings);
   }, [userRatings]);
-
   const saveRating = useMutation({
-    mutationFn: async ({ whiskyId, n }: { whiskyId: string; n: number }) => {
+    mutationFn: async ({
+      whiskyId,
+      n
+    }: {
+      whiskyId: string;
+      n: number;
+    }) => {
       if (!user) throw new Error("Please log in to save ratings.");
-      const { data: existing, error: selErr } = await supabase
-        .from("tasting_notes")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("whisky_id", whiskyId)
-        .maybeSingle();
+      const {
+        data: existing,
+        error: selErr
+      } = await supabase.from("tasting_notes").select("id").eq("user_id", user.id).eq("whisky_id", whiskyId).maybeSingle();
       if (selErr) throw selErr;
-
       if (existing) {
-        const { error } = await supabase
-          .from("tasting_notes")
-          .update({ rating: n })
-          .eq("id", existing.id);
+        const {
+          error
+        } = await supabase.from("tasting_notes").update({
+          rating: n
+        }).eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("tasting_notes")
-          .insert({ user_id: user.id, whisky_id: whiskyId, rating: n, flavors: [] });
+        const {
+          error
+        } = await supabase.from("tasting_notes").insert({
+          user_id: user.id,
+          whisky_id: whiskyId,
+          rating: n,
+          flavors: []
+        });
         if (error) throw error;
       }
     },
     onSuccess: (_data, variables) => {
-      setRatings((r) => ({ ...r, [variables.whiskyId]: variables.n }));
+      setRatings(r => ({
+        ...r,
+        [variables.whiskyId]: variables.n
+      }));
       toast.success("Rating saved");
-      queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+      queryClient.invalidateQueries({
+        queryKey: ["my-reviews"]
+      });
     },
     onError: (e: any) => {
       toast.error(e.message || "Failed to save rating");
-    },
+    }
   });
-
-  return (
-    <main className="container mx-auto px-6 py-10">
+  return <main className="container mx-auto px-6 py-10">
       <Helmet>
         <title>Tasting Journey — Explore 12 Drams</title>
         <meta name="description" content="Browse your curated set of 12 whiskies. Open dossiers, record your palate and add ratings as you taste." />
@@ -109,15 +120,14 @@ const Tasting = () => {
       </Helmet>
 
       <h1 className="text-3xl md:text-4xl font-bold mb-6">The Tasting Journey</h1>
-      <p className="text-muted-foreground mb-6">Explore the interactive map of Scotland and open dossiers. Add quick ratings below.</p>
+      <p className="text-muted-foreground mb-6">Explore the interactive map of Japan and open dossiers. Add quick ratings below.</p>
 
       <div className="mb-8 animate-fade-in">
         <WhiskyMap />
       </div>
 
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {whiskies?.map((w) => (
-          <Card key={w.id}>
+        {whiskies?.map(w => <Card key={w.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{w.distillery} — {w.name}</span>
@@ -129,22 +139,18 @@ const Tasting = () => {
             </CardContent>
             <CardFooter className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                {[1,2,3,4,5].map((n) => (
-                  <button
-                    key={n}
-                    aria-label={`Rate ${n} star`}
-                    className={`p-1 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"}`}
-                    onClick={() => {
-                      if (!user) {
-                        toast.info("Log in to save your rating");
-                        return;
-                      }
-                      saveRating.mutate({ whiskyId: w.id, n });
-                    }}
-                  >
+                {[1, 2, 3, 4, 5].map(n => <button key={n} aria-label={`Rate ${n} star`} className={`p-1 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"}`} onClick={() => {
+              if (!user) {
+                toast.info("Log in to save your rating");
+                return;
+              }
+              saveRating.mutate({
+                whiskyId: w.id,
+                n
+              });
+            }}>
                     <Star className="h-5 w-5" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />
-                  </button>
-                ))}
+                  </button>)}
               </div>
               <Button asChild variant="outline" size="sm">
                 <Link to={`/tasting/${w.id}`} aria-label={`Open dossier for ${w.distillery} ${w.name}`}>
@@ -152,19 +158,12 @@ const Tasting = () => {
                 </Link>
               </Button>
             </CardFooter>
-          </Card>
-        ))}
+          </Card>)}
       </section>
 
       <aside className="mt-10 text-sm text-muted-foreground">
-        {!user ? (
-          <span><Link to="/login" className="underline">Log in</Link> to save ratings and palate notes.</span>
-        ) : (
-          <span>Your ratings are saved to your profile.</span>
-        )}
+        {!user ? <span><Link to="/login" className="underline">Log in</Link> to save ratings and palate notes.</span> : <span>Your ratings are saved to your profile.</span>}
       </aside>
-    </main>
-  );
+    </main>;
 };
-
 export default Tasting;
