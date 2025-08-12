@@ -168,6 +168,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_with_code: {
+        Args: { _code: string }
+        Returns: {
+          set_code: string
+          name: string
+          activated: boolean
+        }[]
+      }
       get_flavor_distribution: {
         Args: { _whisky_id: string }
         Returns: {

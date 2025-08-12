@@ -23,31 +23,27 @@ const Activate = () => {
       toast.info("Enter your activation code");
       return;
     }
+    if (!user) {
+      toast.error("Please log in to activate your set");
+      return;
+    }
     try {
       setLoading(true);
-      const { data: ac, error } = await supabase
-        .from("activation_codes")
-        .select("set_code, name, is_active")
-        .eq("code", code.trim())
-        .eq("is_active", true)
-        .maybeSingle();
+      // Use secure RPC that validates the code server-side without exposing activation_codes
+      const { data, error } = await supabase.rpc(
+        'activate_with_code' as any,
+        { _code: code.trim() } as any
+      );
       if (error) throw error;
-      if (!ac) {
+      const result = Array.isArray(data) ? (data[0] as any) : null;
+      if (!result || !result.set_code) {
         toast.error("Invalid or inactive code");
         return;
       }
 
-      const setCode = ac.set_code as string;
-
-      if (user) {
-        const { error: insErr } = await supabase
-          .from("user_sets")
-          .insert({ user_id: user.id, set_code: setCode });
-        if (insErr && !String(insErr.message || "").includes("duplicate key")) throw insErr;
-      }
-
+      const setCode = result.set_code as string;
       setActiveSet(setCode);
-      toast.success(`Activated: ${ac.name || setCode}`);
+      toast.success(`Activated: ${result.name || setCode}`);
       navigate("/tasting");
     } catch (e: any) {
       console.error(e);
