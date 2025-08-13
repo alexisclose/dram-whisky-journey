@@ -39,7 +39,10 @@ const SiteHeader = () => {
             <NavLink className={navLinkClass} to="/quiz">Master's Quiz</NavLink>
             <NavLink className={navLinkClass} to="/activate">Activate</NavLink>
             {!loading && user && (
-              <NavLink className={navLinkClass} to="/reviews">My Reviews</NavLink>
+              <>
+                <NavLink className={navLinkClass} to="/reviews">My Reviews</NavLink>
+                <NavLink className={navLinkClass} to="/profile">My Profile</NavLink>
+              </>
             )}
           </nav>
         </div>

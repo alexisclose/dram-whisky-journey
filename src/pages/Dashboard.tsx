@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpenCheck, Globe2, MapPinned, Medal } from "lucide-react";
+import { BookOpenCheck, Globe2, MapPinned, Medal, Radar } from "lucide-react";
 
 const Dashboard = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : "/dashboard";
@@ -31,6 +31,12 @@ const Dashboard = () => {
       href: "/quiz",
       icon: Medal,
     },
+    {
+      title: "My Whisky Profile",
+      desc: "View your personalized flavor profile based on your tastings.",
+      href: "/profile",
+      icon: Radar,
+    },
   ];
 
   return (
@@ -45,7 +51,7 @@ const Dashboard = () => {
         <p className="text-muted-foreground mt-2 max-w-2xl">Navigate through the journey: complete the University modules, savour each dram, connect with others, and earn your certificate.</p>
       </header>
 
-      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
         {tiles.map(({ title, desc, href, icon: Icon }) => (
           <Card key={title} className="h-full">
             <CardHeader>
