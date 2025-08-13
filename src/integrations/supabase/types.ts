@@ -70,6 +70,7 @@ export type Database = {
           created_at: string
           flavors: string[]
           id: string
+          intensity_ratings: Json | null
           note: string | null
           rating: number | null
           updated_at: string
@@ -80,6 +81,7 @@ export type Database = {
           created_at?: string
           flavors?: string[]
           id?: string
+          intensity_ratings?: Json | null
           note?: string | null
           rating?: number | null
           updated_at?: string
@@ -90,6 +92,7 @@ export type Database = {
           created_at?: string
           flavors?: string[]
           id?: string
+          intensity_ratings?: Json | null
           note?: string | null
           rating?: number | null
           updated_at?: string

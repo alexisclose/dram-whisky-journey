@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { Slider } from "@/components/ui/slider";
 import { Star, ArrowLeft, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
@@ -33,6 +34,16 @@ const FLAVORS = [
   { key: "tropical", label: "Tropical" },
   { key: "berries", label: "Berries" },
 ] as const;
+
+const INTENSITY_AXES = [
+  { key: "fruit", label: "Fruit" },
+  { key: "floral", label: "Floral" },
+  { key: "oak", label: "Oak" },
+  { key: "smoke", label: "Smoke" },
+  { key: "spice", label: "Spice" },
+] as const;
+
+const INTENSITY_LABELS = ["none", "", "medium", "", "pronounced"];
 
 // Simple community palate distribution used as a preview for all whiskies
 const DEFAULT_COMMUNITY: Record<string, number> = {
@@ -65,6 +76,13 @@ const WhiskyDossier = () => {
   const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
   const [rating, setRating] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
+  const [intensityRatings, setIntensityRatings] = useState<Record<string, number>>({
+    fruit: 0,
+    floral: 0,
+    oak: 0,
+    smoke: 0,
+    spice: 0,
+  });
 
   // Load whisky details from database by ID
   const { data: dbWhisky, isLoading: whiskyLoading } = useQuery({
@@ -166,6 +184,9 @@ const WhiskyDossier = () => {
       setSelectedFlavors(existingNote.flavors || []);
       setRating(existingNote.rating);
       setNotes(existingNote.note || "");
+      if (existingNote.intensity_ratings) {
+        setIntensityRatings(existingNote.intensity_ratings as Record<string, number>);
+      }
     }
   }, [existingNote]);
 
@@ -179,6 +200,7 @@ const WhiskyDossier = () => {
         rating,
         note: notes || null,
         flavors: selectedFlavors,
+        intensity_ratings: intensityRatings,
       };
 
       if (existingNote) {
@@ -362,6 +384,34 @@ const WhiskyDossier = () => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-sm font-medium">Intensity Ratings</label>
+                {INTENSITY_AXES.map((axis) => (
+                  <div key={axis.key} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{axis.label}</span>
+                      <span className="text-muted-foreground">
+                        {INTENSITY_LABELS[intensityRatings[axis.key]] || INTENSITY_LABELS[intensityRatings[axis.key]]}
+                      </span>
+                    </div>
+                    <Slider
+                      value={[intensityRatings[axis.key]]}
+                      onValueChange={(value) => 
+                        setIntensityRatings(prev => ({ ...prev, [axis.key]: value[0] }))
+                      }
+                      max={4}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>none</span>
+                      <span>medium</span>
+                      <span>pronounced</span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex items-center gap-2">
