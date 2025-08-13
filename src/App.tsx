@@ -19,6 +19,7 @@ import SiteHeader from "./components/layout/SiteHeader";
 import WhiskyDossier from "./pages/WhiskyDossier";
 import MyReviews from "./pages/MyReviews";
 import Activate from "./pages/Activate";
+import WhiskyProfile from "./pages/WhiskyProfile";
 import { ActiveSetProvider } from "./context/ActiveSetContext";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/tasting/:id" element={<WhiskyDossier />} />
               <Route path="/community" element={<Community />} />
               <Route path="/reviews" element={<MyReviews />} />
+              <Route path="/profile" element={<WhiskyProfile />} />
               <Route path="/quiz" element={<Quiz />} />
               <Route path="/certificate" element={<Certificate />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

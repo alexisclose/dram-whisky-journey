@@ -1,0 +1,243 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Radar } from "lucide-react";
+import { Radar as RechartsRadar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import { useToast } from "@/hooks/use-toast";
+
+interface TastingNote {
+  id: string;
+  rating: number | null;
+  intensity_ratings: any;
+  whisky_id: string;
+}
+
+interface FlavorProfile {
+  fruit: number;
+  floral: number;
+  oak: number;
+  smoke: number;
+  spice: number;
+}
+
+const WhiskyProfile = () => {
+  const { user, loading } = useAuthSession();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [tastingNotes, setTastingNotes] = useState<TastingNote[]>([]);
+  const [flavorProfile, setFlavorProfile] = useState<FlavorProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+      return;
+    }
+
+    if (user) {
+      fetchTastingNotes();
+    }
+  }, [user, loading, navigate]);
+
+  const fetchTastingNotes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tasting_notes')
+        .select('id, rating, intensity_ratings, whisky_id')
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error fetching tasting notes:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load your tasting notes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setTastingNotes(data || []);
+      calculateFlavorProfile(data || []);
+    } catch (error) {
+      console.error('Error fetching tasting notes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your tasting notes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const calculateFlavorProfile = (notes: TastingNote[]) => {
+    // Filter notes that have both rating and intensity ratings
+    const validNotes = notes.filter(note => 
+      note.rating !== null && 
+      note.intensity_ratings && 
+      typeof note.intensity_ratings === 'object'
+    );
+
+    if (validNotes.length === 0) {
+      setFlavorProfile(null);
+      return;
+    }
+
+    // Convert slider values (0-4) to numerical scale (0-10)
+    const convertSliderToScore = (sliderValue: number): number => {
+      const mapping = [0, 2.5, 5, 7.5, 10];
+      return mapping[sliderValue] || 0;
+    };
+
+    // Calculate weighted averages for each flavor
+    const totalWeight = validNotes.reduce((sum, note) => sum + (note.rating || 0), 0);
+    
+    if (totalWeight === 0) {
+      setFlavorProfile(null);
+      return;
+    }
+
+    const flavors = ['fruit', 'floral', 'oak', 'smoke', 'spice'];
+    const profile: FlavorProfile = {} as FlavorProfile;
+
+    flavors.forEach(flavor => {
+      const weightedSum = validNotes.reduce((sum, note) => {
+        const sliderValue = note.intensity_ratings[flavor] || 0;
+        const score = convertSliderToScore(sliderValue);
+        const weight = note.rating || 0;
+        return sum + (score * weight);
+      }, 0);
+
+      profile[flavor as keyof FlavorProfile] = Math.round((weightedSum / totalWeight) * 10) / 10;
+    });
+
+    setFlavorProfile(profile);
+  };
+
+  const getChartData = () => {
+    if (!flavorProfile) return [];
+
+    return [
+      { flavor: 'Fruit', value: flavorProfile.fruit, fullMark: 10 },
+      { flavor: 'Floral', value: flavorProfile.floral, fullMark: 10 },
+      { flavor: 'Oak', value: flavorProfile.oak, fullMark: 10 },
+      { flavor: 'Smoke', value: flavorProfile.smoke, fullMark: 10 },
+      { flavor: 'Spice', value: flavorProfile.spice, fullMark: 10 },
+    ];
+  };
+
+  if (loading || isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your whisky profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)}
+            className="p-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-4xl font-bold">Your Whisky Profile</h1>
+            <p className="text-xl text-muted-foreground mt-2">
+              Discover your unique flavor preferences
+            </p>
+          </div>
+        </div>
+
+        {!flavorProfile ? (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader className="text-center">
+              <Radar className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <CardTitle>No Profile Data Yet</CardTitle>
+              <CardDescription>
+                Start tasting whiskies and rating them to build your unique flavor profile. 
+                Your profile is created based on your star ratings and intensity slider preferences.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button onClick={() => navigate('/tasting')}>
+                Start Tasting Whiskies
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="max-w-4xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Radar className="h-5 w-5" />
+                  Your Flavor Profile
+                </CardTitle>
+                <CardDescription>
+                  Based on {tastingNotes.filter(n => n.rating && n.intensity_ratings).length} rated whiskies
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={getChartData()}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="flavor" />
+                      <PolarRadiusAxis 
+                        angle={90} 
+                        domain={[0, 10]} 
+                        tick={false}
+                      />
+                      <RechartsRadar
+                        name="Intensity"
+                        dataKey="value"
+                        stroke="hsl(var(--orange-400))"
+                        fill="hsl(var(--orange-400))"
+                        fillOpacity={0.3}
+                        strokeWidth={2}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-4">
+                  {Object.entries(flavorProfile).map(([flavor, value]) => (
+                    <div key={flavor} className="text-center">
+                      <div className="text-2xl font-bold text-orange-400">
+                        {value.toFixed(1)}
+                      </div>
+                      <div className="text-sm text-muted-foreground capitalize">
+                        {flavor}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 p-4 bg-muted rounded-lg">
+                  <h3 className="font-semibold mb-2">How Your Profile Works</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your flavor profile is calculated using a weighted average of your intensity slider 
+                    ratings, where whiskies you rated higher have more influence on your overall profile. 
+                    This creates a mathematical representation of your palate preferences.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default WhiskyProfile;
