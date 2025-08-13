@@ -77,11 +77,11 @@ const WhiskyDossier = () => {
   const [rating, setRating] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [intensityRatings, setIntensityRatings] = useState<Record<string, number>>({
-    fruit: 0,
-    floral: 0,
-    oak: 0,
-    smoke: 0,
-    spice: 0,
+    fruit: 2,
+    floral: 2,
+    oak: 2,
+    smoke: 2,
+    spice: 2,
   });
 
   // Load whisky details from database by ID

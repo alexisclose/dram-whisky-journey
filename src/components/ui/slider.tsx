@@ -10,15 +10,30 @@ const Slider = React.forwardRef<
   <SliderPrimitive.Root
     ref={ref}
     className={cn(
-      "relative flex w-full touch-none select-none items-center",
+      "relative flex w-full touch-none select-none items-center py-4",
       className
     )}
     {...props}
   >
-    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
-      <SliderPrimitive.Range className="absolute h-full bg-primary" />
+    <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-muted">
+      <SliderPrimitive.Range className="absolute h-full bg-orange-400" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+    
+    {/* Interval markers */}
+    <div className="absolute inset-0 flex items-center justify-between pointer-events-none">
+      {[0, 1, 2, 3, 4].map((step) => (
+        <div 
+          key={step}
+          className="w-2 h-2 rounded-full bg-orange-400 border border-background"
+          style={{ 
+            left: `${(step / 4) * 100}%`,
+            transform: 'translateX(-50%)'
+          }}
+        />
+      ))}
+    </div>
+    
+    <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-orange-400 bg-orange-400 ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 relative z-10" />
   </SliderPrimitive.Root>
 ))
 Slider.displayName = SliderPrimitive.Root.displayName
