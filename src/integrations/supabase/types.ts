@@ -153,51 +153,63 @@ export type Database = {
       }
       whiskies: {
         Row: {
-          abv: number | null
           created_at: string
-          description: string | null
           distillery: string
-          expert_finish: string | null
-          expert_nose: string | null
-          expert_palate: string | null
+          expert_score_floral: number | null
+          expert_score_fruit: number | null
+          expert_score_oak: number | null
+          expert_score_smoke: number | null
+          expert_score_spice: number | null
           id: string
           image_url: string | null
-          lat: number | null
-          lng: number | null
+          location: string | null
           name: string
+          overview: string | null
+          pairs_well_with_a: string | null
+          pairs_well_with_b: string | null
+          pairs_well_with_c: string | null
           region: string
+          region_location: string | null
           set_code: string
         }
         Insert: {
-          abv?: number | null
           created_at?: string
-          description?: string | null
           distillery: string
-          expert_finish?: string | null
-          expert_nose?: string | null
-          expert_palate?: string | null
+          expert_score_floral?: number | null
+          expert_score_fruit?: number | null
+          expert_score_oak?: number | null
+          expert_score_smoke?: number | null
+          expert_score_spice?: number | null
           id?: string
           image_url?: string | null
-          lat?: number | null
-          lng?: number | null
+          location?: string | null
           name: string
+          overview?: string | null
+          pairs_well_with_a?: string | null
+          pairs_well_with_b?: string | null
+          pairs_well_with_c?: string | null
           region: string
+          region_location?: string | null
           set_code?: string
         }
         Update: {
-          abv?: number | null
           created_at?: string
-          description?: string | null
           distillery?: string
-          expert_finish?: string | null
-          expert_nose?: string | null
-          expert_palate?: string | null
+          expert_score_floral?: number | null
+          expert_score_fruit?: number | null
+          expert_score_oak?: number | null
+          expert_score_smoke?: number | null
+          expert_score_spice?: number | null
           id?: string
           image_url?: string | null
-          lat?: number | null
-          lng?: number | null
+          location?: string | null
           name?: string
+          overview?: string | null
+          pairs_well_with_a?: string | null
+          pairs_well_with_b?: string | null
+          pairs_well_with_c?: string | null
           region?: string
+          region_location?: string | null
           set_code?: string
         }
         Relationships: []

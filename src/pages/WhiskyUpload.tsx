@@ -10,17 +10,21 @@ import { AdminGuard } from "@/components/auth/AdminGuard";
 import { Progress } from "@/components/ui/progress";
 
 interface WhiskyCSVRow {
-  distillery: string;
-  name: string;
-  region: string;
-  abv: number;
-  lat: number;
-  lng: number;
-  expert_nose?: string;
-  expert_palate?: string;
-  expert_finish?: string;
-  description?: string;
-  image_url?: string;
+  WhiskyName: string;
+  Distillery: string;
+  Region: string;
+  Location: string;
+  "Region, Location": string;
+  ImageURL?: string;
+  "Overview incl expert tasting notes"?: string;
+  ExpertScore_Fruit?: number;
+  ExpertScore_Floral?: number;
+  ExpertScore_Spice?: number;
+  ExpertScore_Smoke?: number;
+  ExpertScore_Oak?: number;
+  "Pairs well with A"?: string;
+  "Pairs well with B"?: string;
+  "Pairs well with C"?: string;
   set_code?: string;
 }
 
@@ -35,32 +39,40 @@ const WhiskyUploadContent = () => {
 
   const downloadTemplate = () => {
     const headers = [
-      "distillery",
-      "name", 
-      "region",
-      "abv",
-      "lat",
-      "lng",
-      "expert_nose",
-      "expert_palate", 
-      "expert_finish",
-      "description",
-      "image_url",
+      "WhiskyName",
+      "Distillery", 
+      "Region",
+      "Location",
+      "Region, Location",
+      "ImageURL",
+      "Overview incl expert tasting notes",
+      "ExpertScore_Fruit", 
+      "ExpertScore_Floral",
+      "ExpertScore_Spice",
+      "ExpertScore_Smoke",
+      "ExpertScore_Oak",
+      "Pairs well with A",
+      "Pairs well with B",
+      "Pairs well with C",
       "set_code"
     ];
     
     const exampleRow = [
-      "Glenfiddich",
       "12 Year Old",
+      "Glenfiddich",
       "Speyside", 
-      "40",
-      "57.455",
-      "-3.128",
-      "Fresh pear and subtle oak",
-      "Creamy vanilla with hints of honey",
-      "Long and smooth with gentle spice",
-      "The world's most awarded single malt Scotch whisky",
+      "Dufftown, Scotland",
+      "Speyside, Dufftown",
       "https://example.com/glenfiddich-12.jpg",
+      "The world's most awarded single malt with fresh pear, subtle oak, creamy vanilla and honey notes",
+      "7",
+      "5",
+      "4",
+      "2",
+      "6",
+      "Dark chocolate",
+      "Grilled salmon",
+      "Highland cheese",
       "classic"
     ];
 
@@ -81,7 +93,7 @@ const WhiskyUploadContent = () => {
     }
 
     const headers = lines[0].split(",").map(h => h.trim().replace(/"/g, ""));
-    const requiredHeaders = ["distillery", "name", "region", "abv", "lat", "lng"];
+    const requiredHeaders = ["WhiskyName", "Distillery", "Region", "Location"];
     
     for (const required of requiredHeaders) {
       if (!headers.includes(required)) {
@@ -89,7 +101,7 @@ const WhiskyUploadContent = () => {
       }
     }
 
-    const whiskies: WhiskyCSVRow[] = [];
+    const whiskies: any[] = [];
     
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(",").map(v => v.trim().replace(/"/g, ""));
@@ -97,24 +109,36 @@ const WhiskyUploadContent = () => {
       
       headers.forEach((header, index) => {
         const value = values[index];
-        if (header === "abv" || header === "lat" || header === "lng") {
-          whisky[header] = value ? parseFloat(value) : null;
+        if (header.startsWith("ExpertScore_")) {
+          whisky[header.toLowerCase().replace("expertscore_", "expert_score_")] = value ? parseInt(value) : null;
+        } else if (header === "WhiskyName") {
+          whisky.name = value || null;
+        } else if (header === "Distillery") {
+          whisky.distillery = value || null;
+        } else if (header === "Region") {
+          whisky.region = value || null;
+        } else if (header === "Location") {
+          whisky.location = value || null;
+        } else if (header === "Region, Location") {
+          whisky.region_location = value || null;
+        } else if (header === "ImageURL") {
+          whisky.image_url = value || null;
+        } else if (header === "Overview incl expert tasting notes") {
+          whisky.overview = value || null;
+        } else if (header === "Pairs well with A") {
+          whisky.pairs_well_with_a = value || null;
+        } else if (header === "Pairs well with B") {
+          whisky.pairs_well_with_b = value || null;
+        } else if (header === "Pairs well with C") {
+          whisky.pairs_well_with_c = value || null;
         } else {
-          whisky[header] = value || null;
+          whisky[header.toLowerCase()] = value || null;
         }
       });
 
       // Validate required fields
       if (!whisky.distillery || !whisky.name || !whisky.region) {
-        throw new Error(`Row ${i + 1}: Missing required fields (distillery, name, or region)`);
-      }
-
-      if (whisky.abv === null || isNaN(whisky.abv)) {
-        throw new Error(`Row ${i + 1}: Invalid ABV value`);
-      }
-
-      if (whisky.lat === null || isNaN(whisky.lat) || whisky.lng === null || isNaN(whisky.lng)) {
-        throw new Error(`Row ${i + 1}: Invalid latitude or longitude`);
+        throw new Error(`Row ${i + 1}: Missing required fields (WhiskyName, Distillery, or Region)`);
       }
 
       // Set default set_code if not provided
@@ -296,23 +320,27 @@ const WhiskyUploadContent = () => {
               <div>
                 <h4 className="font-semibold mb-2">Required Columns:</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• <strong>distillery</strong> - Name of the distillery</li>
-                  <li>• <strong>name</strong> - Name of the whisky expression</li>
-                  <li>• <strong>region</strong> - Geographic region (e.g., Speyside, Islay)</li>
-                  <li>• <strong>abv</strong> - Alcohol by volume percentage (number)</li>
-                  <li>• <strong>lat</strong> - Latitude coordinate (decimal)</li>
-                  <li>• <strong>lng</strong> - Longitude coordinate (decimal)</li>
+                  <li>• <strong>WhiskyName</strong> - Name of the whisky expression</li>
+                  <li>• <strong>Distillery</strong> - Name of the distillery</li>
+                  <li>• <strong>Region</strong> - Geographic region (e.g., Speyside, Islay)</li>
+                  <li>• <strong>Location</strong> - Specific location of the distillery</li>
                 </ul>
               </div>
               
               <div>
                 <h4 className="font-semibold mb-2">Optional Columns:</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• <strong>expert_nose</strong> - Expert tasting notes for aroma</li>
-                  <li>• <strong>expert_palate</strong> - Expert tasting notes for taste</li>
-                  <li>• <strong>expert_finish</strong> - Expert tasting notes for finish</li>
-                  <li>• <strong>description</strong> - General description or distillery story</li>
-                  <li>• <strong>image_url</strong> - URL to bottle image</li>
+                  <li>• <strong>Region, Location</strong> - Combined region and location</li>
+                  <li>• <strong>ImageURL</strong> - URL to bottle image</li>
+                  <li>• <strong>Overview incl expert tasting notes</strong> - Description and expert notes</li>
+                  <li>• <strong>ExpertScore_Fruit</strong> - Expert fruit score (1-10)</li>
+                  <li>• <strong>ExpertScore_Floral</strong> - Expert floral score (1-10)</li>
+                  <li>• <strong>ExpertScore_Spice</strong> - Expert spice score (1-10)</li>
+                  <li>• <strong>ExpertScore_Smoke</strong> - Expert smoke score (1-10)</li>
+                  <li>• <strong>ExpertScore_Oak</strong> - Expert oak score (1-10)</li>
+                  <li>• <strong>Pairs well with A</strong> - First pairing suggestion</li>
+                  <li>• <strong>Pairs well with B</strong> - Second pairing suggestion</li>
+                  <li>• <strong>Pairs well with C</strong> - Third pairing suggestion</li>
                   <li>• <strong>set_code</strong> - Set classification (defaults to "classic")</li>
                 </ul>
               </div>
