@@ -74,9 +74,8 @@ const WhiskyRecommendations = ({ flavorProfile, userId }: WhiskyRecommendationsP
         return;
       }
 
-      // Filter out recommendations with very low similarity (< 10%)
-      const filteredRecommendations = data?.filter(rec => rec.similarity_percentage >= 10) || [];
-      setRecommendations(filteredRecommendations);
+      // Always show at least 3 recommendations (no similarity filter)
+      setRecommendations(data?.slice(0, 3) || []);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
       toast({
