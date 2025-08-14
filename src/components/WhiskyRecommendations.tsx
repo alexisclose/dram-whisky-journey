@@ -172,7 +172,7 @@ const WhiskyRecommendations = ({ flavorProfile, userId }: WhiskyRecommendationsP
             <div
               key={whisky.whisky_id}
               className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-              onClick={() => navigate(`/whisky/${whisky.whisky_id}`)}
+              onClick={() => navigate(`/dossier/${whisky.whisky_id}`)}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
@@ -214,7 +214,15 @@ const WhiskyRecommendations = ({ flavorProfile, userId }: WhiskyRecommendationsP
               </div>
 
               <div className="flex items-center justify-between">
-                <Button size="sm" variant="ghost" className="text-xs">
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/dossier/${whisky.whisky_id}`);
+                  }}
+                >
                   View Details <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               </div>
