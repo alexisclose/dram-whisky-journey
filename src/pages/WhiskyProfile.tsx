@@ -28,6 +28,7 @@ interface FlavorProfile {
 interface WordCloudData {
   text: string;
   value: number;
+  color?: string;
 }
 
 const WhiskyProfile = () => {
@@ -154,17 +155,118 @@ const WhiskyProfile = () => {
       });
     });
 
-    // Convert to word cloud format
+    // Convert to word cloud format with proper formatting
     const wordCloudData: WordCloudData[] = Object.entries(flavorScores)
-      .map(([flavor, scores]) => ({
-        text: flavor,
-        value: Math.round((scores.weightedSum / scores.totalWeight) * 10) / 10
-      }))
+      .map(([flavor, scores]) => {
+        const formattedName = formatFlavorName(flavor);
+        return {
+          text: formattedName,
+          value: Math.round((scores.weightedSum / scores.totalWeight) * 10) / 10,
+          color: getFlavorColor(formattedName)
+        };
+      })
       .filter(item => item.value > 0)
       .sort((a, b) => b.value - a.value)
       .slice(0, 50); // Limit to top 50 flavors
 
     setWordCloudData(wordCloudData);
+  };
+
+  const formatFlavorName = (flavor: string): string => {
+    return flavor
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const getFlavorColor = (flavorName: string): string => {
+    const colorMap: { [key: string]: string } = {
+      // Fruits - Various fruit colors
+      'green apple': '#22c55e',
+      'red apple': '#ef4444',
+      'citrus': '#f59e0b',
+      'lemon': '#eab308',
+      'orange': '#ea580c',
+      'banana': '#eab308',
+      'pear': '#84cc16',
+      'apricot': '#f97316',
+      'peach': '#fb923c',
+      'cherry': '#dc2626',
+      'grape': '#7c3aed',
+      'dried fruit': '#92400e',
+      'raisin': '#451a03',
+      'fig': '#7c2d12',
+      
+      // Floral - Light, delicate colors
+      'rose': '#f43f5e',
+      'lavender': '#a855f7',
+      'violet': '#8b5cf6',
+      'jasmine': '#fbbf24',
+      'honeysuckle': '#fde047',
+      
+      // Spices - Warm, earthy colors
+      'cinnamon': '#a16207',
+      'nutmeg': '#92400e',
+      'clove': '#451a03',
+      'black pepper': '#374151',
+      'white pepper': '#6b7280',
+      'ginger': '#d97706',
+      'cardamom': '#65a30d',
+      'allspice': '#7c2d12',
+      
+      // Oak/Wood - Brown tones
+      'vanilla': '#fbbf24',
+      'caramel': '#a16207',
+      'toffee': '#92400e',
+      'butterscotch': '#d97706',
+      'honey': '#f59e0b',
+      'maple': '#a16207',
+      'oak': '#78716c',
+      'cedar': '#a3a3a3',
+      'sandalwood': '#d6d3d1',
+      
+      // Smoke/Peat - Dark colors
+      'smoke': '#1f2937',
+      'peat': '#374151',
+      'ash': '#6b7280',
+      'coal': '#111827',
+      'tar': '#000000',
+      'bonfire': '#451a03',
+      
+      // Nuts - Brown/tan colors
+      'almond': '#d6d3d1',
+      'walnut': '#78716c',
+      'hazelnut': '#a3a3a3',
+      'pecan': '#92400e',
+      'coconut': '#f3f4f6',
+      
+      // Chocolate/Coffee - Dark browns
+      'chocolate': '#451a03',
+      'dark chocolate': '#1c0701',
+      'coffee': '#44403c',
+      'espresso': '#292524',
+      'cocoa': '#7c2d12',
+      
+      // Herbs - Green tones
+      'mint': '#059669',
+      'eucalyptus': '#10b981',
+      'thyme': '#16a34a',
+      'rosemary': '#15803d',
+      'sage': '#166534',
+      
+      // Other
+      'leather': '#78716c',
+      'tobacco': '#92400e',
+      'rubber': '#374151',
+      'medicinal': '#dc2626',
+      'iodine': '#7c3aed',
+      'salt': '#e5e7eb',
+      'butter': '#fbbf24',
+      'cream': '#fef3c7',
+    };
+
+    const lowerName = flavorName.toLowerCase();
+    return colorMap[lowerName] || '#6366f1'; // Default color if not found
   };
 
   const getChartData = () => {
@@ -301,18 +403,14 @@ const WhiskyProfile = () => {
                       words={wordCloudData}
                       options={{
                         fontFamily: 'Inter, system-ui, sans-serif',
-                        fontSizes: [12, 60],
+                        fontSizes: [14, 60],
+                        rotations: 0, // Keep all text horizontal
+                        rotationAngles: [0, 0], // Ensure horizontal orientation
                         scale: 'sqrt',
                         spiral: 'archimedean',
                         transitionDuration: 500,
-                        colors: [
-                          'hsl(var(--orange-400))',
-                          'hsl(var(--orange-500))',
-                          'hsl(var(--orange-600))',
-                          'hsl(var(--amber-400))',
-                          'hsl(var(--amber-500))',
-                          'hsl(var(--yellow-500))',
-                        ],
+                        padding: 4,
+                        deterministic: true,
                       }}
                     />
                   </div>
