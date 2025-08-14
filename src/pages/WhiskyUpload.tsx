@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
-import { Upload, FileText, Download } from "lucide-react";
+import { Upload, FileText, Download, X, CheckCircle } from "lucide-react";
 import { AdminGuard } from "@/components/auth/AdminGuard";
+import { Progress } from "@/components/ui/progress";
 
 interface WhiskyCSVRow {
   distillery: string;
@@ -25,8 +25,12 @@ interface WhiskyCSVRow {
 }
 
 const WhiskyUploadContent = () => {
-  const [csvContent, setCsvContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const downloadTemplate = () => {
@@ -124,26 +128,113 @@ const WhiskyUploadContent = () => {
     return whiskies;
   };
 
+  const validateFile = (file: File): boolean => {
+    if (!file.name.endsWith('.csv')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a CSV file (.csv)",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast({
+        title: "File too large",
+        description: "File size must be less than 5MB",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsText(file);
+    });
+  };
+
+  const handleFileSelect = async (file: File) => {
+    if (!validateFile(file)) return;
+
+    setSelectedFile(file);
+    
+    try {
+      const content = await readFileContent(file);
+      const lines = content.trim().split('\n');
+      setFilePreview(lines.slice(0, 6)); // Show first 6 lines as preview
+    } catch (error) {
+      toast({
+        title: "Error reading file",
+        description: "Failed to read the selected file",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    setFilePreview([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleUpload = async () => {
-    if (!csvContent.trim()) {
+    if (!selectedFile) {
       toast({
         title: "Error",
-        description: "Please paste CSV content first",
+        description: "Please select a CSV file first",
         variant: "destructive",
       });
       return;
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
+      setUploadProgress(20);
+      const csvContent = await readFileContent(selectedFile);
+      
+      setUploadProgress(40);
       const whiskies = parseCSV(csvContent);
       
+      setUploadProgress(60);
       toast({
         title: "Parsing successful",
         description: `Parsed ${whiskies.length} whiskies. Uploading to database...`,
       });
 
+      setUploadProgress(80);
       const { data, error } = await supabase
         .from("whiskies")
         .insert(whiskies)
@@ -153,12 +244,13 @@ const WhiskyUploadContent = () => {
         throw error;
       }
 
+      setUploadProgress(100);
       toast({
         title: "Upload successful",
         description: `Successfully uploaded ${data.length} whiskies to the database`,
       });
 
-      setCsvContent("");
+      clearFile();
     } catch (error: any) {
       console.error("Upload error:", error);
       toast({
@@ -168,6 +260,7 @@ const WhiskyUploadContent = () => {
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -236,33 +329,125 @@ const WhiskyUploadContent = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                CSV Upload
+                CSV File Upload
               </CardTitle>
               <CardDescription>
-                Paste your CSV content below and click upload
+                Select or drag & drop a CSV file to upload whisky data
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Paste your CSV content here..."
-                value={csvContent}
-                onChange={(e) => setCsvContent(e.target.value)}
-                rows={15}
-                className="font-mono text-sm"
-              />
+              {/* File Drop Zone */}
+              <div
+                className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragOver 
+                    ? "border-primary bg-primary/5" 
+                    : selectedFile 
+                    ? "border-green-500 bg-green-50 dark:bg-green-950/20" 
+                    : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileInputChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                
+                {selectedFile ? (
+                  <div className="space-y-2">
+                    <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
+                    <div className="font-medium text-green-700 dark:text-green-400">
+                      {selectedFile.name}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Upload className="h-8 w-8 text-muted-foreground mx-auto" />
+                    <div className="font-medium">
+                      {isDragOver ? "Drop your CSV file here" : "Choose a CSV file or drag & drop"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Maximum file size: 5MB
+                    </div>
+                  </div>
+                )}
+                
+                {selectedFile && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearFile();
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              {/* File Preview */}
+              {filePreview.length > 0 && (
+                <Card className="border-muted">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">File Preview</CardTitle>
+                    <CardDescription className="text-xs">
+                      First few lines of your CSV file
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-muted/50 rounded p-3 font-mono text-xs overflow-x-auto">
+                      {filePreview.map((line, index) => (
+                        <div 
+                          key={index} 
+                          className={index === 0 ? "font-semibold text-primary" : ""}
+                        >
+                          {line}
+                        </div>
+                      ))}
+                      {filePreview.length === 6 && (
+                        <div className="text-muted-foreground italic">
+                          ... and more rows
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Progress Bar */}
+              {isUploading && uploadProgress > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Uploading...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="w-full" />
+                </div>
+              )}
               
+              {/* Action Buttons */}
               <div className="flex gap-4">
                 <Button 
                   onClick={handleUpload} 
-                  disabled={isUploading || !csvContent.trim()}
+                  disabled={isUploading || !selectedFile}
                   className="flex-1"
                 >
                   {isUploading ? "Uploading..." : "Upload Whiskies"}
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => setCsvContent("")}
-                  disabled={isUploading}
+                  onClick={clearFile}
+                  disabled={isUploading || !selectedFile}
                 >
                   Clear
                 </Button>
