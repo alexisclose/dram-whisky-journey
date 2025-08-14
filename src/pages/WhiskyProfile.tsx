@@ -8,6 +8,7 @@ import { ArrowLeft, Radar, Cloud } from "lucide-react";
 import { Radar as RechartsRadar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
 import ReactWordcloud from 'react-wordcloud';
+import WhiskyRecommendations from "@/components/WhiskyRecommendations";
 
 interface TastingNote {
   id: string;
@@ -425,6 +426,11 @@ const WhiskyProfile = () => {
                 </CardContent>
               </Card>
             )}
+
+            <WhiskyRecommendations 
+              flavorProfile={flavorProfile} 
+              userId={user?.id || ''} 
+            />
           </div>
         )}
       </div>

@@ -267,6 +267,33 @@ export type Database = {
         Args: { _flavor: string; _whisky_id: string }
         Returns: number
       }
+      get_whisky_recommendations: {
+        Args: {
+          _floral_score?: number
+          _fruit_score?: number
+          _limit?: number
+          _oak_score?: number
+          _smoke_score?: number
+          _spice_score?: number
+          _user_id: string
+        }
+        Returns: {
+          distillery: string
+          expert_score_floral: number
+          expert_score_fruit: number
+          expert_score_oak: number
+          expert_score_smoke: number
+          expert_score_spice: number
+          image_url: string
+          location: string
+          name: string
+          overview: string
+          region: string
+          similarity_percentage: number
+          similarity_score: number
+          whisky_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
