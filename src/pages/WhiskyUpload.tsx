@@ -2,10 +2,12 @@ import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
-import { Upload, FileText, Download, X, CheckCircle } from "lucide-react";
+import { Upload, FileText, Download, X, CheckCircle, RefreshCw } from "lucide-react";
 import { AdminGuard } from "@/components/auth/AdminGuard";
 import { Progress } from "@/components/ui/progress";
 
@@ -34,6 +36,8 @@ const WhiskyUploadContent = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [replaceMode, setReplaceMode] = useState(false);
+  const [uploadStats, setUploadStats] = useState<{ inserted: number; updated: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -297,6 +301,7 @@ const WhiskyUploadContent = () => {
 
     setIsUploading(true);
     setUploadProgress(0);
+    setUploadStats(null);
 
     try {
       setUploadProgress(20);
@@ -308,30 +313,58 @@ const WhiskyUploadContent = () => {
       setUploadProgress(60);
       toast({
         title: "Parsing successful",
-        description: `Parsed ${whiskies.length} whiskies. Uploading to database...`,
+        description: `Parsed ${whiskies.length} whiskies. ${replaceMode ? 'Upserting' : 'Uploading'} to database...`,
       });
 
       setUploadProgress(80);
-      const { data, error } = await supabase
-        .from("whiskies")
-        .insert(whiskies as any[])
-        .select();
+      
+      if (replaceMode) {
+        // Use upsert to handle duplicates by updating existing records
+        const { data, error } = await supabase
+          .from("whiskies")
+          .upsert(whiskies as any[], {
+            onConflict: 'distillery,name',
+            ignoreDuplicates: false
+          })
+          .select();
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        // Get statistics (simplified - actual counts would need additional queries)
+        setUploadStats({ inserted: data.length, updated: 0 });
+        
+        setUploadProgress(100);
+        toast({
+          title: "Update successful",
+          description: `Successfully processed ${data.length} whiskies (updated existing records with matching distillery/name)`,
+        });
+      } else {
+        // Regular insert operation
+        const { data, error } = await supabase
+          .from("whiskies")
+          .insert(whiskies as any[])
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        setUploadStats({ inserted: data.length, updated: 0 });
+        
+        setUploadProgress(100);
+        toast({
+          title: "Upload successful",
+          description: `Successfully uploaded ${data.length} new whiskies to the database`,
+        });
       }
-
-      setUploadProgress(100);
-      toast({
-        title: "Upload successful",
-        description: `Successfully uploaded ${data.length} whiskies to the database`,
-      });
 
       clearFile();
     } catch (error: any) {
       console.error("Upload error:", error);
       toast({
-        title: "Upload failed",
+        title: replaceMode ? "Update failed" : "Upload failed",
         description: error.message || "An error occurred during upload",
         variant: "destructive",
       });
@@ -407,6 +440,28 @@ const WhiskyUploadContent = () => {
                   <Download className="h-4 w-4 mr-2" />
                   Download TSV Template
                 </Button>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="replace-mode"
+                    checked={replaceMode}
+                    onCheckedChange={setReplaceMode}
+                  />
+                  <Label htmlFor="replace-mode" className="text-sm">
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4" />
+                      Replace Mode: Update existing whiskies with matching distillery/name
+                    </span>
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {replaceMode 
+                    ? "Will update existing records and insert new ones. Use this to replace your current data."
+                    : "Will only insert new records. Duplicate distillery/name combinations will cause errors."
+                  }
+                </p>
               </div>
             </CardContent>
           </Card>
