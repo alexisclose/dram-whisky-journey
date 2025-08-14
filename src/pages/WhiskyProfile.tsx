@@ -4,15 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Radar } from "lucide-react";
+import { ArrowLeft, Radar, Cloud } from "lucide-react";
 import { Radar as RechartsRadar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
+import ReactWordcloud from 'react-wordcloud';
 
 interface TastingNote {
   id: string;
   rating: number | null;
   intensity_ratings: any;
   whisky_id: string;
+  flavors: string[];
 }
 
 interface FlavorProfile {
@@ -23,12 +25,18 @@ interface FlavorProfile {
   spice: number;
 }
 
+interface WordCloudData {
+  text: string;
+  value: number;
+}
+
 const WhiskyProfile = () => {
   const { user, loading } = useAuthSession();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [tastingNotes, setTastingNotes] = useState<TastingNote[]>([]);
   const [flavorProfile, setFlavorProfile] = useState<FlavorProfile | null>(null);
+  const [wordCloudData, setWordCloudData] = useState<WordCloudData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +54,7 @@ const WhiskyProfile = () => {
     try {
       const { data, error } = await supabase
         .from('tasting_notes')
-        .select('id, rating, intensity_ratings, whisky_id')
+        .select('id, rating, intensity_ratings, whisky_id, flavors')
         .eq('user_id', user?.id);
 
       if (error) {
@@ -61,6 +69,7 @@ const WhiskyProfile = () => {
 
       setTastingNotes(data || []);
       calculateFlavorProfile(data || []);
+      calculateWordCloudData(data || []);
     } catch (error) {
       console.error('Error fetching tasting notes:', error);
       toast({
@@ -115,6 +124,47 @@ const WhiskyProfile = () => {
     });
 
     setFlavorProfile(profile);
+  };
+
+  const calculateWordCloudData = (notes: TastingNote[]) => {
+    // Filter notes that have both rating and flavors
+    const validNotes = notes.filter(note => 
+      note.rating !== null && 
+      note.flavors && 
+      Array.isArray(note.flavors) && 
+      note.flavors.length > 0
+    );
+
+    if (validNotes.length === 0) {
+      setWordCloudData([]);
+      return;
+    }
+
+    // Calculate weighted scores for each flavor
+    const flavorScores: { [flavor: string]: { totalWeight: number; weightedSum: number } } = {};
+
+    validNotes.forEach(note => {
+      const rating = note.rating || 0;
+      note.flavors.forEach(flavor => {
+        if (!flavorScores[flavor]) {
+          flavorScores[flavor] = { totalWeight: 0, weightedSum: 0 };
+        }
+        flavorScores[flavor].totalWeight += rating;
+        flavorScores[flavor].weightedSum += rating * rating; // Square for more emphasis on high ratings
+      });
+    });
+
+    // Convert to word cloud format
+    const wordCloudData: WordCloudData[] = Object.entries(flavorScores)
+      .map(([flavor, scores]) => ({
+        text: flavor,
+        value: Math.round((scores.weightedSum / scores.totalWeight) * 10) / 10
+      }))
+      .filter(item => item.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 50); // Limit to top 50 flavors
+
+    setWordCloudData(wordCloudData);
   };
 
   const getChartData = () => {
@@ -176,7 +226,7 @@ const WhiskyProfile = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -233,6 +283,50 @@ const WhiskyProfile = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {wordCloudData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Cloud className="h-5 w-5" />
+                    Your Favorite Tasting Notes
+                  </CardTitle>
+                  <CardDescription>
+                    Word cloud of your most appreciated flavors, sized by weighted ratings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-96">
+                    <ReactWordcloud
+                      words={wordCloudData}
+                      options={{
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                        fontSizes: [12, 60],
+                        scale: 'sqrt',
+                        spiral: 'archimedean',
+                        transitionDuration: 500,
+                        colors: [
+                          'hsl(var(--orange-400))',
+                          'hsl(var(--orange-500))',
+                          'hsl(var(--orange-600))',
+                          'hsl(var(--amber-400))',
+                          'hsl(var(--amber-500))',
+                          'hsl(var(--yellow-500))',
+                        ],
+                      }}
+                    />
+                  </div>
+                  <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <h3 className="font-semibold mb-2">How Your Word Cloud Works</h3>
+                    <p className="text-sm text-muted-foreground">
+                      The size of each word represents how much you enjoy that flavor, calculated using 
+                      weighted averages based on your star ratings. Words from higher-rated whiskies 
+                      appear larger, showing your most appreciated tasting notes.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </div>
