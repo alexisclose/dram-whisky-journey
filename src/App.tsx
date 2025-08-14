@@ -12,6 +12,8 @@ import Login from "./pages/Auth/Login";
 import Dashboard from "./pages/Dashboard";
 import University from "./pages/University";
 import Tasting from "./pages/Tasting";
+import Explore from "./pages/Explore";
+import WhiskyUpload from "./pages/WhiskyUpload";
 import Community from "./pages/Community";
 import Quiz from "./pages/Quiz";
 import Certificate from "./pages/Certificate";
@@ -41,7 +43,10 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/university" element={<University />} />
               <Route path="/tasting" element={<Tasting />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/whisky-upload" element={<WhiskyUpload />} />
               <Route path="/tasting/:id" element={<WhiskyDossier />} />
+              <Route path="/whisky-dossier/:id" element={<WhiskyDossier />} />
               <Route path="/community" element={<Community />} />
               <Route path="/reviews" element={<MyReviews />} />
               <Route path="/profile" element={<WhiskyProfile />} />

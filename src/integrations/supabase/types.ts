@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -134,8 +134,13 @@ export type Database = {
         Row: {
           abv: number | null
           created_at: string
+          description: string | null
           distillery: string
+          expert_finish: string | null
+          expert_nose: string | null
+          expert_palate: string | null
           id: string
+          image_url: string | null
           lat: number | null
           lng: number | null
           name: string
@@ -145,8 +150,13 @@ export type Database = {
         Insert: {
           abv?: number | null
           created_at?: string
+          description?: string | null
           distillery: string
+          expert_finish?: string | null
+          expert_nose?: string | null
+          expert_palate?: string | null
           id?: string
+          image_url?: string | null
           lat?: number | null
           lng?: number | null
           name: string
@@ -156,8 +166,13 @@ export type Database = {
         Update: {
           abv?: number | null
           created_at?: string
+          description?: string | null
           distillery?: string
+          expert_finish?: string | null
+          expert_nose?: string | null
+          expert_palate?: string | null
           id?: string
+          image_url?: string | null
           lat?: number | null
           lng?: number | null
           name?: string
@@ -198,21 +213,21 @@ export type Database = {
       activate_with_code: {
         Args: { _code: string }
         Returns: {
-          set_code: string
-          name: string
           activated: boolean
+          name: string
+          set_code: string
         }[]
       }
       get_flavor_distribution: {
         Args: { _whisky_id: string }
         Returns: {
-          flavor: string
           count: number
+          flavor: string
           percentage: number
         }[]
       }
       get_flavor_percentage: {
-        Args: { _whisky_id: string; _flavor: string }
+        Args: { _flavor: string; _whisky_id: string }
         Returns: number
       }
     }
