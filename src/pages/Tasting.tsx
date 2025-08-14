@@ -15,9 +15,8 @@ type WhiskyRow = {
   distillery: string;
   name: string;
   region: string | null;
-  abv: number | null;
-  lat: number | null;
-  lng: number | null;
+  location?: string | null;
+  set_code: string;
 };
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
@@ -37,7 +36,7 @@ const Tasting = () => {
       const {
         data,
         error
-      } = await supabase.from("whiskies").select("id, distillery, name, region, abv, lat, lng, set_code").eq("set_code", activeSet);
+      } = await supabase.from("whiskies").select("id, distillery, name, region, location, set_code").eq("set_code", activeSet);
       if (error) throw error;
       return (data || []) as WhiskyRow[];
     }
@@ -135,7 +134,7 @@ const Tasting = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              ABV {w.abv ?? "?"}% · Lat {typeof w.lat === "number" ? w.lat.toFixed(2) : "—"} · Lng {typeof w.lng === "number" ? w.lng.toFixed(2) : "—"}
+              {w.location || "Location not specified"}
             </CardContent>
             <CardFooter className="flex items-center justify-between">
               <div className="flex items-center gap-1">

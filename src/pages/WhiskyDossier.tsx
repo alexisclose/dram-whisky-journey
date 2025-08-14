@@ -91,7 +91,7 @@ const WhiskyDossier = () => {
       if (!whiskyId) return null;
       const { data, error } = await supabase
         .from("whiskies")
-        .select("id, distillery, name, region, abv, lat, lng")
+        .select("id, distillery, name, region, location, image_url, overview")
         .eq("id", whiskyId)
         .maybeSingle();
       if (error) throw error;
@@ -274,7 +274,7 @@ const WhiskyDossier = () => {
             category: "Whisky",
             additionalProperty: [
               { "@type": "PropertyValue", name: "Region", value: whisky.region },
-              { "@type": "PropertyValue", name: "ABV", value: `${whisky.abv}%` },
+              { "@type": "PropertyValue", name: "Location", value: whisky.location },
             ],
           })}
         </script>
@@ -324,14 +324,10 @@ const WhiskyDossier = () => {
                 <div className="space-y-4 text-sm text-muted-foreground">
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">Region: {whisky.region}</Badge>
-                    <Badge variant="secondary">ABV: {whisky.abv}%</Badge>
-                    <Badge variant="secondary">Lat: {whisky.lat.toFixed(2)}</Badge>
-                    <Badge variant="secondary">Lng: {whisky.lng.toFixed(2)}</Badge>
+                    {whisky.location && <Badge variant="secondary">Location: {whisky.location}</Badge>}
                   </div>
                   <p>
-                    A classic expression from {whisky.distillery}. This placeholder narrative will
-                    be replaced with a short story about the distillery, cask program,
-                    and what to expect in the glass.
+                    {whisky.overview || `A classic expression from ${whisky.distillery}. This placeholder narrative will be replaced with a short story about the distillery, cask program, and what to expect in the glass.`}
                   </p>
                 </div>
               </div>

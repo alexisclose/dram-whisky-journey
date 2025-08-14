@@ -261,7 +261,7 @@ const WhiskyUploadContent = () => {
       setUploadProgress(80);
       const { data, error } = await supabase
         .from("whiskies")
-        .insert(whiskies)
+        .insert(whiskies as any[])
         .select();
 
       if (error) {

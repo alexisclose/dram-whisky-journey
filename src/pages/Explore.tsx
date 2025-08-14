@@ -15,21 +15,25 @@ type WhiskyRow = {
   distillery: string;
   name: string;
   region: string;
-  abv: number | null;
-  lat: number | null;
-  lng: number | null;
-  expert_nose: string | null;
-  expert_palate: string | null;
-  expert_finish: string | null;
-  description: string | null;
-  image_url: string | null;
+  location?: string;
+  region_location?: string;
+  image_url?: string;
+  overview?: string;
+  expert_score_fruit?: number;
+  expert_score_floral?: number;
+  expert_score_spice?: number;
+  expert_score_smoke?: number;
+  expert_score_oak?: number;
+  pairs_well_with_a?: string;
+  pairs_well_with_b?: string;
+  pairs_well_with_c?: string;
   set_code: string;
+  created_at: string;
 };
 
 const Explore = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState<string>("all");
-  const [abvRange, setAbvRange] = useState<string>("all");
 
   const { data: whiskies, isLoading } = useQuery({
     queryKey: ["explore-whiskies"],
@@ -58,13 +62,7 @@ const Explore = () => {
 
     const matchesRegion = selectedRegion === "all" || whisky.region === selectedRegion;
 
-    const matchesAbv = abvRange === "all" || (whisky.abv && (
-      (abvRange === "low" && whisky.abv < 43) ||
-      (abvRange === "medium" && whisky.abv >= 43 && whisky.abv < 50) ||
-      (abvRange === "high" && whisky.abv >= 50)
-    ));
-
-    return matchesSearch && matchesRegion && matchesAbv;
+    return matchesSearch && matchesRegion;
   }) || [];
 
   if (isLoading) {
@@ -136,22 +134,10 @@ const Explore = () => {
               </SelectContent>
             </Select>
 
-            {/* ABV Filter */}
-            <Select value={abvRange} onValueChange={setAbvRange}>
-              <SelectTrigger className="w-full lg:w-48">
-                <SelectValue placeholder="All ABV" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All ABV</SelectItem>
-                <SelectItem value="low">Under 43%</SelectItem>
-                <SelectItem value="medium">43% - 50%</SelectItem>
-                <SelectItem value="high">Over 50%</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Active Filters */}
-          {(searchTerm || selectedRegion !== "all" || abvRange !== "all") && (
+          {(searchTerm || selectedRegion !== "all") && (
             <div className="flex flex-wrap gap-2">
               {searchTerm && (
                 <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearchTerm("")}>
@@ -161,11 +147,6 @@ const Explore = () => {
               {selectedRegion !== "all" && (
                 <Badge variant="secondary" className="cursor-pointer" onClick={() => setSelectedRegion("all")}>
                   Region: {selectedRegion} ×
-                </Badge>
-              )}
-              {abvRange !== "all" && (
-                <Badge variant="secondary" className="cursor-pointer" onClick={() => setAbvRange("all")}>
-                  ABV: {abvRange === "low" ? "Under 43%" : abvRange === "medium" ? "43% - 50%" : "Over 50%"} ×
                 </Badge>
               )}
             </div>
@@ -185,7 +166,6 @@ const Explore = () => {
               onClick={() => {
                 setSearchTerm("");
                 setSelectedRegion("all");
-                setAbvRange("all");
               }}
             >
               Clear all filters
@@ -219,33 +199,33 @@ const Explore = () => {
                       <MapPin className="w-3 h-3 mr-1" />
                       {whisky.region}
                     </Badge>
-                    {whisky.abv && (
+                    {whisky.location && (
                       <Badge variant="outline" className="text-xs">
-                        {whisky.abv}% ABV
+                        {whisky.location}
                       </Badge>
                     )}
                   </div>
                 </CardHeader>
                 
                 <CardContent>
-                  {whisky.description && (
+                  {whisky.overview && (
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                      {whisky.description}
+                      {whisky.overview}
                     </p>
                   )}
                   
-                  {(whisky.expert_nose || whisky.expert_palate || whisky.expert_finish) && (
+                  {(whisky.expert_score_fruit || whisky.expert_score_floral || whisky.expert_score_spice) && (
                     <div className="space-y-2 mb-4">
-                      {whisky.expert_nose && (
+                      {whisky.expert_score_fruit && (
                         <div>
-                          <span className="text-xs font-medium text-muted-foreground">Nose: </span>
-                          <span className="text-xs line-clamp-2">{whisky.expert_nose}</span>
+                          <span className="text-xs font-medium text-muted-foreground">Fruit: </span>
+                          <span className="text-xs">{whisky.expert_score_fruit}/10</span>
                         </div>
                       )}
-                      {whisky.expert_palate && (
+                      {whisky.expert_score_floral && (
                         <div>
-                          <span className="text-xs font-medium text-muted-foreground">Palate: </span>
-                          <span className="text-xs line-clamp-2">{whisky.expert_palate}</span>
+                          <span className="text-xs font-medium text-muted-foreground">Floral: </span>
+                          <span className="text-xs">{whisky.expert_score_floral}/10</span>
                         </div>
                       )}
                     </div>
@@ -253,10 +233,8 @@ const Explore = () => {
                   
                   <div className="flex justify-between items-center">
                     <div className="text-xs text-muted-foreground">
-                      {whisky.lat && whisky.lng && (
-                        <span>
-                          {whisky.lat.toFixed(3)}, {whisky.lng.toFixed(3)}
-                        </span>
+                      {whisky.region_location && (
+                        <span>{whisky.region_location}</span>
                       )}
                     </div>
                     <Button asChild size="sm">

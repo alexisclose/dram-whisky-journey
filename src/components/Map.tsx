@@ -29,23 +29,8 @@ const Map: React.FC = () => {
     }), "top-right");
     map.scrollZoom.disable();
     map.on("load", () => {
-      // Add markers for each whisky in the set
-      WHISKIES.forEach(w => {
-        const el = document.createElement("div");
-        el.className = "rounded-full bg-primary/90 text-background border border-primary/30 shadow-md hover-scale";
-        el.style.width = "14px";
-        el.style.height = "14px";
-        const popup = new mapboxgl.Popup({
-          offset: 12
-        }).setHTML(`<div style="min-width:180px">
-            <div style="font-weight:600;margin-bottom:4px">${w.distillery} — ${w.name}</div>
-            <div style="font-size:12px;opacity:.7">${w.region} · ABV ${w.abv}%</div>
-            <div style="margin-top:8px"><a href="/tasting/${w.id}" style="color:var(--primary)">Open Dossier →</a></div>
-          </div>`);
-        new mapboxgl.Marker({
-          element: el
-        }).setLngLat([w.lng, w.lat]).setPopup(popup).addTo(map);
-      });
+      // Note: Map functionality disabled since location coordinates were removed from the database
+      // To re-enable: Add location coordinates back to the whisky database or update the schema
       setReady(true);
     });
     return () => map.remove();
