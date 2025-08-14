@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 import { Upload, FileText, Download } from "lucide-react";
-import { AdminGuard } from "@/components/AdminGuard";
+import { AdminGuard } from "@/components/auth/AdminGuard";
 
 interface WhiskyCSVRow {
   distillery: string;
