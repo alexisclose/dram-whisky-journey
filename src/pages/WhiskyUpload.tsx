@@ -37,7 +37,7 @@ const WhiskyUploadContent = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const downloadTemplate = () => {
+  const downloadCSVTemplate = () => {
     const headers = [
       "WhiskyName",
       "Distillery", 
@@ -86,13 +86,65 @@ const WhiskyUploadContent = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const parseCSV = (csvText: string): WhiskyCSVRow[] => {
-    const lines = csvText.trim().split("\n");
+  const downloadTSVTemplate = () => {
+    const headers = [
+      "WhiskyName",
+      "Distillery", 
+      "Region",
+      "Location",
+      "Region, Location",
+      "ImageURL",
+      "Overview incl expert tasting notes",
+      "ExpertScore_Fruit", 
+      "ExpertScore_Floral",
+      "ExpertScore_Spice",
+      "ExpertScore_Smoke",
+      "ExpertScore_Oak",
+      "Pairs well with A",
+      "Pairs well with B",
+      "Pairs well with C",
+      "set_code"
+    ];
+    
+    const exampleRow = [
+      "12 Year Old",
+      "Glenfiddich",
+      "Speyside", 
+      "Dufftown, Scotland",
+      "Speyside, Dufftown",
+      "https://example.com/glenfiddich-12.jpg",
+      "The world's most awarded single malt with fresh pear, subtle oak, creamy vanilla and honey notes",
+      "7",
+      "5",
+      "4",
+      "2",
+      "6",
+      "Dark chocolate",
+      "Grilled salmon",
+      "Highland cheese",
+      "classic"
+    ];
+
+    const tsvContent = [headers.join("\t"), exampleRow.join("\t")].join("\n");
+    const blob = new Blob([tsvContent], { type: "text/tab-separated-values" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "whisky_template.tsv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const parseDelimitedFile = (fileContent: string, fileName: string): WhiskyCSVRow[] => {
+    const lines = fileContent.trim().split("\n");
     if (lines.length < 2) {
-      throw new Error("CSV must have at least a header row and one data row");
+      throw new Error("File must have at least a header row and one data row");
     }
 
-    const headers = lines[0].split(",").map(h => h.trim().replace(/"/g, ""));
+    // Determine delimiter based on file extension
+    const delimiter = fileName.toLowerCase().endsWith('.tsv') ? '\t' : ',';
+    
+    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ""));
     const requiredHeaders = ["WhiskyName", "Distillery", "Region", "Location"];
     
     for (const required of requiredHeaders) {
@@ -104,7 +156,7 @@ const WhiskyUploadContent = () => {
     const whiskies: any[] = [];
     
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(",").map(v => v.trim().replace(/"/g, ""));
+      const values = lines[i].split(delimiter).map(v => v.trim().replace(/"/g, ""));
       const whisky: any = {};
       
       headers.forEach((header, index) => {
@@ -153,10 +205,11 @@ const WhiskyUploadContent = () => {
   };
 
   const validateFile = (file: File): boolean => {
-    if (!file.name.endsWith('.csv')) {
+    const fileName = file.name.toLowerCase();
+    if (!fileName.endsWith('.csv') && !fileName.endsWith('.tsv')) {
       toast({
         title: "Invalid file type",
-        description: "Please select a CSV file (.csv)",
+        description: "Please select a CSV (.csv) or TSV (.tsv) file",
         variant: "destructive",
       });
       return false;
@@ -236,7 +289,7 @@ const WhiskyUploadContent = () => {
     if (!selectedFile) {
       toast({
         title: "Error",
-        description: "Please select a CSV file first",
+        description: "Please select a CSV or TSV file first",
         variant: "destructive",
       });
       return;
@@ -250,7 +303,7 @@ const WhiskyUploadContent = () => {
       const csvContent = await readFileContent(selectedFile);
       
       setUploadProgress(40);
-      const whiskies = parseCSV(csvContent);
+      const whiskies = parseDelimitedFile(csvContent, selectedFile.name);
       
       setUploadProgress(60);
       toast({
@@ -310,10 +363,10 @@ const WhiskyUploadContent = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                CSV Format Instructions
+                CSV/TSV Format Instructions
               </CardTitle>
               <CardDescription>
-                Follow these guidelines for a successful upload
+                Follow these guidelines for a successful upload using CSV (comma-separated) or TSV (tab-separated) formats
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -345,10 +398,16 @@ const WhiskyUploadContent = () => {
                 </ul>
               </div>
 
-              <Button onClick={downloadTemplate} variant="outline" className="w-full">
-                <Download className="h-4 w-4 mr-2" />
-                Download CSV Template
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={downloadCSVTemplate} variant="outline" className="flex-1">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download CSV Template
+                </Button>
+                <Button onClick={downloadTSVTemplate} variant="outline" className="flex-1">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download TSV Template
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -357,10 +416,10 @@ const WhiskyUploadContent = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                CSV File Upload
+                CSV/TSV File Upload
               </CardTitle>
               <CardDescription>
-                Select or drag & drop a CSV file to upload whisky data
+                Select or drag & drop a CSV or TSV file to upload whisky data
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -381,7 +440,7 @@ const WhiskyUploadContent = () => {
                 <Input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv"
+                  accept=".csv,.tsv"
                   onChange={handleFileInputChange}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
@@ -400,10 +459,10 @@ const WhiskyUploadContent = () => {
                   <div className="space-y-2">
                     <Upload className="h-8 w-8 text-muted-foreground mx-auto" />
                     <div className="font-medium">
-                      {isDragOver ? "Drop your CSV file here" : "Choose a CSV file or drag & drop"}
+                      {isDragOver ? "Drop your CSV/TSV file here" : "Choose a CSV or TSV file or drag & drop"}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Maximum file size: 5MB
+                      Maximum file size: 5MB • Supports CSV and TSV formats
                     </div>
                   </div>
                 )}
@@ -429,7 +488,7 @@ const WhiskyUploadContent = () => {
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm">File Preview</CardTitle>
                     <CardDescription className="text-xs">
-                      First few lines of your CSV file
+                      First few lines of your file
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
