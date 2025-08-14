@@ -2,6 +2,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -12,6 +13,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 const SiteHeader = () => {
   const { user, loading } = useAuthSession();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -43,7 +45,9 @@ const SiteHeader = () => {
               <>
                 <NavLink className={navLinkClass} to="/reviews">My Reviews</NavLink>
                 <NavLink className={navLinkClass} to="/profile">My Profile</NavLink>
-                <NavLink className={navLinkClass} to="/whisky-upload">Upload</NavLink>
+                {isAdmin && (
+                  <NavLink className={navLinkClass} to="/whisky-upload">Upload</NavLink>
+                )}
               </>
             )}
           </nav>

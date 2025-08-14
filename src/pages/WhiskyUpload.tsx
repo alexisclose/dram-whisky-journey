@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 import { Upload, FileText, Download } from "lucide-react";
+import { AdminGuard } from "@/components/AdminGuard";
 
 interface WhiskyCSVRow {
   distillery: string;
@@ -23,7 +24,7 @@ interface WhiskyCSVRow {
   set_code?: string;
 }
 
-const WhiskyUpload = () => {
+const WhiskyUploadContent = () => {
   const [csvContent, setCsvContent] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -271,6 +272,14 @@ const WhiskyUpload = () => {
         </div>
       </div>
     </>
+  );
+};
+
+const WhiskyUpload = () => {
+  return (
+    <AdminGuard>
+      <WhiskyUploadContent />
+    </AdminGuard>
   );
 };
 
