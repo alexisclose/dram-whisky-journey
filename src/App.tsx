@@ -47,6 +47,7 @@ const App = () => (
               <Route path="/whisky-upload" element={<WhiskyUpload />} />
               <Route path="/tasting/:id" element={<WhiskyDossier />} />
               <Route path="/whisky-dossier/:id" element={<WhiskyDossier />} />
+              <Route path="/dossier/:id" element={<WhiskyDossier />} />
               <Route path="/community" element={<Community />} />
               <Route path="/reviews" element={<MyReviews />} />
               <Route path="/profile" element={<WhiskyProfile />} />
