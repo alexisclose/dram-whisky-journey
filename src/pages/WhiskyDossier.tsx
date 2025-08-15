@@ -90,13 +90,38 @@ const WhiskyDossier = () => {
     queryKey: ["whisky-by-id", whiskyId],
     queryFn: async () => {
       if (!whiskyId) return null;
-      const { data, error } = await supabase
+      
+      // First try to find in regular whiskies table
+      const { data: regularWhisky, error: regularError } = await supabase
         .from("whiskies")
         .select("id, distillery, name, region, location, image_url, overview, expert_score_fruit, expert_score_floral, expert_score_oak, expert_score_smoke, expert_score_spice")
         .eq("id", whiskyId)
         .maybeSingle();
-      if (error) throw error;
-      return data;
+      
+      if (regularError && regularError.code !== 'PGRST116') throw regularError;
+      
+      if (regularWhisky) {
+        return { ...regularWhisky, is_user_submitted: false };
+      }
+      
+      // If not found, try user_whiskies table
+      const { data: userWhisky, error: userError } = await supabase
+        .from("user_whiskies")
+        .select("id, distillery, name, region, location, image_url, review_text, rating, user_id, flavors, intensity_ratings")
+        .eq("id", whiskyId)
+        .maybeSingle();
+      
+      if (userError && userError.code !== 'PGRST116') throw userError;
+      
+      if (userWhisky) {
+        return { 
+          ...userWhisky, 
+          overview: userWhisky.review_text,
+          is_user_submitted: true 
+        };
+      }
+      
+      return null;
     },
     enabled: !!whiskyId,
   });
@@ -119,11 +144,11 @@ const WhiskyDossier = () => {
     enabled: !!user,
   });
 
-  // Load existing user note
+  // Load existing user note (only for regular whiskies, not user-submitted ones)
   const { data: existingNote } = useQuery({
     queryKey: ["user-note", dbWhisky?.id, user?.id],
     queryFn: async () => {
-      if (!dbWhisky?.id || !user) return null;
+      if (!dbWhisky?.id || !user || dbWhisky.is_user_submitted) return null;
       const { data, error } = await supabase
         .from("tasting_notes")
         .select("*")
@@ -133,7 +158,7 @@ const WhiskyDossier = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!dbWhisky?.id && !!user,
+    enabled: !!dbWhisky?.id && !!user && !dbWhisky?.is_user_submitted,
   });
 
   // Load community flavor distribution
@@ -327,6 +352,9 @@ const WhiskyDossier = () => {
   const matchPercentage = useMemo(() => {
     if (!userTastingNotes || !whisky || userTastingNotes.length === 0) return 0;
 
+    // For user-submitted whiskies, return 0 since they don't have expert scores
+    if (whisky.is_user_submitted) return 0;
+
     // Filter notes that have both rating and intensity ratings
     const validNotes = userTastingNotes.filter(note => 
       note.rating !== null && 
@@ -365,7 +393,8 @@ const WhiskyDossier = () => {
 
       // Get whisky expert score
       const expertScoreKey = `expert_score_${flavor}` as keyof typeof whisky;
-      whiskyVector.push(whisky[expertScoreKey] as number || 0);
+      const expertScore = whisky[expertScoreKey];
+      whiskyVector.push(typeof expertScore === 'number' ? expertScore : 0);
     });
 
     // Calculate cosine similarity
@@ -377,7 +406,7 @@ const WhiskyDossier = () => {
 
     const similarity = dotProduct / (userMagnitude * whiskyMagnitude);
     return Math.round(similarity * 100);
-  }, [userTastingNotes, whisky?.expert_score_fruit, whisky?.expert_score_floral, whisky?.expert_score_oak, whisky?.expert_score_smoke, whisky?.expert_score_spice]);
+  }, [userTastingNotes, whisky]);
 
   // Calculate real rating statistics from user reviews
   const ratingStats = useMemo(() => {
@@ -487,6 +516,9 @@ const WhiskyDossier = () => {
                   <div className="w-6 h-4 bg-green-500 rounded-sm shadow-lg"></div>
                   <span className="text-sm font-medium drop-shadow-lg">Whisky from {whisky.region}</span>
                 </div>
+                {whisky.is_user_submitted && (
+                  <Badge className="mt-2 bg-blue-500/80 text-white border-blue-400">Community Added</Badge>
+                )}
               </div>
             </div>
 
@@ -519,15 +551,17 @@ const WhiskyDossier = () => {
                </div>
 
               {/* Match Card */}
-              <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <div className="w-4 h-4 bg-blue-400 rounded-full shadow-lg"></div>
-                    <span className="text-3xl font-bold text-white drop-shadow-lg">{matchPercentage}%</span>
+              {!whisky.is_user_submitted && (
+                <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      <div className="w-4 h-4 bg-blue-400 rounded-full shadow-lg"></div>
+                      <span className="text-3xl font-bold text-white drop-shadow-lg">{matchPercentage}%</span>
+                    </div>
+                    <div className="text-white/80 font-medium drop-shadow-lg">Match for you</div>
                   </div>
-                  <div className="text-white/80 font-medium drop-shadow-lg">Match for you</div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
