@@ -138,6 +138,7 @@ const WhiskyDossier = () => {
     queryKey: ["user-reviews", dbWhisky?.id],
     queryFn: async () => {
       if (!dbWhisky?.id) return [];
+      console.log("Fetching reviews for whisky ID:", dbWhisky.id);
       const { data, error } = await supabase
         .from("tasting_notes")
         .select(`
@@ -147,12 +148,18 @@ const WhiskyDossier = () => {
           flavors,
           intensity_ratings,
           created_at,
-          profiles(display_name, username)
+          user_id,
+          profiles!inner(display_name, username)
         `)
         .eq("whisky_id", dbWhisky.id)
         .order("created_at", { ascending: false })
         .limit(10);
-      if (error) throw error;
+      
+      console.log("Query result:", { data, error });
+      if (error) {
+        console.error("Query error:", error);
+        throw error;
+      }
       return data || [];
     },
     enabled: !!dbWhisky?.id,
