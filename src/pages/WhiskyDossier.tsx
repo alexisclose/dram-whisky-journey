@@ -147,7 +147,7 @@ const WhiskyDossier = () => {
           flavors,
           intensity_ratings,
           created_at,
-          profiles!inner(display_name, username)
+          profiles(display_name, username)
         `)
         .eq("whisky_id", dbWhisky.id)
         .not("note", "is", null)
@@ -484,7 +484,7 @@ const WhiskyDossier = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-sm">
-                            {review.profiles?.display_name || review.profiles?.username || 'Anonymous'}
+                            {review.profiles?.display_name || review.profiles?.username || 'Anonymous User'}
                           </span>
                           {review.rating && (
                             <div className="flex items-center gap-1">
