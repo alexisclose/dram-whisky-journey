@@ -133,6 +133,32 @@ const WhiskyDossier = () => {
     enabled: !!dbWhisky?.id,
   });
 
+  // Load all user tasting notes for this whisky
+  const { data: userReviews } = useQuery({
+    queryKey: ["user-reviews", dbWhisky?.id],
+    queryFn: async () => {
+      if (!dbWhisky?.id) return [];
+      const { data, error } = await supabase
+        .from("tasting_notes")
+        .select(`
+          id,
+          rating,
+          note,
+          flavors,
+          intensity_ratings,
+          created_at,
+          profiles!inner(display_name, username)
+        `)
+        .eq("whisky_id", dbWhisky.id)
+        .not("note", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!dbWhisky?.id,
+  });
+
   // Load wishlist status
   const { data: wishlistEntry } = useQuery({
     queryKey: ["wishlist-entry", dbWhisky?.id, user?.id],
@@ -417,16 +443,94 @@ const WhiskyDossier = () => {
               </CardContent>
             </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Expert Tasting Notes</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p><strong>Nose</strong>: Green apple, vanilla, and honey with gentle oak.</p>
-              <p><strong>Palate</strong>: Citrus and spice balanced by malt sweetness; light smoke in some batches.</p>
-              <p><strong>Finish</strong>: Medium length with caramel and dried fruit lingering.</p>
-            </CardContent>
-          </Card>
+            {/* Community Palate Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Community Palate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground mb-4">Top flavors reported by the community:</div>
+                <div className="space-y-4">
+                  {topFlavors.map(([flavorKey, percentage]) => {
+                    const flavorMeta = FLAVORS.find((f) => f.key === flavorKey);
+                    return (
+                      <div key={flavorKey} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{flavorMeta?.label}</span>
+                          <span className="text-sm font-bold">{percentage}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                          <div
+                            className="bg-primary h-full rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* User Reviews Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Community Reviews</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {userReviews && userReviews.length > 0 ? (
+                  userReviews.map((review: any) => (
+                    <div key={review.id} className="p-4 bg-muted/50 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">
+                            {review.profiles?.display_name || review.profiles?.username || 'Anonymous'}
+                          </span>
+                          {review.rating && (
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className="w-4 h-4 text-yellow-400"
+                                  fill={star <= review.rating ? "currentColor" : "none"}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {review.note && (
+                        <p className="text-sm text-muted-foreground">{review.note}</p>
+                      )}
+                      {review.flavors && review.flavors.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {review.flavors.slice(0, 5).map((flavor: string) => {
+                            const flavorMeta = FLAVORS.find((f) => f.key === flavor);
+                            return (
+                              <Badge key={flavor} variant="outline" className="text-xs">
+                                {flavorMeta?.label || flavor}
+                              </Badge>
+                            );
+                          })}
+                          {review.flavors.length > 5 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{review.flavors.length - 5} more
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted-foreground py-6">
+                    <p className="text-sm">No reviews yet. Be the first to share your tasting notes!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
           <Card id="review-section" className="lg:col-span-3">
             <CardHeader>
@@ -555,34 +659,6 @@ const WhiskyDossier = () => {
             </CardContent>
           </Card>
 
-          {/* Community Palate - Mobile Full Width */}
-          <Card className="lg:col-start-3 lg:row-start-1">
-            <CardHeader>
-              <CardTitle>Community Palate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground mb-4">Top flavors reported by the community:</div>
-              <div className="space-y-4">
-                {topFlavors.map(([flavorKey, percentage]) => {
-                  const flavorMeta = FLAVORS.find((f) => f.key === flavorKey);
-                  return (
-                    <div key={flavorKey} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{flavorMeta?.label}</span>
-                        <span className="text-sm font-bold">{percentage}%</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                        <div
-                          className="bg-primary h-full rounded-full transition-all duration-500"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
         </article>
       </section>
       </div>
