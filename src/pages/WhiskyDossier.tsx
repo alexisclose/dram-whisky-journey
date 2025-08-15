@@ -286,37 +286,33 @@ const WhiskyDossier = () => {
         </script>
       </Helmet>
 
-      {/* Hero Section with Landscape Background */}
-      <div className="relative min-h-screen">
-        {/* Landscape Background */}
+      {/* Hero Section - Mobile-First Design */}
+      <div className="relative min-h-screen bg-background">
+        {/* Background Image with Strong Overlay */}
         <div className="absolute inset-0">
-          <AspectRatio ratio={16/9} className="h-full">
-            <img
-              src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=675&fit=crop"
-              alt="Scottish landscape"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
-          </AspectRatio>
+          <img
+            src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=675&fit=crop"
+            alt="Scottish landscape"
+            className="w-full h-full object-cover"
+          />
+          {/* Stronger gradient overlay for better text visibility */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/80" />
         </div>
 
-        {/* Back Button */}
-        <div className="absolute top-4 left-4 z-10">
-          <Button variant="ghost" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" asChild>
+        {/* Navigation Bar */}
+        <div className="relative z-20 flex items-center justify-between p-4">
+          <Button variant="ghost" size="icon" className="rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 border border-white/20" asChild>
             <Link to="/tasting" aria-label="Back to Tasting Journey">
               <ArrowLeft className="h-5 w-5 text-white" />
             </Link>
           </Button>
-        </div>
-
-        {/* Wishlist Button */}
-        <div className="absolute top-4 right-4 z-10">
+          
           {user ? (
-            <Button variant="ghost" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => toggleWishlist.mutate()} disabled={toggleWishlist.isPending}>
+            <Button variant="ghost" size="icon" className="rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 border border-white/20" onClick={() => toggleWishlist.mutate()} disabled={toggleWishlist.isPending}>
               <Heart className="h-5 w-5 text-white" fill={wishlistEntry ? "currentColor" : "none"} />
             </Button>
           ) : (
-            <Button variant="ghost" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" asChild>
+            <Button variant="ghost" size="icon" className="rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 border border-white/20" asChild>
               <Link to="/login">
                 <Heart className="h-5 w-5 text-white" />
               </Link>
@@ -324,65 +320,69 @@ const WhiskyDossier = () => {
           )}
         </div>
 
-        {/* Content Container */}
-        <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-8">
-          <div className="max-w-4xl w-full">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              {/* Bottle Image */}
-              <div className="flex-shrink-0">
-                <img
-                  src="/placeholder.svg"
-                  alt={`${whisky.distillery} ${whisky.name} bottle`}
-                  className="w-48 h-auto max-h-96 object-contain"
-                />
-              </div>
+        {/* Mobile-First Content Layout */}
+        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-8 pt-20">
+          <div className="w-full max-w-sm mx-auto">
+            {/* Bottle Image - Mobile Optimized */}
+            <div className="flex justify-center mb-8">
+              <img
+                src="/placeholder.svg"
+                alt={`${whisky.distillery} ${whisky.name} bottle`}
+                className="w-32 h-auto max-h-48 object-contain drop-shadow-2xl"
+              />
+            </div>
 
-              {/* Info Panel */}
-              <div className="flex-1 text-white">
-                {/* Rating and Reviews */}
-                <div className="space-y-2 mb-6">
-                  <div className="text-4xl font-bold">{mockRating}</div>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className="w-5 h-5 text-yellow-400"
-                        fill={star <= Math.floor(mockRating) ? "currentColor" : "none"}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-white/80">{mockReviews} ratings</div>
-                </div>
-
-                {/* Match Percentage */}
-                <div className="mb-8">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                    <span className="text-2xl font-bold">{mockMatch}%</span>
-                  </div>
-                  <div className="text-white/80">Match for you</div>
+            {/* Whisky Title with Background */}
+            <div className="text-center mb-8">
+              <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">{whisky.distillery}</h1>
+                <h2 className="text-lg md:text-xl text-white/90 mb-4 drop-shadow-lg">{whisky.name}</h2>
+                <div className="flex items-center justify-center gap-2 text-white/80">
+                  <div className="w-6 h-4 bg-green-500 rounded-sm shadow-lg"></div>
+                  <span className="text-sm font-medium drop-shadow-lg">Whisky from {whisky.region}</span>
                 </div>
               </div>
             </div>
 
-            {/* Whisky Details */}
-            <div className="text-center text-white mt-8">
-              <h1 className="text-2xl font-semibold mb-2">{whisky.distillery}</h1>
-              <h2 className="text-xl mb-2">{whisky.name}</h2>
-              <div className="flex items-center justify-center gap-2 text-white/80">
-                <div className="w-6 h-4 bg-green-600 rounded-sm"></div>
-                <span>Whisky from {whisky.region}</span>
+            {/* Stats Cards - Mobile Stack */}
+            <div className="space-y-4 mb-8">
+              {/* Rating Card */}
+              <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-white mb-3 drop-shadow-lg">{mockRating}</div>
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className="w-6 h-6 text-yellow-400 drop-shadow-lg"
+                        fill={star <= Math.floor(mockRating) ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-white/80 font-medium drop-shadow-lg">{mockReviews} ratings</div>
+                </div>
+              </div>
+
+              {/* Match Card */}
+              <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="w-4 h-4 bg-blue-400 rounded-full shadow-lg"></div>
+                    <span className="text-3xl font-bold text-white drop-shadow-lg">{mockMatch}%</span>
+                  </div>
+                  <div className="text-white/80 font-medium drop-shadow-lg">Match for you</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Floating Review Button */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+      {/* Floating Review Button - Mobile Optimized */}
+      <div className="fixed bottom-4 left-4 right-4 z-50 md:bottom-6 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2">
         <Button 
           size="lg" 
-          className="rounded-full px-8 py-6 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg"
+          className="w-full md:w-auto rounded-2xl px-6 py-4 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl border border-white/20 backdrop-blur-sm"
           disabled={!user}
           onClick={() => {
             // Scroll to review section
@@ -396,10 +396,10 @@ const WhiskyDossier = () => {
         </Button>
       </div>
 
-      {/* Additional Content Below */}
-      <div className="container mx-auto px-6 py-10">
-        <section className="grid gap-6 lg:grid-cols-3">
-          <article className="lg:col-span-2 grid gap-6">
+      {/* Additional Content Below - Mobile-First Layout */}
+      <div className="container mx-auto px-4 py-8">
+        <section className="space-y-6 lg:grid lg:gap-6 lg:grid-cols-3">
+          <article className="space-y-6 lg:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle>Overview</CardTitle>
@@ -428,18 +428,27 @@ const WhiskyDossier = () => {
             </CardContent>
           </Card>
 
-          <Card id="review-section">
+          <Card id="review-section" className="lg:col-span-3">
             <CardHeader>
               <CardTitle>Your Palate</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <ToggleGroup type="multiple" value={selectedFlavors} onValueChange={setSelectedFlavors} className="flex flex-wrap gap-2">
-                {FLAVORS.map((f) => (
-                  <ToggleGroupItem key={f.key} value={f.key} aria-label={`Toggle ${f.label}`}>
-                    {f.label}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
+            <CardContent className="space-y-6">
+              {/* Mobile-Optimized Flavor Selection */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Select flavors you taste:</label>
+                <ToggleGroup type="multiple" value={selectedFlavors} onValueChange={setSelectedFlavors} className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
+                  {FLAVORS.map((f) => (
+                    <ToggleGroupItem 
+                      key={f.key} 
+                      value={f.key} 
+                      aria-label={`Toggle ${f.label}`}
+                      className="h-12 text-sm font-medium data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
+                      {f.label}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
 
               {selectedFlavors.length > 0 && (
                 <div className="space-y-2 text-sm">
@@ -465,93 +474,116 @@ const WhiskyDossier = () => {
                 />
               </div>
 
-              <div className="space-y-4">
+              {/* Mobile-Optimized Intensity Ratings */}
+              <div className="space-y-6">
                 <label className="text-sm font-medium">Intensity Ratings</label>
-                {INTENSITY_AXES.map((axis) => (
-                  <div key={axis.key} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{axis.label}</span>
-                      <span className="text-muted-foreground">
-                        {INTENSITY_LABELS[intensityRatings[axis.key]] || INTENSITY_LABELS[intensityRatings[axis.key]]}
-                      </span>
+                <div className="space-y-6">
+                  {INTENSITY_AXES.map((axis) => (
+                    <div key={axis.key} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="capitalize font-medium text-base">{axis.label}</span>
+                        <span className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                          {INTENSITY_LABELS[intensityRatings[axis.key]] || "medium"}
+                        </span>
+                      </div>
+                      <div className="px-2">
+                        <Slider
+                          value={[intensityRatings[axis.key]]}
+                          onValueChange={(value) => setIntensityRatings(prev => ({ ...prev, [axis.key]: value[0] }))}
+                          max={4}
+                          min={0}
+                          step={1}
+                          className="w-full touch-none"
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground px-2">
+                        <span>none</span>
+                        <span>medium</span>
+                        <span>pronounced</span>
+                      </div>
                     </div>
-                    <Slider
-                      value={[intensityRatings[axis.key]]}
-                      onValueChange={(value) => 
-                        setIntensityRatings(prev => ({ ...prev, [axis.key]: value[0] }))
-                      }
-                      max={4}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>none</span>
-                      <span>medium</span>
-                      <span>pronounced</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Quick rating:</span>
-                {[1,2,3,4,5].map((n) => (
-                  <button
-                    key={n}
-                    aria-label={`Rate ${n} star`}
-                    className={`p-1 rounded ${rating && rating >= n ? "text-primary" : "text-muted-foreground"}`}
-                    onClick={() => setRating(n)}
-                  >
-                    <Star className="h-5 w-5" fill={rating && rating >= n ? "currentColor" : "none"} />
-                  </button>
-                ))}
+              {/* Mobile-Optimized Star Rating */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Star Rating</label>
+                <div className="flex justify-center gap-2 py-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Button
+                      key={star}
+                      variant="ghost"
+                      size="sm"
+                      className="p-2 h-auto hover:bg-transparent touch-manipulation"
+                      onClick={() => setRating(rating === star ? null : star)}
+                    >
+                      <Star
+                        className={`w-10 h-10 ${
+                          rating && star <= rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    </Button>
+                  ))}
+                </div>
+                {rating && (
+                  <p className="text-center text-sm text-muted-foreground bg-muted px-3 py-2 rounded-lg">
+                    You rated this {rating} star{rating !== 1 ? 's' : ''}
+                  </p>
+                )}
               </div>
-            </CardContent>
-            <CardFooter className="flex items-center justify-between">
-              {!user ? (
-                <p className="text-sm text-muted-foreground">
-                  <Link to="/login" className="underline">Log in</Link> to save your tasting notes.
-                </p>
+
+              {/* Mobile-Optimized Save Button */}
+              {user ? (
+                <Button 
+                  onClick={() => saveMutation.mutate()} 
+                  disabled={saveMutation.isPending} 
+                  className="w-full h-12 text-base font-semibold"
+                  size="lg"
+                >
+                  {saveMutation.isPending ? "Saving..." : existingNote ? "Update note" : "Save note"}
+                </Button>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  {existingNote ? "Update your saved note" : "Save your first note for this whisky"}
-                </p>
+                <div className="text-center p-4 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    <Link to="/login" className="underline font-medium">Log in</Link> to save your tasting notes.
+                  </p>
+                </div>
               )}
-              <Button 
-                variant="outline" 
-                disabled={!user || saveMutation.isPending}
-                onClick={() => saveMutation.mutate()}
-              >
-                {saveMutation.isPending ? "Saving..." : existingNote ? "Update" : "Save"}
-              </Button>
-            </CardFooter>
+            </CardContent>
           </Card>
-        </article>
 
-        <aside className="lg:col-span-1">
-          <Card>
+          {/* Community Palate - Mobile Full Width */}
+          <Card className="lg:col-start-3 lg:row-start-1">
             <CardHeader>
               <CardTitle>Community Palate</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">Preview percentages based on community reports.</p>
+            <CardContent>
+              <div className="text-sm text-muted-foreground mb-4">Top flavors reported by the community:</div>
               <div className="space-y-4">
-                {topFlavors.map(([key, value]) => {
-                  const meta = FLAVORS.find((f) => f.key === key);
+                {topFlavors.map(([flavorKey, percentage]) => {
+                  const flavorMeta = FLAVORS.find((f) => f.key === flavorKey);
                   return (
-                    <div key={key} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>{meta?.label}</span>
-                        <span className="text-muted-foreground">{value}%</span>
+                    <div key={flavorKey} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{flavorMeta?.label}</span>
+                        <span className="text-sm font-bold">{percentage}%</span>
                       </div>
-                      <Progress value={value} />
+                      <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all duration-500"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </CardContent>
           </Card>
-        </aside>
+        </article>
       </section>
       </div>
     </>
