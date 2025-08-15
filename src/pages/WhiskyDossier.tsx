@@ -182,55 +182,97 @@ const WhiskyDossier = () => {
       if (!dbWhisky?.id) return [];
       console.log("Fetching reviews for whisky ID:", dbWhisky.id);
       
-      // First get tasting notes
-      const { data: tastingNotes, error: notesError } = await supabase
-        .from("tasting_notes")
-        .select(`
-          id,
-          rating,
-          note,
-          flavors,
-          intensity_ratings,
-          created_at,
-          user_id
-        `)
-        .eq("whisky_id", dbWhisky.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
+      const reviews = [];
       
-      if (notesError) {
-        console.error("Notes query error:", notesError);
-        throw notesError;
-      }
-
-      if (!tastingNotes || tastingNotes.length === 0) {
-        console.log("No tasting notes found");
-        return [];
-      }
-
-      // Get user profiles for the notes
-      const userIds = tastingNotes.map(note => note.user_id);
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("user_id, display_name, username")
-        .in("user_id", userIds);
-
-      if (profilesError) {
-        console.error("Profiles query error:", profilesError);
-        throw profilesError;
-      }
-
-      // Combine the data
-      const reviewsWithProfiles = tastingNotes.map(note => ({
-        ...note,
-        profiles: profiles?.find(p => p.user_id === note.user_id) || {
-          display_name: "Anonymous",
-          username: "anonymous"
+      // If this is a user-submitted whisky, get the original review
+      if (dbWhisky.is_user_submitted) {
+        const { data: userWhisky, error: userWhiskyError } = await supabase
+          .from("user_whiskies")
+          .select(`
+            id,
+            review_text,
+            rating,
+            created_at,
+            user_id,
+            flavors,
+            intensity_ratings
+          `)
+          .eq("id", dbWhisky.id)
+          .single();
+        
+        if (!userWhiskyError && userWhisky) {
+          // Get the user profile for the whisky creator
+          const { data: creatorProfile } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, username")
+            .eq("user_id", userWhisky.user_id)
+            .single();
+          
+          reviews.push({
+            id: userWhisky.id,
+            rating: userWhisky.rating,
+            note: userWhisky.review_text,
+            flavors: userWhisky.flavors || [],
+            intensity_ratings: userWhisky.intensity_ratings || {},
+            created_at: userWhisky.created_at,
+            user_id: userWhisky.user_id,
+            profiles: {
+              display_name: creatorProfile?.display_name || "Anonymous",
+              username: creatorProfile?.username || "anonymous"
+            },
+            is_creator: true
+          });
         }
-      }));
+      } else {
+        // For regular whiskies, get tasting notes
+        const { data: tastingNotes, error: notesError } = await supabase
+          .from("tasting_notes")
+          .select(`
+            id,
+            rating,
+            note,
+            flavors,
+            intensity_ratings,
+            created_at,
+            user_id
+          `)
+          .eq("whisky_id", dbWhisky.id)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        
+        if (notesError) {
+          console.error("Notes query error:", notesError);
+          throw notesError;
+        }
 
-      console.log("Final reviews data:", reviewsWithProfiles);
-      return reviewsWithProfiles;
+        if (tastingNotes && tastingNotes.length > 0) {
+          // Get user profiles for the notes
+          const userIds = tastingNotes.map(note => note.user_id);
+          const { data: profiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("user_id, display_name, username")
+            .in("user_id", userIds);
+
+          if (profilesError) {
+            console.error("Profiles query error:", profilesError);
+            throw profilesError;
+          }
+
+          // Combine the data
+          const reviewsWithProfiles = tastingNotes.map(note => ({
+            ...note,
+            profiles: profiles?.find(p => p.user_id === note.user_id) || {
+              display_name: "Anonymous",
+              username: "anonymous"
+            }
+          }));
+
+          reviews.push(...reviewsWithProfiles);
+        }
+      }
+
+      console.log("Final reviews data:", reviews);
+      return reviews;
     },
     enabled: !!dbWhisky?.id,
   });
