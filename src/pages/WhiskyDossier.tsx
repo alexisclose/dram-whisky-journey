@@ -150,7 +150,6 @@ const WhiskyDossier = () => {
           profiles(display_name, username)
         `)
         .eq("whisky_id", dbWhisky.id)
-        .not("note", "is", null)
         .order("created_at", { ascending: false })
         .limit(10);
       if (error) throw error;
@@ -502,8 +501,10 @@ const WhiskyDossier = () => {
                           {new Date(review.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      {review.note && (
+                      {review.note ? (
                         <p className="text-sm text-muted-foreground">{review.note}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">No written review</p>
                       )}
                       {review.flavors && review.flavors.length > 0 && (
                         <div className="flex flex-wrap gap-1">
