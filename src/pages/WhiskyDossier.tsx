@@ -85,14 +85,14 @@ const WhiskyDossier = () => {
     spice: 2,
   });
 
-  // Load whisky details from database by ID
+  // Load whisky details from database by ID including expert scores
   const { data: dbWhisky, isLoading: whiskyLoading } = useQuery({
     queryKey: ["whisky-by-id", whiskyId],
     queryFn: async () => {
       if (!whiskyId) return null;
       const { data, error } = await supabase
         .from("whiskies")
-        .select("id, distillery, name, region, location, image_url, overview")
+        .select("id, distillery, name, region, location, image_url, overview, expert_score_fruit, expert_score_floral, expert_score_oak, expert_score_smoke, expert_score_spice")
         .eq("id", whiskyId)
         .maybeSingle();
       if (error) throw error;
@@ -101,6 +101,23 @@ const WhiskyDossier = () => {
     enabled: !!whiskyId,
   });
   const whisky = dbWhisky;
+
+  // Load user's tasting notes to calculate their flavor profile
+  const { data: userTastingNotes } = useQuery({
+    queryKey: ["user-tasting-notes", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("tasting_notes")
+        .select("rating, intensity_ratings")
+        .eq("user_id", user.id)
+        .not("rating", "is", null)
+        .not("intensity_ratings", "is", null);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   // Load existing user note
   const { data: existingNote } = useQuery({
@@ -320,10 +337,81 @@ const WhiskyDossier = () => {
 
   const title = `${whisky.distillery} — ${whisky.name}`;
 
-  // Generate mock ratings and match percentage for now
+  // Calculate user's flavor profile from their tasting notes
+  const userFlavorProfile = useMemo(() => {
+    if (!userTastingNotes || userTastingNotes.length === 0) return null;
+
+    // Filter notes that have both rating and intensity ratings
+    const validNotes = userTastingNotes.filter(note => 
+      note.rating !== null && 
+      note.intensity_ratings && 
+      typeof note.intensity_ratings === 'object'
+    );
+
+    if (validNotes.length === 0) return null;
+
+    // Convert slider values (0-4) to numerical scale (0-10)
+    const convertSliderToScore = (sliderValue: number): number => {
+      const mapping = [0, 2.5, 5, 7.5, 10];
+      return mapping[sliderValue] || 0;
+    };
+
+    // Calculate weighted averages for each flavor
+    const totalWeight = validNotes.reduce((sum, note) => sum + (note.rating || 0), 0);
+    
+    if (totalWeight === 0) return null;
+
+    const flavors = ['fruit', 'floral', 'oak', 'smoke', 'spice'];
+    const profile: Record<string, number> = {};
+
+    flavors.forEach(flavor => {
+      const weightedSum = validNotes.reduce((sum, note) => {
+        const sliderValue = note.intensity_ratings[flavor] || 0;
+        const score = convertSliderToScore(sliderValue);
+        const weight = note.rating || 0;
+        return sum + (score * weight);
+      }, 0);
+
+      profile[flavor] = Math.round((weightedSum / totalWeight) * 10) / 10;
+    });
+
+    return profile;
+  }, [userTastingNotes]);
+
+  // Calculate match percentage using cosine similarity
+  const matchPercentage = useMemo(() => {
+    if (!userFlavorProfile || !whisky) return 0;
+
+    const userVector = [
+      userFlavorProfile.fruit || 0,
+      userFlavorProfile.floral || 0,
+      userFlavorProfile.oak || 0,
+      userFlavorProfile.smoke || 0,
+      userFlavorProfile.spice || 0
+    ];
+
+    const whiskyVector = [
+      whisky.expert_score_fruit || 0,
+      whisky.expert_score_floral || 0,
+      whisky.expert_score_oak || 0,
+      whisky.expert_score_smoke || 0,
+      whisky.expert_score_spice || 0
+    ];
+
+    // Calculate cosine similarity
+    const dotProduct = userVector.reduce((sum, val, i) => sum + val * whiskyVector[i], 0);
+    const userMagnitude = Math.sqrt(userVector.reduce((sum, val) => sum + val * val, 0));
+    const whiskyMagnitude = Math.sqrt(whiskyVector.reduce((sum, val) => sum + val * val, 0));
+
+    if (userMagnitude === 0 || whiskyMagnitude === 0) return 0;
+
+    const similarity = dotProduct / (userMagnitude * whiskyMagnitude);
+    return Math.round(similarity * 100);
+  }, [userFlavorProfile, whisky]);
+
+  // Generate mock ratings for now
   const mockRating = 4.2;
   const mockReviews = 79;
-  const mockMatch = 46;
 
   return (
     <>
@@ -428,7 +516,7 @@ const WhiskyDossier = () => {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-3 mb-2">
                     <div className="w-4 h-4 bg-blue-400 rounded-full shadow-lg"></div>
-                    <span className="text-3xl font-bold text-white drop-shadow-lg">{mockMatch}%</span>
+                    <span className="text-3xl font-bold text-white drop-shadow-lg">{matchPercentage}%</span>
                   </div>
                   <div className="text-white/80 font-medium drop-shadow-lg">Match for you</div>
                 </div>
