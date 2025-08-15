@@ -317,25 +317,11 @@ const WhiskyDossier = () => {
     return DEFAULT_COMMUNITY;
   }, [communityFlavors]);
 
-  const topFlavors = useMemo(() =>
+   const topFlavors = useMemo(() =>
     Object.entries(community)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5),
   [community]);
-
-  if (!whisky) {
-    return (
-      <main className="container mx-auto px-6 py-10">
-        <Helmet>
-          <title>Whisky Dossier — Not Found</title>
-          <meta name="robots" content="noindex" />
-        </Helmet>
-        <p className="text-muted-foreground">That whisky wasn't found. <Link className="underline" to="/tasting">Back to the Tasting Journey</Link></p>
-      </main>
-    );
-  }
-
-  const title = `${whisky.distillery} — ${whisky.name}`;
 
   // Calculate match percentage using user's flavor profile and whisky expert scores
   const matchPercentage = useMemo(() => {
@@ -409,6 +395,21 @@ const WhiskyDossier = () => {
     
     return { averageRating, totalReviews: ratingsWithValues.length };
   }, [userReviews]);
+
+  // IMPORTANT: Handle conditional returns AFTER all hooks are called
+  if (!whisky) {
+    return (
+      <main className="container mx-auto px-6 py-10">
+        <Helmet>
+          <title>Whisky Dossier — Not Found</title>
+          <meta name="robots" content="noindex" />
+        </Helmet>
+        <p className="text-muted-foreground">That whisky wasn't found. <Link className="underline" to="/tasting">Back to the Tasting Journey</Link></p>
+      </main>
+    );
+  }
+
+  const title = `${whisky.distillery} — ${whisky.name}`;
 
   return (
     <>
