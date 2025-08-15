@@ -38,13 +38,12 @@ const SiteHeader = () => {
             <NavLink className={navLinkClass} to="/university">Whisky University</NavLink>
             <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
             <NavLink className={navLinkClass} to="/explore">Explore</NavLink>
-            <NavLink className={navLinkClass} to="/community">Global Shelf</NavLink>
             <NavLink className={navLinkClass} to="/quiz">Master's Quiz</NavLink>
             <NavLink className={navLinkClass} to="/activate">Activate</NavLink>
             {!loading && user && (
               <>
-                <NavLink className={navLinkClass} to="/reviews">My Reviews</NavLink>
-                <NavLink className={navLinkClass} to="/profile">My Profile</NavLink>
+                <NavLink className={navLinkClass} to="/reviews">My Whiskies</NavLink>
+                <NavLink className={navLinkClass} to="/profile">My Whisky Profile</NavLink>
                 {isAdmin && (
                   <NavLink className={navLinkClass} to="/whisky-upload">Upload</NavLink>
                 )}

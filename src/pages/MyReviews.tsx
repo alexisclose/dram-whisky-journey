@@ -81,13 +81,13 @@ const MyReviews = () => {
   return (
     <main className="container mx-auto px-6 py-10">
       <Helmet>
-        <title>My Reviews — Dram Discoverer</title>
+        <title>My Whiskies — Dram Discoverer</title>
         <meta name="description" content="See all the tasting notes and ratings you've submitted." />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl md:text-4xl font-bold">My Reviews</h1>
+        <h1 className="text-3xl md:text-4xl font-bold">My Whiskies</h1>
         <Button variant="outline" onClick={() => navigate("/tasting")}>Go to Tasting</Button>
       </header>
 

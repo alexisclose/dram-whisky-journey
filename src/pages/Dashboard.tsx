@@ -20,12 +20,6 @@ const Dashboard = () => {
       icon: MapPinned,
     },
     {
-      title: "Global Shelf",
-      desc: "Share discoveries with the community and upvote favourites.",
-      href: "/community",
-      icon: Globe2,
-    },
-    {
       title: "Master's Quiz",
       desc: "Test your knowledge and earn your title.",
       href: "/quiz",
