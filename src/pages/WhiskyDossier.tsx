@@ -10,6 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Star, ArrowLeft, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
@@ -259,8 +260,13 @@ const WhiskyDossier = () => {
 
   const title = `${whisky.distillery} — ${whisky.name}`;
 
+  // Generate mock ratings and match percentage for now
+  const mockRating = 4.2;
+  const mockReviews = 79;
+  const mockMatch = 46;
+
   return (
-    <main className="container mx-auto px-6 py-10">
+    <>
       <Helmet>
         <title>{`Whisky Dossier — ${title}`}</title>
         <meta name="description" content={`Explore tasting dossier for ${whisky.distillery} ${whisky.name}. See stats, expert notes, select your palate, and compare with community percentages.`} />
@@ -280,47 +286,125 @@ const WhiskyDossier = () => {
         </script>
       </Helmet>
 
-      <header className="mb-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/tasting" aria-label="Back to Tasting Journey"><ArrowLeft className="mr-2 h-4 w-4" /> Back</Link>
-          </Button>
-          <h1 className="text-3xl md:text-4xl font-bold">Whisky Dossier — {title}</h1>
+      {/* Hero Section with Landscape Background */}
+      <div className="relative min-h-screen">
+        {/* Landscape Background */}
+        <div className="absolute inset-0">
+          <AspectRatio ratio={16/9} className="h-full">
+            <img
+              src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=675&fit=crop"
+              alt="Scottish landscape"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+          </AspectRatio>
         </div>
-        {user ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toggleWishlist.mutate()}
-            disabled={toggleWishlist.isPending}
-            aria-label={wishlistEntry ? "In wishlist" : "Add to wishlist"}
-          >
-            <Heart className="mr-2 h-4 w-4" fill={wishlistEntry ? "currentColor" : "none"} />
-            {wishlistEntry ? "In wishlist" : "Add to wishlist"}
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/login" aria-label="Log in to add to wishlist">
-              <Heart className="mr-2 h-4 w-4" /> Log in to wishlist
+
+        {/* Back Button */}
+        <div className="absolute top-4 left-4 z-10">
+          <Button variant="ghost" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" asChild>
+            <Link to="/tasting" aria-label="Back to Tasting Journey">
+              <ArrowLeft className="h-5 w-5 text-white" />
             </Link>
           </Button>
-        )}
-      </header>
+        </div>
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        <article className="lg:col-span-2 grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6 md:grid-cols-2">
+        {/* Wishlist Button */}
+        <div className="absolute top-4 right-4 z-10">
+          {user ? (
+            <Button variant="ghost" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" onClick={() => toggleWishlist.mutate()} disabled={toggleWishlist.isPending}>
+              <Heart className="h-5 w-5 text-white" fill={wishlistEntry ? "currentColor" : "none"} />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" className="rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20" asChild>
+              <Link to="/login">
+                <Heart className="h-5 w-5 text-white" />
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Content Container */}
+        <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-8">
+          <div className="max-w-4xl w-full">
+            <div className="flex flex-col md:flex-row items-center gap-8">
+              {/* Bottle Image */}
+              <div className="flex-shrink-0">
                 <img
                   src="/placeholder.svg"
-                  alt={`${whisky.distillery} ${whisky.name} bottle photo`}
-                  loading="lazy"
-                  className="w-full rounded-md border"
+                  alt={`${whisky.distillery} ${whisky.name} bottle`}
+                  className="w-48 h-auto max-h-96 object-contain"
                 />
+              </div>
+
+              {/* Info Panel */}
+              <div className="flex-1 text-white">
+                {/* Rating and Reviews */}
+                <div className="space-y-2 mb-6">
+                  <div className="text-4xl font-bold">{mockRating}</div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className="w-5 h-5 text-yellow-400"
+                        fill={star <= Math.floor(mockRating) ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-white/80">{mockReviews} ratings</div>
+                </div>
+
+                {/* Match Percentage */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                    <span className="text-2xl font-bold">{mockMatch}%</span>
+                  </div>
+                  <div className="text-white/80">Match for you</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Whisky Details */}
+            <div className="text-center text-white mt-8">
+              <h1 className="text-2xl font-semibold mb-2">{whisky.distillery}</h1>
+              <h2 className="text-xl mb-2">{whisky.name}</h2>
+              <div className="flex items-center justify-center gap-2 text-white/80">
+                <div className="w-6 h-4 bg-green-600 rounded-sm"></div>
+                <span>Whisky from {whisky.region}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Review Button */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+        <Button 
+          size="lg" 
+          className="rounded-full px-8 py-6 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg"
+          disabled={!user}
+          onClick={() => {
+            // Scroll to review section
+            const reviewSection = document.getElementById('review-section');
+            if (reviewSection) {
+              reviewSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
+          {user ? 'Leave a review' : 'Log in to review'}
+        </Button>
+      </div>
+
+      {/* Additional Content Below */}
+      <div className="container mx-auto px-6 py-10">
+        <section className="grid gap-6 lg:grid-cols-3">
+          <article className="lg:col-span-2 grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Overview</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4 text-sm text-muted-foreground">
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">Region: {whisky.region}</Badge>
@@ -330,9 +414,8 @@ const WhiskyDossier = () => {
                     {whisky.overview || `A classic expression from ${whisky.distillery}. This placeholder narrative will be replaced with a short story about the distillery, cask program, and what to expect in the glass.`}
                   </p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
           <Card>
             <CardHeader>
@@ -345,7 +428,7 @@ const WhiskyDossier = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="review-section">
             <CardHeader>
               <CardTitle>Your Palate</CardTitle>
             </CardHeader>
@@ -470,7 +553,8 @@ const WhiskyDossier = () => {
           </Card>
         </aside>
       </section>
-    </main>
+      </div>
+    </>
   );
 };
 
