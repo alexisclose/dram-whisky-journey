@@ -139,7 +139,9 @@ const WhiskyDossier = () => {
     queryFn: async () => {
       if (!dbWhisky?.id) return [];
       console.log("Fetching reviews for whisky ID:", dbWhisky.id);
-      const { data, error } = await supabase
+      
+      // First get tasting notes
+      const { data: tastingNotes, error: notesError } = await supabase
         .from("tasting_notes")
         .select(`
           id,
@@ -148,19 +150,45 @@ const WhiskyDossier = () => {
           flavors,
           intensity_ratings,
           created_at,
-          user_id,
-          profiles!inner(display_name, username)
+          user_id
         `)
         .eq("whisky_id", dbWhisky.id)
         .order("created_at", { ascending: false })
         .limit(10);
       
-      console.log("Query result:", { data, error });
-      if (error) {
-        console.error("Query error:", error);
-        throw error;
+      if (notesError) {
+        console.error("Notes query error:", notesError);
+        throw notesError;
       }
-      return data || [];
+
+      if (!tastingNotes || tastingNotes.length === 0) {
+        console.log("No tasting notes found");
+        return [];
+      }
+
+      // Get user profiles for the notes
+      const userIds = tastingNotes.map(note => note.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username")
+        .in("user_id", userIds);
+
+      if (profilesError) {
+        console.error("Profiles query error:", profilesError);
+        throw profilesError;
+      }
+
+      // Combine the data
+      const reviewsWithProfiles = tastingNotes.map(note => ({
+        ...note,
+        profiles: profiles?.find(p => p.user_id === note.user_id) || {
+          display_name: "Anonymous",
+          username: "anonymous"
+        }
+      }));
+
+      console.log("Final reviews data:", reviewsWithProfiles);
+      return reviewsWithProfiles;
     },
     enabled: !!dbWhisky?.id,
   });
