@@ -393,9 +393,22 @@ const WhiskyDossier = () => {
     return Math.round(similarity * 100);
   }, [userTastingNotes, whisky?.expert_score_fruit, whisky?.expert_score_floral, whisky?.expert_score_oak, whisky?.expert_score_smoke, whisky?.expert_score_spice]);
 
-  // Generate mock ratings for now
-  const mockRating = 4.2;
-  const mockReviews = 79;
+  // Calculate real rating statistics from user reviews
+  const ratingStats = useMemo(() => {
+    if (!userReviews || userReviews.length === 0) {
+      return { averageRating: null, totalReviews: 0 };
+    }
+
+    const ratingsWithValues = userReviews.filter(review => review.rating !== null);
+    if (ratingsWithValues.length === 0) {
+      return { averageRating: null, totalReviews: 0 };
+    }
+
+    const totalRating = ratingsWithValues.reduce((sum, review) => sum + (review.rating || 0), 0);
+    const averageRating = Math.round((totalRating / ratingsWithValues.length) * 10) / 10;
+    
+    return { averageRating, totalReviews: ratingsWithValues.length };
+  }, [userReviews]);
 
   return (
     <>
@@ -479,21 +492,30 @@ const WhiskyDossier = () => {
             {/* Stats Cards - Mobile Stack */}
             <div className="space-y-4 mb-8">
               {/* Rating Card */}
-              <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-white mb-3 drop-shadow-lg">{mockRating}</div>
-                  <div className="flex items-center justify-center gap-1 mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className="w-6 h-6 text-yellow-400 drop-shadow-lg"
-                        fill={star <= Math.floor(mockRating) ? "currentColor" : "none"}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-white/80 font-medium drop-shadow-lg">{mockReviews} ratings</div>
-                </div>
-              </div>
+               <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                 <div className="text-center">
+                   {ratingStats.averageRating !== null ? (
+                     <>
+                       <div className="text-4xl font-bold text-white mb-3 drop-shadow-lg">{ratingStats.averageRating}</div>
+                       <div className="flex items-center justify-center gap-1 mb-2">
+                         {[1, 2, 3, 4, 5].map((star) => (
+                           <Star
+                             key={star}
+                             className="w-6 h-6 text-yellow-400 drop-shadow-lg"
+                             fill={star <= Math.floor(ratingStats.averageRating || 0) ? "currentColor" : "none"}
+                           />
+                         ))}
+                       </div>
+                       <div className="text-white/80 font-medium drop-shadow-lg">{ratingStats.totalReviews} rating{ratingStats.totalReviews !== 1 ? 's' : ''}</div>
+                     </>
+                   ) : (
+                     <>
+                       <div className="text-2xl font-bold text-white mb-3 drop-shadow-lg">No ratings yet</div>
+                       <div className="text-white/80 font-medium drop-shadow-lg">Be the first to rate this whisky</div>
+                     </>
+                   )}
+                 </div>
+               </div>
 
               {/* Match Card */}
               <div className="bg-black/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
