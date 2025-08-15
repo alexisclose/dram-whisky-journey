@@ -337,9 +337,9 @@ const WhiskyDossier = () => {
 
   const title = `${whisky.distillery} — ${whisky.name}`;
 
-  // Calculate user's flavor profile from their tasting notes
-  const userFlavorProfile = useMemo(() => {
-    if (!userTastingNotes || userTastingNotes.length === 0) return null;
+  // Calculate match percentage using user's flavor profile and whisky expert scores
+  const matchPercentage = useMemo(() => {
+    if (!userTastingNotes || !whisky || userTastingNotes.length === 0) return 0;
 
     // Filter notes that have both rating and intensity ratings
     const validNotes = userTastingNotes.filter(note => 
@@ -348,7 +348,7 @@ const WhiskyDossier = () => {
       typeof note.intensity_ratings === 'object'
     );
 
-    if (validNotes.length === 0) return null;
+    if (validNotes.length === 0) return 0;
 
     // Convert slider values (0-4) to numerical scale (0-10)
     const convertSliderToScore = (sliderValue: number): number => {
@@ -359,12 +359,14 @@ const WhiskyDossier = () => {
     // Calculate weighted averages for each flavor
     const totalWeight = validNotes.reduce((sum, note) => sum + (note.rating || 0), 0);
     
-    if (totalWeight === 0) return null;
+    if (totalWeight === 0) return 0;
 
     const flavors = ['fruit', 'floral', 'oak', 'smoke', 'spice'];
-    const profile: Record<string, number> = {};
+    const userVector: number[] = [];
+    const whiskyVector: number[] = [];
 
     flavors.forEach(flavor => {
+      // Calculate user's weighted average for this flavor
       const weightedSum = validNotes.reduce((sum, note) => {
         const sliderValue = note.intensity_ratings[flavor] || 0;
         const score = convertSliderToScore(sliderValue);
@@ -372,31 +374,13 @@ const WhiskyDossier = () => {
         return sum + (score * weight);
       }, 0);
 
-      profile[flavor] = Math.round((weightedSum / totalWeight) * 10) / 10;
+      const userScore = Math.round((weightedSum / totalWeight) * 10) / 10;
+      userVector.push(userScore);
+
+      // Get whisky expert score
+      const expertScoreKey = `expert_score_${flavor}` as keyof typeof whisky;
+      whiskyVector.push(whisky[expertScoreKey] as number || 0);
     });
-
-    return profile;
-  }, [userTastingNotes]);
-
-  // Calculate match percentage using cosine similarity
-  const matchPercentage = useMemo(() => {
-    if (!userFlavorProfile || !whisky) return 0;
-
-    const userVector = [
-      userFlavorProfile.fruit || 0,
-      userFlavorProfile.floral || 0,
-      userFlavorProfile.oak || 0,
-      userFlavorProfile.smoke || 0,
-      userFlavorProfile.spice || 0
-    ];
-
-    const whiskyVector = [
-      whisky.expert_score_fruit || 0,
-      whisky.expert_score_floral || 0,
-      whisky.expert_score_oak || 0,
-      whisky.expert_score_smoke || 0,
-      whisky.expert_score_spice || 0
-    ];
 
     // Calculate cosine similarity
     const dotProduct = userVector.reduce((sum, val, i) => sum + val * whiskyVector[i], 0);
@@ -407,7 +391,7 @@ const WhiskyDossier = () => {
 
     const similarity = dotProduct / (userMagnitude * whiskyMagnitude);
     return Math.round(similarity * 100);
-  }, [userFlavorProfile, whisky]);
+  }, [userTastingNotes, whisky?.expert_score_fruit, whisky?.expert_score_floral, whisky?.expert_score_oak, whisky?.expert_score_smoke, whisky?.expert_score_spice]);
 
   // Generate mock ratings for now
   const mockRating = 4.2;
