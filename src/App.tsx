@@ -14,6 +14,7 @@ import University from "./pages/University";
 import Tasting from "./pages/Tasting";
 import Explore from "./pages/Explore";
 import WhiskyUpload from "./pages/WhiskyUpload";
+import AddWhisky from "./pages/AddWhisky";
 
 import Quiz from "./pages/Quiz";
 import Certificate from "./pages/Certificate";

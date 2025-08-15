@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Search, Filter, MapPin } from "lucide-react";
+import { Search, Filter, MapPin, Plus } from "lucide-react";
 
 type WhiskyRow = {
   id: string;
@@ -102,9 +102,17 @@ const Explore = () => {
           <p className="text-xl text-muted-foreground mb-6">
             Discover our complete collection of whiskies from around the world
           </p>
-          <p className="text-muted-foreground">
-            {whiskies?.length || 0} whiskies available • {filteredWhiskies.length} shown
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
+            <p className="text-muted-foreground">
+              {whiskies?.length || 0} whiskies available • {filteredWhiskies.length} shown
+            </p>
+            <Button asChild>
+              <Link to="/add-whisky">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Your Whisky
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Search and Filters */}
