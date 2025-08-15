@@ -151,6 +151,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_whiskies: {
+        Row: {
+          created_at: string
+          distillery: string
+          flavors: string[]
+          id: string
+          image_url: string | null
+          intensity_ratings: Json | null
+          location: string
+          name: string
+          rating: number | null
+          region: string
+          review_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distillery: string
+          flavors?: string[]
+          id?: string
+          image_url?: string | null
+          intensity_ratings?: Json | null
+          location: string
+          name: string
+          rating?: number | null
+          region: string
+          review_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distillery?: string
+          flavors?: string[]
+          id?: string
+          image_url?: string | null
+          intensity_ratings?: Json | null
+          location?: string
+          name?: string
+          rating?: number | null
+          region?: string
+          review_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       whiskies: {
         Row: {
           created_at: string
