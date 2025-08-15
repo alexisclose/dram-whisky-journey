@@ -29,6 +29,10 @@ type WhiskyRow = {
   pairs_well_with_c?: string;
   set_code: string;
   created_at: string;
+  is_user_submitted?: boolean;
+  user_id?: string;
+  review_text?: string;
+  rating?: number;
 };
 
 const Explore = () => {
@@ -38,13 +42,34 @@ const Explore = () => {
   const { data: whiskies, isLoading } = useQuery({
     queryKey: ["explore-whiskies"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch regular whiskies
+      const { data: regularWhiskies, error: regularError } = await supabase
         .from("whiskies")
         .select("*")
         .order("distillery", { ascending: true });
       
-      if (error) throw error;
-      return data as WhiskyRow[];
+      if (regularError) throw regularError;
+
+      // Fetch user-submitted whiskies
+      const { data: userWhiskies, error: userError } = await supabase
+        .from("user_whiskies")
+        .select("*")
+        .order("distillery", { ascending: true });
+      
+      if (userError) throw userError;
+
+      // Combine and format both types
+      const allWhiskies: WhiskyRow[] = [
+        ...(regularWhiskies || []).map(w => ({ ...w, is_user_submitted: false })),
+        ...(userWhiskies || []).map(w => ({ 
+          ...w, 
+          is_user_submitted: true,
+          overview: w.review_text,
+          set_code: 'user-submitted'
+        }))
+      ];
+
+      return allWhiskies.sort((a, b) => a.distillery.localeCompare(b.distillery));
     },
   });
 
@@ -192,6 +217,11 @@ const Explore = () => {
                       <CardDescription className="text-base font-medium">
                         {whisky.name}
                       </CardDescription>
+                      {whisky.is_user_submitted && (
+                        <Badge variant="secondary" className="text-xs mt-1">
+                          Community Added
+                        </Badge>
+                      )}
                     </div>
                     {whisky.image_url && (
                       <img 
@@ -222,7 +252,14 @@ const Explore = () => {
                     </p>
                   )}
                   
-                  {(whisky.expert_score_fruit || whisky.expert_score_floral || whisky.expert_score_spice) && (
+                  {whisky.is_user_submitted && whisky.rating && (
+                    <div className="mb-4">
+                      <span className="text-xs font-medium text-muted-foreground">User Rating: </span>
+                      <span className="text-xs">{whisky.rating}/5 ⭐</span>
+                    </div>
+                  )}
+
+                  {!whisky.is_user_submitted && (whisky.expert_score_fruit || whisky.expert_score_floral || whisky.expert_score_spice) && (
                     <div className="space-y-2 mb-4">
                       {whisky.expert_score_fruit && (
                         <div>
