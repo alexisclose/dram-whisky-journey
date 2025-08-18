@@ -254,10 +254,12 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
       
       markerEl.addEventListener('mouseenter', () => {
         markerEl.style.transform = 'scale(1.2)';
+        markerEl.style.transformOrigin = 'center';
       });
       
       markerEl.addEventListener('mouseleave', () => {
         markerEl.style.transform = 'scale(1)';
+        markerEl.style.transformOrigin = 'center';
       });
       
       const marker = new mapboxgl.Marker(markerEl)
