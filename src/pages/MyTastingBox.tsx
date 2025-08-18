@@ -114,7 +114,7 @@ const MyTastingBox = () => {
       <p className="text-muted-foreground mb-6 text-sm sm:text-base">Explore the interactive map of Japan and open dossiers. Add quick ratings below.</p>
 
       <div className="mb-6 sm:mb-8 animate-fade-in">
-        <WhiskyMap />
+        <WhiskyMap whiskies={whiskies || []} />
       </div>
 
       <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
