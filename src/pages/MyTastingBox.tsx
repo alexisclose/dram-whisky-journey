@@ -17,6 +17,8 @@ type WhiskyRow = {
   name: string;
   region: string | null;
   location?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   set_code: string;
 };
 
@@ -32,7 +34,7 @@ const MyTastingBox = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whiskies")
-        .select("id, distillery, name, region, location, set_code")
+        .select("id, distillery, name, region, location, latitude, longitude, set_code")
         .eq("set_code", activeSet);
       if (error) throw error;
       return (data || []) as WhiskyRow[];
