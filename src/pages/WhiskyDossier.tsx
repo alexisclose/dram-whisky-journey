@@ -543,9 +543,12 @@ const WhiskyDossier = () => {
             {/* Bottle Image - Mobile Optimized */}
             <div className="flex justify-center mb-8">
               <img
-                src="/placeholder.svg"
+                src={whisky.image_url || "/placeholder.svg"}
                 alt={`${whisky.distillery} ${whisky.name} bottle`}
                 className="w-32 h-auto max-h-48 object-contain drop-shadow-2xl"
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.svg";
+                }}
               />
             </div>
 
