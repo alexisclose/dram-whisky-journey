@@ -5,15 +5,17 @@ import { Link } from "react-router-dom";
 import { BookOpen, Box, Trophy } from "lucide-react";
 import { useActiveSet } from "@/context/ActiveSetContext";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useState } from "react";
 import Activate from "./Activate";
 
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
   const { activeSet, loading } = useActiveSet();
   const { user } = useAuthSession();
+  const [showActivation, setShowActivation] = useState(false);
 
   // If user is not logged in or hasn't activated a set, show activation page
-  if (!user || (!loading && activeSet === "classic")) {
+  if (!user || (!loading && activeSet === "classic") || showActivation) {
     return <Activate />;
   }
 
@@ -97,7 +99,7 @@ const Tasting = () => {
           variant="ghost" 
           size="sm" 
           className="text-muted-foreground hover:text-foreground text-sm"
-          onClick={() => window.location.reload()}
+          onClick={() => setShowActivation(true)}
         >
           Activate Another Set
         </Button>
