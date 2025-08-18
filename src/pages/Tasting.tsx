@@ -1,18 +1,23 @@
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { BookOpen, Box, Trophy } from "lucide-react";
 import { useActiveSet } from "@/context/ActiveSetContext";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useState, useEffect } from "react";
-import Activate from "./Activate";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
-  const { activeSet, loading } = useActiveSet();
+  const { activeSet, loading, setActiveSet } = useActiveSet();
   const { user } = useAuthSession();
   const [showActivation, setShowActivation] = useState(false);
+  const [code, setCode] = useState("");
+  const [activating, setActivating] = useState(false);
 
   // Reset showActivation when activeSet changes (successful activation)
   useEffect(() => {
@@ -21,9 +26,84 @@ const Tasting = () => {
     }
   }, [activeSet]);
 
+  const handleActivate = async () => {
+    if (!code.trim()) {
+      toast.info("Enter your activation code");
+      return;
+    }
+    if (!user) {
+      toast.error("Please log in to activate your set");
+      return;
+    }
+    try {
+      setActivating(true);
+      const { data, error } = await supabase.rpc(
+        'activate_with_code' as any,
+        { _code: code.trim() } as any
+      );
+      if (error) throw error;
+      const result = Array.isArray(data) ? (data[0] as any) : null;
+      if (!result || !result.set_code) {
+        toast.error("Invalid or inactive code");
+        return;
+      }
+
+      const activatedSetCode = result.set_code as string;
+      setActiveSet(activatedSetCode);
+      toast.success(`Activated: ${result.name || activatedSetCode}`);
+      setCode("");
+      setShowActivation(false);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || "Activation failed");
+    } finally {
+      setActivating(false);
+    }
+  };
+
   // If user is not logged in or hasn't activated a set, show activation page
   if (!user || (!loading && activeSet === "classic") || showActivation) {
-    return <Activate />;
+    return (
+      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <Helmet>
+          <title>Activate Tasting Set — Enter Code</title>
+          <meta name="description" content="Activate your whisky tasting set by entering your code to unlock the correct drams." />
+          <link rel="canonical" href={canonical} />
+        </Helmet>
+
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">Activate Your Tasting Set</h1>
+
+        <Card className="max-w-xl">
+          <CardHeader>
+            <CardTitle>Enter Activation Code</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="code">Code</Label>
+              <Input
+                id="code"
+                placeholder="e.g., JPN-2025"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Codes map to a tasting set (e.g., classic or japanese). Once activated, your Tasting Journey will show the right drams.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleActivate} disabled={activating}>
+              {activating ? "Activating..." : "Activate"}
+            </Button>
+            {showActivation && (
+              <Button variant="ghost" onClick={() => setShowActivation(false)} className="ml-2">
+                Cancel
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      </main>
+    );
   }
 
   // Show loading state while checking active set
