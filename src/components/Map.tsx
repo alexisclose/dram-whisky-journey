@@ -95,15 +95,23 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
 
   // Calculate map bounds and center based on whisky locations
   const mapConfig = useMemo(() => {
-    if (!whiskies.length) return { center: [0, 20] as [number, number], zoom: 2, title: "World Map" };
+    if (!whiskies.length) return { center: [0, 20] as [number, number], zoom: 2, title: "World Map", bounds: null };
 
-    // Get unique countries from whiskies
+    // Collect all coordinates (precise or fallback)
+    const coordinates: [number, number][] = [];
     const countries = new Set<string>();
     const regions = new Set<string>();
 
     whiskies.forEach(whisky => {
-      // Use precise coordinates if available
-      if (whisky.latitude && whisky.longitude) return;
+      if (whisky.latitude && whisky.longitude) {
+        // Use precise coordinates
+        coordinates.push([whisky.longitude, whisky.latitude]);
+      } else {
+        // Use fallback coordinates
+        const location = whisky.location || whisky.region || "World";
+        const fallbackCoords = LOCATION_COORDINATES[location] || LOCATION_COORDINATES["World"];
+        coordinates.push(fallbackCoords);
+      }
       
       const location = whisky.location || whisky.region || "";
       
@@ -132,31 +140,49 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
       }
     });
 
-    // Determine title and center based on countries
-    const countriesArray = Array.from(countries);
-    if (countriesArray.length === 1) {
-      const country = countriesArray[0];
-      const coords = LOCATION_COORDINATES[country] || LOCATION_COORDINATES["World"];
-      let zoom = 5.5;
+    // Calculate bounds from all coordinates
+    if (coordinates.length > 0) {
+      const lngs = coordinates.map(coord => coord[0]);
+      const lats = coordinates.map(coord => coord[1]);
       
-      if (country === "Scotland") zoom = 6.5;
-      else if (country === "Ireland") zoom = 6.5;
-      else if (country === "United States") zoom = 4;
+      const bounds: [[number, number], [number, number]] = [
+        [Math.min(...lngs), Math.min(...lats)], // Southwest
+        [Math.max(...lngs), Math.max(...lats)]  // Northeast
+      ];
       
+      // Add padding to bounds
+      const lngPadding = (bounds[1][0] - bounds[0][0]) * 0.1;
+      const latPadding = (bounds[1][1] - bounds[0][1]) * 0.1;
+      
+      bounds[0][0] -= lngPadding;
+      bounds[0][1] -= latPadding;
+      bounds[1][0] += lngPadding;
+      bounds[1][1] += latPadding;
+      
+      // Calculate center
+      const center: [number, number] = [
+        (bounds[0][0] + bounds[1][0]) / 2,
+        (bounds[0][1] + bounds[1][1]) / 2
+      ];
+
+      // Determine title based on countries
+      const countriesArray = Array.from(countries);
+      let title = "Whisky Map";
+      if (countriesArray.length === 1) {
+        title = `${countriesArray[0]} Whisky Map`;
+      } else if (countriesArray.length > 1) {
+        title = "International Whisky Map";
+      }
+
       return {
-        center: coords as [number, number],
-        zoom,
-        title: `${country} Whisky Map`
-      };
-    } else if (countriesArray.length > 1) {
-      return {
-        center: LOCATION_COORDINATES["World"] as [number, number],
-        zoom: 2,
-        title: "International Whisky Map"
+        center,
+        zoom: 6, // Will be overridden by fitBounds
+        title,
+        bounds
       };
     }
 
-    return { center: LOCATION_COORDINATES["World"] as [number, number], zoom: 2, title: "Whisky Map" };
+    return { center: LOCATION_COORDINATES["World"] as [number, number], zoom: 2, title: "Whisky Map", bounds: null };
   }, [whiskies]);
 
   // Fetch Mapbox token from Supabase
@@ -206,6 +232,13 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
     map.scrollZoom.disable();
     
     map.on("load", () => {
+      // Fit bounds to show all whisky locations if bounds are available
+      if (mapConfig.bounds) {
+        map.fitBounds(mapConfig.bounds, {
+          padding: 50,
+          maxZoom: 10
+        });
+      }
       setReady(true);
     });
     
