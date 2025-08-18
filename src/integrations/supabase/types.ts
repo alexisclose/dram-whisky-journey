@@ -210,7 +210,9 @@ export type Database = {
           expert_score_spice: number | null
           id: string
           image_url: string | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           name: string
           overview: string | null
           pairs_well_with_a: string | null
@@ -230,7 +232,9 @@ export type Database = {
           expert_score_spice?: number | null
           id?: string
           image_url?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           name: string
           overview?: string | null
           pairs_well_with_a?: string | null
@@ -250,7 +254,9 @@ export type Database = {
           expert_score_spice?: number | null
           id?: string
           image_url?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           name?: string
           overview?: string | null
           pairs_well_with_a?: string | null
