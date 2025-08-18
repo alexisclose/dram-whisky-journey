@@ -34,18 +34,18 @@ const Dashboard = () => {
   ];
 
   return (
-    <main className="container mx-auto px-6 py-10">
+    <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <Helmet>
         <title>Dashboard — Dram Discoverer</title>
         <meta name="description" content="Your central hub to learn, taste, share, and test in the Dram Discoverer whisky journey." />
         <link rel="canonical" href={canonical} />
       </Helmet>
-      <header className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold">Your Whisky Hub</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">Navigate through the journey: complete the University modules, savour each dram, connect with others, and earn your certificate.</p>
+      <header className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Your Whisky Hub</h1>
+        <p className="text-muted-foreground mt-2 max-w-2xl text-sm sm:text-base">Navigate through the journey: complete the University modules, savour each dram, connect with others, and earn your certificate.</p>
       </header>
 
-      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {tiles.map(({ title, desc, href, icon: Icon }) => (
           <Card key={title} className="h-full">
             <CardHeader>

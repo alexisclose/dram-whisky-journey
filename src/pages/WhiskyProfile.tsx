@@ -295,18 +295,18 @@ const WhiskyProfile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Button 
             variant="ghost" 
             onClick={() => navigate(-1)}
-            className="p-2"
+            className="p-2 self-start"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-4xl font-bold">Your Whisky Profile</h1>
-            <p className="text-xl text-muted-foreground mt-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Your Whisky Profile</h1>
+            <p className="text-lg sm:text-xl text-muted-foreground mt-1 sm:mt-2">
               Discover your unique flavor preferences
             </p>
           </div>
@@ -341,11 +341,11 @@ const WhiskyProfile = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-96">
+                <div className="h-80 sm:h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={getChartData()}>
                       <PolarGrid />
-                      <PolarAngleAxis dataKey="flavor" />
+                      <PolarAngleAxis dataKey="flavor" tick={{ fontSize: 12 }} />
                       <PolarRadiusAxis 
                         angle={90} 
                         domain={[0, 10]} 
@@ -363,22 +363,22 @@ const WhiskyProfile = () => {
                   </ResponsiveContainer>
                 </div>
 
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4">
                   {Object.entries(flavorProfile).map(([flavor, value]) => (
                     <div key={flavor} className="text-center">
-                      <div className="text-2xl font-bold text-orange-400">
-                        {value.toFixed(1)}
-                      </div>
-                      <div className="text-sm text-muted-foreground capitalize">
-                        {flavor}
-                      </div>
+                  <div className="text-lg sm:text-2xl font-bold text-orange-400">
+                    {value.toFixed(1)}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground capitalize">
+                    {flavor}
+                  </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-8 p-4 bg-muted rounded-lg">
-                  <h3 className="font-semibold mb-2">How Your Profile Works</h3>
-                  <p className="text-sm text-muted-foreground">
+                <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-muted rounded-lg">
+                  <h3 className="font-semibold mb-2 text-sm sm:text-base">How Your Profile Works</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Your flavor profile is calculated using a weighted average of your intensity slider 
                     ratings, where whiskies you rated higher have more influence on your overall profile. 
                     This creates a mathematical representation of your palate preferences.
@@ -399,12 +399,12 @@ const WhiskyProfile = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-96">
+                  <div className="h-80 sm:h-96">
                     <ReactWordcloud
                       words={wordCloudData}
                       options={{
                         fontFamily: 'Inter, system-ui, sans-serif',
-                        fontSizes: [14, 60],
+                        fontSizes: [12, 48],
                         rotations: 0, // Keep all text horizontal
                         rotationAngles: [0, 0], // Ensure horizontal orientation
                         scale: 'sqrt',
@@ -415,9 +415,9 @@ const WhiskyProfile = () => {
                       }}
                     />
                   </div>
-                  <div className="mt-4 p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold mb-2">How Your Word Cloud Works</h3>
-                    <p className="text-sm text-muted-foreground">
+                  <div className="mt-4 p-3 sm:p-4 bg-muted rounded-lg">
+                    <h3 className="font-semibold mb-2 text-sm sm:text-base">How Your Word Cloud Works</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       The size of each word represents how much you enjoy that flavor, calculated using 
                       weighted averages based on your star ratings. Words from higher-rated whiskies 
                       appear larger, showing your most appreciated tasting notes.

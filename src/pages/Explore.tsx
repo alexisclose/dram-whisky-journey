@@ -121,17 +121,17 @@ const Explore = () => {
         <meta name="keywords" content="whisky, whiskey, explore, collection, Scotland, Ireland, Japan, bourbon" />
       </Helmet>
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Explore Whiskies</h1>
-          <p className="text-xl text-muted-foreground mb-6">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Explore Whiskies</h1>
+          <p className="text-lg sm:text-xl text-muted-foreground mb-4 sm:mb-6 px-2">
             Discover our complete collection of whiskies from around the world
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
-            <p className="text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4">
+            <p className="text-muted-foreground text-sm sm:text-base">
               {whiskies?.length || 0} whiskies available • {filteredWhiskies.length} shown
             </p>
-            <Button asChild>
+            <Button asChild className="w-full sm:w-auto">
               <Link to="/add-whisky">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Your Whisky
@@ -141,8 +141,8 @@ const Explore = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <div className="mb-6 sm:mb-8 space-y-4">
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
             {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -205,7 +205,7 @@ const Explore = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredWhiskies.map((whisky) => (
               <Card key={whisky.id} className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02]">
                 <CardHeader>

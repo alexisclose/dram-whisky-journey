@@ -1,4 +1,3 @@
-
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,17 +20,17 @@ const Signup = () => {
   }
 
   return (
-    <main className="container mx-auto px-6 py-10">
+    <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <Helmet>
         <title>Sign Up — Dram Discoverer</title>
         <meta name="description" content="Create your account to save progress across learning, tasting, and the quiz." />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <h1 className="text-3xl md:text-4xl font-bold mb-6">Create your account</h1>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-center">Create your account</h1>
 
       <form
-        className="max-w-md space-y-4"
+        className="max-w-md mx-auto space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
           if (loading) return;
@@ -59,7 +58,7 @@ const Signup = () => {
             return;
           }
           if (data.session) {
-            toast.success("Account created! You’re logged in.");
+            toast.success("Account created! You're logged in.");
             navigate("/dashboard");
           } else {
             toast.info("Account created. Check your email to confirm your address.");
@@ -69,21 +68,42 @@ const Signup = () => {
       >
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" required placeholder="you@example.com" />
+          <Input 
+            id="email" 
+            name="email" 
+            type="email" 
+            required 
+            placeholder="you@example.com" 
+            className="mt-1"
+          />
         </div>
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" required placeholder="••••••••" />
+          <Input 
+            id="password" 
+            name="password" 
+            type="password" 
+            required 
+            placeholder="••••••••" 
+            className="mt-1"
+          />
         </div>
         <div>
           <Label htmlFor="nickname">Public Nickname</Label>
-          <Input id="nickname" name="nickname" type="text" required placeholder="What should we call you?" />
+          <Input 
+            id="nickname" 
+            name="nickname" 
+            type="text" 
+            required 
+            placeholder="What should we call you?" 
+            className="mt-1"
+          />
         </div>
-        <Button type="submit" variant="brand" size="lg" className="w-full" disabled={loading}>
+        <Button type="submit" variant="brand" size="lg" className="w-full min-h-[44px]" disabled={loading}>
           {loading ? "Creating account..." : "Sign Up"}
         </Button>
-        <p className="text-sm text-muted-foreground">
-          Already have an account? <Link to="/login" className="underline">Log in</Link>
+        <p className="text-sm text-muted-foreground text-center">
+          Already have an account? <Link to="/login" className="underline font-medium">Log in</Link>
         </p>
       </form>
     </main>

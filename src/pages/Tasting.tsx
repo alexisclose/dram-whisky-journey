@@ -111,21 +111,21 @@ const Tasting = () => {
       toast.error(e.message || "Failed to save rating");
     }
   });
-  return <main className="container mx-auto px-6 py-10">
+    return <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <Helmet>
         <title>Tasting Journey — Explore 12 Drams</title>
         <meta name="description" content="Browse your curated set of 12 whiskies. Open dossiers, record your palate and add ratings as you taste." />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <h1 className="text-3xl md:text-4xl font-bold mb-6">The Tasting Journey</h1>
-      <p className="text-muted-foreground mb-6">Explore the interactive map of Japan and open dossiers. Add quick ratings below.</p>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">The Tasting Journey</h1>
+      <p className="text-muted-foreground mb-6 text-sm sm:text-base">Explore the interactive map of Japan and open dossiers. Add quick ratings below.</p>
 
-      <div className="mb-8 animate-fade-in">
+      <div className="mb-6 sm:mb-8 animate-fade-in">
         <WhiskyMap />
       </div>
 
-      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {whiskies?.map(w => <Card key={w.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">

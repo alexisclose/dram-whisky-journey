@@ -28,22 +28,21 @@ const SiteHeader = () => {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="font-bold tracking-tight text-lg">
+      <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-2 sm:gap-6">
+          <Link to="/" className="font-bold tracking-tight text-base sm:text-lg">
             Dram Discoverer
           </Link>
-          <nav className="hidden md:flex items-center gap-1" aria-label="Main Navigation">
+          <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
             <NavLink className={navLinkClass} to="/dashboard">Hub</NavLink>
-            <NavLink className={navLinkClass} to="/university">Whisky University</NavLink>
-            <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
+            <NavLink className={navLinkClass} to="/university">University</NavLink>
+            <NavLink className={navLinkClass} to="/tasting">Tasting</NavLink>
             <NavLink className={navLinkClass} to="/explore">Explore</NavLink>
-            <NavLink className={navLinkClass} to="/quiz">Master's Quiz</NavLink>
-            <NavLink className={navLinkClass} to="/activate">Activate</NavLink>
+            <NavLink className={navLinkClass} to="/quiz">Quiz</NavLink>
             {!loading && user && (
               <>
-                <NavLink className={navLinkClass} to="/reviews">My Whiskies</NavLink>
-                <NavLink className={navLinkClass} to="/profile">My Whisky Profile</NavLink>
+                <NavLink className={navLinkClass} to="/reviews">Reviews</NavLink>
+                <NavLink className={navLinkClass} to="/profile">Profile</NavLink>
                 {isAdmin && (
                   <NavLink className={navLinkClass} to="/whisky-upload">Upload</NavLink>
                 )}
@@ -54,20 +53,20 @@ const SiteHeader = () => {
         <div className="flex items-center gap-2">
           {!loading && !user && (
             <>
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" className="text-xs sm:text-sm">
                 <Link to="/login">Log in</Link>
               </Button>
-              <Button asChild variant="brand" size="sm">
+              <Button asChild variant="brand" size="sm" className="text-xs sm:text-sm">
                 <Link to="/signup">Sign up</Link>
               </Button>
             </>
           )}
           {!loading && user && (
             <>
-              <span className="hidden sm:inline text-sm text-muted-foreground mr-1">
+              <span className="hidden md:inline text-xs sm:text-sm text-muted-foreground mr-1 truncate max-w-32">
                 {user.email}
               </span>
-              <Button onClick={handleLogout} variant="outline" size="sm">
+              <Button onClick={handleLogout} variant="outline" size="sm" className="text-xs sm:text-sm">
                 Log out
               </Button>
             </>

@@ -79,16 +79,18 @@ const MyReviews = () => {
   const empty = useMemo(() => (data ?? []).length === 0, [data]);
 
   return (
-    <main className="container mx-auto px-6 py-10">
+    <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <Helmet>
         <title>My Whiskies — Dram Discoverer</title>
         <meta name="description" content="See all the tasting notes and ratings you've submitted." />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl md:text-4xl font-bold">My Whiskies</h1>
-        <Button variant="outline" onClick={() => navigate("/tasting")}>Go to Tasting</Button>
+      <header className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">My Whiskies</h1>
+        <Button variant="outline" onClick={() => navigate("/tasting")} className="w-full sm:w-auto">
+          Go to Tasting
+        </Button>
       </header>
 
       {!loading && !user && (
@@ -117,7 +119,7 @@ const MyReviews = () => {
             {!wlLoading && (wishlist?.length ?? 0) === 0 && (
               <p className="text-muted-foreground">Your wishlist is empty.</p>
             )}
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {(wishlist ?? []).map((item: any) => (
                 <Card key={item.id}>
                   <CardHeader>
@@ -141,7 +143,7 @@ const MyReviews = () => {
           {!isLoading && empty && (
             <p className="text-muted-foreground">You haven't added any reviews yet.</p>
           )}
-          <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {(data ?? []).map((tn) => {
               const flavors = tn.flavors ?? [];
 

@@ -1,4 +1,3 @@
-
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,17 +20,17 @@ const Login = () => {
   }
 
   return (
-    <main className="container mx-auto px-6 py-10">
+    <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <Helmet>
         <title>Log In — Dram Discoverer</title>
         <meta name="description" content="Log in to your Dram Discoverer account to continue your whisky journey." />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <h1 className="text-3xl md:text-4xl font-bold mb-6">Welcome back</h1>
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-center">Welcome back</h1>
 
       <form
-        className="max-w-md space-y-4"
+        className="max-w-md mx-auto space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
           if (loading) return;
@@ -55,17 +54,31 @@ const Login = () => {
       >
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" required placeholder="you@example.com" />
+          <Input 
+            id="email" 
+            name="email" 
+            type="email" 
+            required 
+            placeholder="you@example.com" 
+            className="mt-1"
+          />
         </div>
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" required placeholder="••••••••" />
+          <Input 
+            id="password" 
+            name="password" 
+            type="password" 
+            required 
+            placeholder="••••••••" 
+            className="mt-1"
+          />
         </div>
-        <Button type="submit" variant="brand" size="lg" className="w-full" disabled={loading}>
+        <Button type="submit" variant="brand" size="lg" className="w-full min-h-[44px]" disabled={loading}>
           {loading ? "Logging in..." : "Log In"}
         </Button>
-        <p className="text-sm text-muted-foreground">
-          No account yet? <Link to="/signup" className="underline">Create one</Link>
+        <p className="text-sm text-muted-foreground text-center">
+          No account yet? <Link to="/signup" className="underline font-medium">Create one</Link>
         </p>
       </form>
     </main>
