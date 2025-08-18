@@ -3,9 +3,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { BookOpen, Box, Trophy } from "lucide-react";
+import { useActiveSet } from "@/context/ActiveSetContext";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import Activate from "./Activate";
 
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
+  const { activeSet, loading } = useActiveSet();
+  const { user } = useAuthSession();
+
+  // If user is not logged in or hasn't activated a set, show activation page
+  if (!user || (!loading && activeSet === "classic")) {
+    return <Activate />;
+  }
+
+  // Show loading state while checking active set
+  if (loading) {
+    return (
+      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <div className="text-center">Loading...</div>
+      </main>
+    );
+  }
 
   return (
     <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">

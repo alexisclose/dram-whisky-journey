@@ -43,7 +43,6 @@ const SiteHeader = () => {
             <NavLink className={navLinkClass} to="/dashboard">Hub</NavLink>
             <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
             <NavLink className={navLinkClass} to="/explore">Explore</NavLink>
-            <NavLink className={navLinkClass} to="/activate">Activate</NavLink>
             {!loading && user && (
               <>
                 <NavLink className={navLinkClass} to="/reviews">My Whiskies</NavLink>
@@ -72,7 +71,7 @@ const SiteHeader = () => {
                 </div>
                 
                 <nav className="flex flex-col gap-2">
-                   <NavLink 
+                  <NavLink 
                     className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
                     to="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
@@ -92,13 +91,6 @@ const SiteHeader = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Explore
-                  </NavLink>
-                  <NavLink 
-                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    to="/activate"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Activate
                   </NavLink>
                   
                   {!loading && user && (
