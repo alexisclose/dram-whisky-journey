@@ -5,6 +5,9 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -15,6 +18,7 @@ const SiteHeader = () => {
   const { user, loading } = useAuthSession();
   const { isAdmin } = useUserRole();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -33,16 +37,19 @@ const SiteHeader = () => {
           <Link to="/" className="font-bold tracking-tight text-base sm:text-lg">
             Dram Discoverer
           </Link>
+          
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
             <NavLink className={navLinkClass} to="/dashboard">Hub</NavLink>
-            <NavLink className={navLinkClass} to="/university">University</NavLink>
-            <NavLink className={navLinkClass} to="/tasting">Tasting</NavLink>
+            <NavLink className={navLinkClass} to="/university">Whisky University</NavLink>
+            <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
             <NavLink className={navLinkClass} to="/explore">Explore</NavLink>
-            <NavLink className={navLinkClass} to="/quiz">Quiz</NavLink>
+            <NavLink className={navLinkClass} to="/quiz">Master's Quiz</NavLink>
+            <NavLink className={navLinkClass} to="/activate">Activate</NavLink>
             {!loading && user && (
               <>
-                <NavLink className={navLinkClass} to="/reviews">Reviews</NavLink>
-                <NavLink className={navLinkClass} to="/profile">Profile</NavLink>
+                <NavLink className={navLinkClass} to="/reviews">My Whiskies</NavLink>
+                <NavLink className={navLinkClass} to="/profile">My Whisky Profile</NavLink>
                 {isAdmin && (
                   <NavLink className={navLinkClass} to="/whisky-upload">Upload</NavLink>
                 )}
@@ -50,27 +57,152 @@ const SiteHeader = () => {
             )}
           </nav>
         </div>
+        
         <div className="flex items-center gap-2">
-          {!loading && !user && (
-            <>
-              <Button asChild variant="ghost" size="sm" className="text-xs sm:text-sm">
-                <Link to="/login">Log in</Link>
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="lg:hidden">
+              <Button variant="ghost" size="sm" className="p-2">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
               </Button>
-              <Button asChild variant="brand" size="sm" className="text-xs sm:text-sm">
-                <Link to="/signup">Sign up</Link>
-              </Button>
-            </>
-          )}
-          {!loading && user && (
-            <>
-              <span className="hidden md:inline text-xs sm:text-sm text-muted-foreground mr-1 truncate max-w-32">
-                {user.email}
-              </span>
-              <Button onClick={handleLogout} variant="outline" size="sm" className="text-xs sm:text-sm">
-                Log out
-              </Button>
-            </>
-          )}
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <div className="flex flex-col gap-4 mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">Menu</h2>
+                </div>
+                
+                <nav className="flex flex-col gap-2">
+                  <NavLink 
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                    to="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Hub
+                  </NavLink>
+                  <NavLink 
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                    to="/university"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Whisky University
+                  </NavLink>
+                  <NavLink 
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                    to="/tasting"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Tasting Journey
+                  </NavLink>
+                  <NavLink 
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                    to="/explore"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Explore
+                  </NavLink>
+                  <NavLink 
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                    to="/quiz"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Master's Quiz
+                  </NavLink>
+                  <NavLink 
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                    to="/activate"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Activate
+                  </NavLink>
+                  
+                  {!loading && user && (
+                    <>
+                      <div className="border-t my-2"></div>
+                      <NavLink 
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                        to="/reviews"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        My Whiskies
+                      </NavLink>
+                      <NavLink 
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                        to="/profile"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        My Whisky Profile
+                      </NavLink>
+                      {isAdmin && (
+                        <NavLink 
+                          className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                          to="/whisky-upload"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Upload
+                        </NavLink>
+                      )}
+                    </>
+                  )}
+                </nav>
+                
+                <div className="border-t pt-4 mt-4">
+                  {!loading && !user && (
+                    <div className="flex flex-col gap-2">
+                      <Button asChild variant="ghost" className="justify-start">
+                        <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Log in</Link>
+                      </Button>
+                      <Button asChild variant="brand" className="justify-start">
+                        <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>Sign up</Link>
+                      </Button>
+                    </div>
+                  )}
+                  {!loading && user && (
+                    <div className="flex flex-col gap-2">
+                      <div className="text-xs text-muted-foreground px-3 py-1 truncate">
+                        {user.email}
+                      </div>
+                      <Button 
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }} 
+                        variant="outline" 
+                        className="justify-start"
+                      >
+                        Log out
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          {/* Desktop Auth Buttons */}
+          <div className="hidden lg:flex items-center gap-2">
+            {!loading && !user && (
+              <>
+                <Button asChild variant="ghost" size="sm" className="text-xs sm:text-sm">
+                  <Link to="/login">Log in</Link>
+                </Button>
+                <Button asChild variant="brand" size="sm" className="text-xs sm:text-sm">
+                  <Link to="/signup">Sign up</Link>
+                </Button>
+              </>
+            )}
+            {!loading && user && (
+              <>
+                <span className="hidden xl:inline text-xs sm:text-sm text-muted-foreground mr-1 truncate max-w-32">
+                  {user.email}
+                </span>
+                <Button onClick={handleLogout} variant="outline" size="sm" className="text-xs sm:text-sm">
+                  Log out
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>
