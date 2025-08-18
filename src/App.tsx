@@ -12,6 +12,7 @@ import Login from "./pages/Auth/Login";
 import Dashboard from "./pages/Dashboard";
 import University from "./pages/University";
 import Tasting from "./pages/Tasting";
+import MyTastingBox from "./pages/MyTastingBox";
 import Explore from "./pages/Explore";
 import WhiskyUpload from "./pages/WhiskyUpload";
 import AddWhisky from "./pages/AddWhisky";
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/university" element={<University />} />
               <Route path="/tasting" element={<Tasting />} />
+              <Route path="/my-tasting-box" element={<MyTastingBox />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/whisky-upload" element={<WhiskyUpload />} />
               <Route path="/tasting/:id" element={<WhiskyDossier />} />
