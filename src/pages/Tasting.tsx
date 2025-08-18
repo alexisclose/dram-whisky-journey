@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { BookOpen, Box, Trophy } from "lucide-react";
 import { useActiveSet } from "@/context/ActiveSetContext";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Activate from "./Activate";
 
 const Tasting = () => {
@@ -13,6 +13,13 @@ const Tasting = () => {
   const { activeSet, loading } = useActiveSet();
   const { user } = useAuthSession();
   const [showActivation, setShowActivation] = useState(false);
+
+  // Reset showActivation when activeSet changes (successful activation)
+  useEffect(() => {
+    if (activeSet && activeSet !== "classic") {
+      setShowActivation(false);
+    }
+  }, [activeSet]);
 
   // If user is not logged in or hasn't activated a set, show activation page
   if (!user || (!loading && activeSet === "classic") || showActivation) {
