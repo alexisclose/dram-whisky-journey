@@ -249,17 +249,22 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
         border-radius: 50%;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         cursor: pointer;
-        transition: transform 0.2s ease;
+        transition: all 0.2s ease;
+        transform-origin: center center;
       `;
       
       markerEl.addEventListener('mouseenter', () => {
-        markerEl.style.transform = 'scale(1.2)';
-        markerEl.style.transformOrigin = 'center';
+        markerEl.style.width = '14px';
+        markerEl.style.height = '14px';
+        markerEl.style.marginLeft = '-1px';
+        markerEl.style.marginTop = '-1px';
       });
       
       markerEl.addEventListener('mouseleave', () => {
-        markerEl.style.transform = 'scale(1)';
-        markerEl.style.transformOrigin = 'center';
+        markerEl.style.width = '12px';
+        markerEl.style.height = '12px';
+        markerEl.style.marginLeft = '0px';
+        markerEl.style.marginTop = '0px';
       });
       
       const marker = new mapboxgl.Marker(markerEl)
