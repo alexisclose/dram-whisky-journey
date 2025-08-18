@@ -91,6 +91,17 @@ const Tasting = () => {
           </CardContent>
         </Card>
       </section>
+
+      <div className="mt-8 sm:mt-12 text-center">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-muted-foreground hover:text-foreground text-sm"
+          onClick={() => window.location.reload()}
+        >
+          Activate Another Set
+        </Button>
+      </div>
     </main>
   );
 };
