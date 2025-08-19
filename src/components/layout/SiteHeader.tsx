@@ -40,7 +40,6 @@ const SiteHeader = () => {
           
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
-            <NavLink className={navLinkClass} to="/dashboard">Hub</NavLink>
             <NavLink className={navLinkClass} to="/feed">Feed</NavLink>
             <NavLink className={navLinkClass} to="/discover">Discover</NavLink>
             <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
@@ -73,13 +72,6 @@ const SiteHeader = () => {
                 </div>
                 
                 <nav className="flex flex-col gap-2">
-                  <NavLink 
-                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    to="/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Hub
-                  </NavLink>
                   <NavLink 
                     className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
                     to="/feed"
