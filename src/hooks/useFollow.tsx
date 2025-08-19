@@ -31,11 +31,33 @@ export function useFollow(targetUserId?: string) {
     if (!targetUserId) return;
     
     try {
-      // Simplified for now - just return placeholder data until types are updated
+      // Use type assertion to work around missing types
+      const { count: followerCount } = await (supabase as any)
+        .from('user_follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', targetUserId);
+
+      const { count: followingCount } = await (supabase as any)
+        .from('user_follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', targetUserId);
+
+      let isFollowing = false;
+      if (user && user.id !== targetUserId) {
+        const { data } = await (supabase as any)
+          .from('user_follows')
+          .select('id')
+          .eq('follower_id', user.id)
+          .eq('following_id', targetUserId)
+          .maybeSingle();
+        
+        isFollowing = !!data;
+      }
+
       setStats({
-        followerCount: 0,
-        followingCount: 0,
-        isFollowing: false
+        followerCount: followerCount || 0,
+        followingCount: followingCount || 0,
+        isFollowing
       });
     } catch (error) {
       console.error('Error fetching follow stats:', error);
@@ -50,14 +72,22 @@ export function useFollow(targetUserId?: string) {
     setFollowing(true);
     
     try {
-      // Placeholder implementation
+      const { error } = await (supabase as any)
+        .from('user_follows')
+        .insert({
+          follower_id: user.id,
+          following_id: targetUserId
+        });
+
+      if (error) throw error;
+
       setStats(prev => ({
         ...prev,
         isFollowing: true,
         followerCount: prev.followerCount + 1
       }));
 
-      toast.success('Following user (feature coming soon)');
+      toast.success('Following user');
     } catch (error) {
       console.error('Error following user:', error);
       toast.error('Failed to follow user');
@@ -72,14 +102,21 @@ export function useFollow(targetUserId?: string) {
     setFollowing(true);
     
     try {
-      // Placeholder implementation
+      const { error } = await (supabase as any)
+        .from('user_follows')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', targetUserId);
+
+      if (error) throw error;
+
       setStats(prev => ({
         ...prev,
         isFollowing: false,
         followerCount: Math.max(0, prev.followerCount - 1)
       }));
 
-      toast.success('Unfollowed user (feature coming soon)');
+      toast.success('Unfollowed user');
     } catch (error) {
       console.error('Error unfollowing user:', error);
       toast.error('Failed to unfollow user');

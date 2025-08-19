@@ -25,6 +25,7 @@ import MyReviews from "./pages/MyReviews";
 import Activate from "./pages/Activate";
 import WhiskyProfile from "./pages/WhiskyProfile";
 import Feed from "./pages/Feed";
+import UserProfile from "./pages/UserProfile";
 import { ActiveSetProvider } from "./context/ActiveSetContext";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/reviews" element={<MyReviews />} />
               <Route path="/profile" element={<WhiskyProfile />} />
               <Route path="/feed" element={<Feed />} />
+              <Route path="/user/:userId" element={<UserProfile />} />
               <Route path="/quiz" element={<Quiz />} />
               <Route path="/certificate" element={<Certificate />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

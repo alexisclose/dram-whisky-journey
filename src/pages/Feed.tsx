@@ -4,11 +4,13 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Heart, MessageCircle, User, Calendar, Star, Plus } from "lucide-react";
+import { Heart, MessageCircle, User, Calendar, Star, Plus, Send } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 
 interface FeedItem {
@@ -35,6 +37,9 @@ export default function Feed() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [reactingTo, setReactingTo] = useState<string | null>(null);
+  const [postContent, setPostContent] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [showPostDialog, setShowPostDialog] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -49,28 +54,82 @@ export default function Feed() {
     if (!user) return;
     
     try {
-      // For now, return sample data until database types are updated
-      const sampleFeedItems: FeedItem[] = [
-        {
-          item_id: "sample-1",
-          item_type: "social_post",
-          user_id: "sample-user",
-          username: "whisky_lover",
-          display_name: "Whisky Enthusiast", 
-          content: "Just discovered an amazing new Islay scotch! The peat smoke is incredible 🥃",
-          created_at: new Date().toISOString(),
-          is_following: true,
-          reaction_count: 5,
-          comment_count: 2
-        }
-      ];
-      
-      setFeedItems(sampleFeedItems);
+      // Try to use the get_user_feed function first
+      const { data, error } = await (supabase as any).rpc('get_user_feed', {
+        _user_id: user.id,
+        _limit: 20,
+        _offset: 0
+      });
+
+      if (error) {
+        console.error('Feed function error:', error);
+        // Fall back to basic posts query
+        const { data: posts, error: postsError } = await (supabase as any)
+          .from('social_posts')
+          .select(`
+            id,
+            user_id,
+            content,
+            image_url,
+            created_at,
+            profiles!inner(username, display_name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        
+        if (postsError) throw postsError;
+
+        const formattedPosts: FeedItem[] = (posts || []).map(post => ({
+          item_id: post.id,
+          item_type: 'social_post' as const,
+          user_id: post.user_id,
+          username: (post.profiles as any)?.username || 'unknown',
+          display_name: (post.profiles as any)?.display_name || 'Unknown User',
+          content: post.content,
+          image_url: post.image_url,
+          created_at: post.created_at,
+          is_following: false,
+          reaction_count: 0,
+          comment_count: 0
+        }));
+
+        setFeedItems(formattedPosts);
+      } else {
+        setFeedItems(data || []);
+      }
     } catch (error) {
       console.error('Error fetching feed:', error);
       toast.error('Failed to load feed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createPost = async () => {
+    if (!user || !postContent.trim() || posting) return;
+    
+    setPosting(true);
+    
+    try {
+      const { error } = await (supabase as any)
+        .from('social_posts')
+        .insert({
+          user_id: user.id,
+          content: postContent.trim(),
+          post_type: 'general'
+        });
+
+      if (error) throw error;
+
+      toast.success('Post created!');
+      setPostContent("");
+      setShowPostDialog(false);
+      fetchFeed(); // Refresh feed
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast.error('Failed to create post');
+    } finally {
+      setPosting(false);
     }
   };
 
@@ -81,9 +140,27 @@ export default function Feed() {
     
     try {
       if (currentReaction) {
-        toast.success('Reaction removed');
+        // Remove reaction
+        const { error } = await (supabase as any)
+          .from('post_reactions')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('target_id', itemId)
+          .eq('target_type', itemType);
+        
+        if (error) throw error;
       } else {
-        toast.success('Reaction added');
+        // Add reaction
+        const { error } = await (supabase as any)
+          .from('post_reactions')
+          .insert({
+            user_id: user.id,
+            target_id: itemId,
+            target_type: itemType,
+            reaction_type: 'like'
+          });
+        
+        if (error) throw error;
       }
 
       // Update local state
@@ -98,6 +175,8 @@ export default function Feed() {
             }
           : item
       ));
+
+      toast.success(currentReaction ? 'Reaction removed' : 'Reaction added');
     } catch (error) {
       console.error('Error handling reaction:', error);
       toast.error('Failed to update reaction');
@@ -150,17 +229,55 @@ export default function Feed() {
               Discover what the community is tasting and sharing
             </p>
             
-            {/* Post Creation Button */}
+            {/* Post Creation */}
             <Card className="mt-6">
               <CardContent className="p-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start text-muted-foreground"
-                  onClick={() => toast.info("Post creation coming soon!")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  What's on your mind about whisky?
-                </Button>
+                <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-muted-foreground"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      What's on your mind about whisky?
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create a Post</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <Textarea
+                        placeholder="Share your whisky thoughts..."
+                        value={postContent}
+                        onChange={(e) => setPostContent(e.target.value)}
+                        className="min-h-[120px]"
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowPostDialog(false)}
+                          disabled={posting}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={createPost}
+                          disabled={!postContent.trim() || posting}
+                        >
+                          {posting ? (
+                            "Posting..."
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4 mr-2" />
+                              Post
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
           </div>
@@ -169,12 +286,12 @@ export default function Feed() {
             <Card>
               <CardContent className="p-12 text-center">
                 <User className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">Social Feed Coming Soon!</h3>
+                <h3 className="font-semibold mb-2">No posts yet</h3>
                 <p className="text-muted-foreground mb-4">
-                  We're building the social features. Soon you'll be able to follow other users and see their whisky posts and tasting notes.
+                  Be the first to share something about whisky! 
                 </p>
-                <Button onClick={() => navigate("/explore")}>
-                  Explore Whiskies
+                <Button onClick={() => setShowPostDialog(true)}>
+                  Create First Post
                 </Button>
               </CardContent>
             </Card>
