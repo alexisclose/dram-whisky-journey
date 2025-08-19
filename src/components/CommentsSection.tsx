@@ -53,19 +53,39 @@ export function CommentsSection({
     try {
       const { data, error } = await (supabase as any)
         .from('comments')
-        .select(`
-          id,
-          content,
-          created_at,
-          user_id,
-          profiles!inner(username, display_name, avatar_url)
-        `)
+        .select('id, content, created_at, user_id')
         .eq('target_id', targetId)
         .eq('target_type', targetType)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setComments(data || []);
+
+      // Get profiles separately for comments
+      const userIds = [...new Set((data || []).map((c: any) => c.user_id))].filter(Boolean) as string[];
+      let profiles = [];
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, username, display_name, avatar_url')
+          .in('user_id', userIds);
+        
+        profiles = profilesData || [];
+      }
+
+      const enrichedComments = (data || []).map(comment => {
+        const profile = profiles.find(p => p.user_id === comment.user_id);
+        return {
+          ...comment,
+          profiles: {
+            username: profile?.username || 'unknown',
+            display_name: profile?.display_name || 'Unknown User',
+            avatar_url: profile?.avatar_url
+          }
+        };
+      });
+
+      setComments(enrichedComments);
     } catch (error) {
       console.error('Error fetching comments:', error);
       toast.error('Failed to load comments');
@@ -87,18 +107,28 @@ export function CommentsSection({
           target_type: targetType,
           content: newComment.trim()
         })
-        .select(`
-          id,
-          content,
-          created_at,
-          user_id,
-          profiles!inner(username, display_name, avatar_url)
-        `)
+        .select('id, content, created_at, user_id')
         .single();
 
       if (error) throw error;
 
-      setComments(prev => [...prev, data]);
+      // Get the user's profile for the new comment
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('user_id, username, display_name, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+
+      const enrichedComment = {
+        ...data,
+        profiles: {
+          username: profileData?.username || 'unknown',
+          display_name: profileData?.display_name || 'Unknown User',
+          avatar_url: profileData?.avatar_url
+        }
+      };
+
+      setComments(prev => [...prev, enrichedComment]);
       setNewComment("");
       onCommentCountChange(commentCount + 1);
       toast.success('Comment added');

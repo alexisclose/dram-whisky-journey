@@ -55,49 +55,46 @@ export default function Feed() {
     if (!user) return;
     
     try {
-      // Try to use the get_user_feed function first
-      const { data, error } = await (supabase as any).rpc('get_user_feed', {
-        _user_id: user.id,
-        _limit: 20,
-        _offset: 0
-      });
+      // Skip the get_user_feed function for now and fetch directly
+      const { data: posts, error: postsError } = await (supabase as any)
+        .from('social_posts')
+        .select('id, user_id, content, image_url, created_at')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (postsError) throw postsError;
 
-      if (error) {
-        console.error('Feed function error:', error);
-        // Fall back to basic posts query
-        const { data: posts, error: postsError } = await (supabase as any)
-          .from('social_posts')
-          .select(`
-            id,
-            user_id,
-            content,
-            image_url,
-            created_at,
-            profiles!inner(username, display_name)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(20);
+      // Get profiles separately to avoid relationship issues
+      const userIds = [...new Set((posts || []).map((p: any) => p.user_id))].filter(Boolean) as string[];
+      let profiles = [];
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, username, display_name')
+          .in('user_id', userIds);
         
-        if (postsError) throw postsError;
+        profiles = profilesData || [];
+      }
 
-        const formattedPosts: FeedItem[] = (posts || []).map(post => ({
+      const formattedPosts: FeedItem[] = (posts || []).map(post => {
+        const profile = profiles.find(p => p.user_id === post.user_id);
+        return {
           item_id: post.id,
           item_type: 'social_post' as const,
           user_id: post.user_id,
-          username: (post.profiles as any)?.username || 'unknown',
-          display_name: (post.profiles as any)?.display_name || 'Unknown User',
+          username: profile?.username || 'unknown',
+          display_name: profile?.display_name || 'Unknown User',
           content: post.content,
           image_url: post.image_url,
           created_at: post.created_at,
           is_following: false,
           reaction_count: 0,
           comment_count: 0
-        }));
+        };
+      });
 
-        setFeedItems(formattedPosts);
-      } else {
-        setFeedItems(data || []);
-      }
+      setFeedItems(formattedPosts);
     } catch (error) {
       console.error('Error fetching feed:', error);
       toast.error('Failed to load feed');

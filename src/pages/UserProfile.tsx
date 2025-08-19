@@ -94,7 +94,7 @@ export default function UserProfile() {
       if (postsError) throw postsError;
       setPosts(postsData || []);
 
-      // Fetch tasting notes with whisky info
+      // Fetch tasting notes with whisky info - fix column name
       const { data: tastingData, error: tastingError } = await supabase
         .from('tasting_notes')
         .select(`

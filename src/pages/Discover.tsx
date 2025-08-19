@@ -76,31 +76,41 @@ export default function Discover() {
 
       setSuggestions(formattedSuggestions);
 
-      // Fetch trending posts (simplified)
+      // Fetch trending posts (simplified) - fix relationship
       const { data: postsData, error: postsError } = await (supabase as any)
         .from('social_posts')
-        .select(`
-          id,
-          content,
-          user_id,
-          created_at,
-          profiles!inner(username, display_name)
-        `)
+        .select('id, content, user_id, created_at')
         .order('created_at', { ascending: false })
         .limit(5);
 
       if (postsError) throw postsError;
 
-      const formattedPosts: TrendingPost[] = (postsData || []).map(post => ({
-        id: post.id,
-        content: post.content,
-        user_id: post.user_id,
-        username: (post.profiles as any)?.username || 'unknown',
-        display_name: (post.profiles as any)?.display_name || 'Unknown User',
-        reaction_count: Math.floor(Math.random() * 20), // Placeholder
-        comment_count: Math.floor(Math.random() * 10), // Placeholder
-        created_at: post.created_at
-      }));
+      // Get profiles separately
+      const userIds = [...new Set((postsData || []).map((p: any) => p.user_id))].filter(Boolean) as string[];
+      let profiles = [];
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, username, display_name')
+          .in('user_id', userIds);
+        
+        profiles = profilesData || [];
+      }
+
+      const formattedPosts: TrendingPost[] = (postsData || []).map(post => {
+        const profile = profiles.find(p => p.user_id === post.user_id);
+        return {
+          id: post.id,
+          content: post.content,
+          user_id: post.user_id,
+          username: profile?.username || 'unknown',
+          display_name: profile?.display_name || 'Unknown User',
+          reaction_count: Math.floor(Math.random() * 20), // Placeholder
+          comment_count: Math.floor(Math.random() * 10), // Placeholder
+          created_at: post.created_at
+        };
+      });
 
       setTrendingPosts(formattedPosts);
     } catch (error) {
