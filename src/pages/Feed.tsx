@@ -52,7 +52,7 @@ export default function Feed() {
     if (!user) return;
     
     try {
-      // Skip the get_user_feed function for now and fetch directly
+      // Fetch social posts
       const { data: posts, error: postsError } = await (supabase as any)
         .from('social_posts')
         .select('id, user_id, content, image_url, created_at')
@@ -61,21 +61,36 @@ export default function Feed() {
       
       if (postsError) throw postsError;
 
-      // Get profiles separately to avoid relationship issues
-      const userIds = [...new Set((posts || []).map((p: any) => p.user_id))].filter(Boolean) as string[];
-      let profiles = [];
+      // Fetch tasting notes with whisky information
+      const { data: tastingNotes, error: tastingNotesError } = await supabase
+        .from('tasting_notes')
+        .select(`
+          id, user_id, note, rating, created_at, whisky_id,
+          whiskies!inner(name, distillery, image_url)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
       
-      if (userIds.length > 0) {
+      if (tastingNotesError) throw tastingNotesError;
+
+      // Get all unique user IDs from both posts and tasting notes
+      const postUserIds = (posts || []).map((p: any) => p.user_id);
+      const tastingUserIds = (tastingNotes || []).map((tn: any) => tn.user_id);
+      const allUserIds = [...new Set([...postUserIds, ...tastingUserIds])].filter(Boolean) as string[];
+      
+      let profiles = [];
+      if (allUserIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
           .select('user_id, username, display_name')
-          .in('user_id', userIds);
+          .in('user_id', allUserIds);
         
         profiles = profilesData || [];
       }
 
-      const formattedPosts: FeedItem[] = (posts || []).map(post => {
-        const profile = profiles.find(p => p.user_id === post.user_id);
+      // Format social posts
+      const formattedPosts: FeedItem[] = (posts || []).map((post: any) => {
+        const profile = profiles.find((p: any) => p.user_id === post.user_id);
         return {
           item_id: post.id,
           item_type: 'social_post' as const,
@@ -91,7 +106,33 @@ export default function Feed() {
         };
       });
 
-      setFeedItems(formattedPosts);
+      // Format tasting notes
+      const formattedTastingNotes: FeedItem[] = (tastingNotes || []).map((note: any) => {
+        const profile = profiles.find((p: any) => p.user_id === note.user_id);
+        const whisky = note.whiskies;
+        return {
+          item_id: note.id,
+          item_type: 'tasting_note' as const,
+          user_id: note.user_id,
+          username: profile?.username || 'unknown',
+          display_name: profile?.display_name || 'Unknown User',
+          content: note.note || '',
+          whisky_name: whisky?.name,
+          whisky_distillery: whisky?.distillery,
+          rating: note.rating,
+          image_url: whisky?.image_url,
+          created_at: note.created_at,
+          is_following: false,
+          reaction_count: 0,
+          comment_count: 0
+        };
+      });
+
+      // Combine and sort all items by creation date
+      const allItems = [...formattedPosts, ...formattedTastingNotes]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setFeedItems(allItems);
     } catch (error) {
       console.error('Error fetching feed:', error);
       toast.error('Failed to load feed');
