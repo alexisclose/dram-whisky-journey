@@ -42,6 +42,7 @@ const SiteHeader = () => {
           <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
             <NavLink className={navLinkClass} to="/dashboard">Hub</NavLink>
             <NavLink className={navLinkClass} to="/feed">Feed</NavLink>
+            <NavLink className={navLinkClass} to="/discover">Discover</NavLink>
             <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
             <NavLink className={navLinkClass} to="/explore">Explore</NavLink>
             {!loading && user && (
@@ -85,6 +86,13 @@ const SiteHeader = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Feed
+                  </NavLink>
+                  <NavLink 
+                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                    to="/discover"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Discover
                   </NavLink>
                   <NavLink 
                     className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"

@@ -11,6 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CommentsSection } from "@/components/CommentsSection";
 import { formatDistanceToNow } from "date-fns";
 
 interface FeedItem {
@@ -185,6 +186,14 @@ export default function Feed() {
     }
   };
 
+  const handleCommentCountChange = (itemId: string, newCount: number) => {
+    setFeedItems(items => items.map(item => 
+      item.item_id === itemId 
+        ? { ...item, comment_count: newCount }
+        : item
+    ));
+  };
+
   const formatTimeAgo = (dateString: string) => {
     return formatDistanceToNow(new Date(dateString), { addSuffix: true });
   };
@@ -357,24 +366,28 @@ export default function Feed() {
                     )}
 
                     {/* Actions */}
-                    <div className="flex items-center space-x-6 pt-4 border-t">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`flex items-center space-x-2 ${
-                          item.user_reaction ? 'text-red-500' : ''
-                        }`}
-                        onClick={() => handleReaction(item.item_id, item.item_type, item.user_reaction)}
-                        disabled={reactingTo === item.item_id}
-                      >
-                        <Heart className={`w-4 h-4 ${item.user_reaction ? 'fill-current' : ''}`} />
-                        <span>{item.reaction_count}</span>
-                      </Button>
-                      
-                      <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                        <MessageCircle className="w-4 h-4" />
-                        <span>{item.comment_count}</span>
-                      </Button>
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div className="flex items-center space-x-6">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`flex items-center space-x-2 ${
+                            item.user_reaction ? 'text-red-500' : ''
+                          }`}
+                          onClick={() => handleReaction(item.item_id, item.item_type, item.user_reaction)}
+                          disabled={reactingTo === item.item_id}
+                        >
+                          <Heart className={`w-4 h-4 ${item.user_reaction ? 'fill-current' : ''}`} />
+                          <span>{item.reaction_count}</span>
+                        </Button>
+                        
+                        <CommentsSection
+                          targetId={item.item_id}
+                          targetType={item.item_type}
+                          commentCount={item.comment_count}
+                          onCommentCountChange={(newCount) => handleCommentCountChange(item.item_id, newCount)}
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
