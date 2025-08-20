@@ -16,6 +16,12 @@ type TastingNote = {
   flavors?: string[]; // array of flavor keys
   created_at: string;
   updated_at: string;
+  whisky?: {
+    id: string;
+    distillery: string;
+    name: string;
+    region: string;
+  };
 };
 
 const MyReviews = () => {
@@ -27,7 +33,7 @@ const MyReviews = () => {
     queryKey: ["my-reviews", user?.id],
     queryFn: async () => {
       if (!user) return [] as TastingNote[];
-      const { data, error } = await supabase
+      const { data: tastingNotes, error } = await supabase
         .from("tasting_notes")
         .select(`
           id,
@@ -40,8 +46,30 @@ const MyReviews = () => {
         `)
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
+      
       if (error) throw error;
-      return (data ?? []) as TastingNote[];
+      
+      // Get unique whisky IDs
+      const whiskyIds = [...new Set((tastingNotes ?? []).map(tn => tn.whisky_id))];
+      
+      if (whiskyIds.length === 0) return [] as TastingNote[];
+      
+      // Fetch whisky details
+      const { data: whiskies, error: whiskyError } = await supabase
+        .from("whiskies")
+        .select("id, distillery, name, region")
+        .in("id", whiskyIds);
+      
+      if (whiskyError) throw whiskyError;
+      
+      // Create a map of whisky details
+      const whiskyMap = new Map((whiskies ?? []).map(w => [w.id, w]));
+      
+      // Combine tasting notes with whisky details
+      return (tastingNotes ?? []).map(tn => ({
+        ...tn,
+        whisky: whiskyMap.get(tn.whisky_id)
+      })) as TastingNote[];
     },
     enabled: !!user && !loading,
     meta: {
@@ -130,7 +158,7 @@ const MyReviews = () => {
                   <CardContent className="text-sm text-muted-foreground flex items-center justify-between">
                     <span>{item.whisky.region}</span>
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/tasting/${item.whisky.id}`}>Open dossier</Link>
+                      <Link to={`/whisky-dossier/${item.whisky.id}`}>View Dossier</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -160,10 +188,14 @@ const MyReviews = () => {
                   <CardContent className="text-sm text-muted-foreground space-y-3">
                     <div>
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">Whisky</div>
-                      <div className="text-foreground break-all">{tn.whisky_id}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Name will appear once master whiskies are synced.
-                      </div>
+                      {tn.whisky ? (
+                        <div className="text-foreground">
+                          <div className="font-medium">{tn.whisky.name}</div>
+                          <div className="text-sm text-muted-foreground">{tn.whisky.distillery} • {tn.whisky.region}</div>
+                        </div>
+                      ) : (
+                        <div className="text-foreground break-all">{tn.whisky_id}</div>
+                      )}
                     </div>
                     {tn.note && (
                       <div>
@@ -179,6 +211,13 @@ const MyReviews = () => {
                             <span key={f} className="px-2 py-0.5 rounded border text-xs">{f}</span>
                           ))}
                         </div>
+                      </div>
+                    )}
+                    {tn.whisky && (
+                      <div className="pt-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/whisky-dossier/${tn.whisky.id}`}>View Dossier</Link>
+                        </Button>
                       </div>
                     )}
                   </CardContent>
