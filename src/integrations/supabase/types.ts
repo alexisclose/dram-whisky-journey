@@ -97,25 +97,40 @@ export type Database = {
       }
       profiles: {
         Row: {
+          agreed_to_privacy: boolean | null
+          agreed_to_terms: boolean | null
           avatar_url: string | null
+          country: string | null
           created_at: string
           display_name: string | null
+          first_name: string | null
+          last_name: string | null
           updated_at: string
           user_id: string
           username: string | null
         }
         Insert: {
+          agreed_to_privacy?: boolean | null
+          agreed_to_terms?: boolean | null
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
         }
         Update: {
+          agreed_to_privacy?: boolean | null
+          agreed_to_terms?: boolean | null
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
           display_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
