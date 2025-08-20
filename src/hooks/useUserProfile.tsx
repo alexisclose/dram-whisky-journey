@@ -7,6 +7,9 @@ interface UserProfile {
   username: string;
   display_name: string;
   avatar_url?: string;
+  first_name?: string;
+  last_name?: string;
+  country?: string;
 }
 
 export function useUserProfile() {
@@ -25,7 +28,7 @@ export function useUserProfile() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("user_id, username, display_name, avatar_url")
+          .select("user_id, username, display_name, avatar_url, first_name, last_name, country")
           .eq("user_id", user.id)
           .single();
 

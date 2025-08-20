@@ -7,7 +7,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import { useState } from "react";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -129,6 +129,14 @@ const SiteHeader = () => {
                           Upload
                         </NavLink>
                       )}
+                      <NavLink 
+                        className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
+                        to="/settings"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </NavLink>
                     </>
                   )}
                 </nav>
@@ -149,6 +157,17 @@ const SiteHeader = () => {
                       <div className="text-xs text-muted-foreground px-3 py-1 truncate">
                         @{profile?.username || user.email}
                       </div>
+                      <Button 
+                        variant="ghost" 
+                        className="justify-start"
+                        onClick={() => {
+                          navigate("/settings");
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </Button>
                       <Button 
                         onClick={() => {
                           handleLogout();
@@ -183,6 +202,14 @@ const SiteHeader = () => {
                 <span className="hidden xl:inline text-xs sm:text-sm text-muted-foreground mr-1 truncate max-w-32">
                   @{profile?.username || user.email}
                 </span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate("/settings")}
+                  className="text-xs sm:text-sm"
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
                 <Button onClick={handleLogout} variant="outline" size="sm" className="text-xs sm:text-sm">
                   Log out
                 </Button>
