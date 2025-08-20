@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Search, Filter, MapPin, Plus, Flag } from "lucide-react";
+import { Search, Filter, MapPin, Plus } from "lucide-react";
 
 type WhiskyRow = {
   id: string;
@@ -38,6 +38,63 @@ type WhiskyRow = {
 const Explore = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState<string>("all");
+
+  // Map regions to country flags
+  const getCountryFlag = (region: string): string => {
+    const countryFlags: { [key: string]: string } = {
+      'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+      'Ireland': '🇮🇪',
+      'Japan': '🇯🇵',
+      'USA': '🇺🇸',
+      'Canada': '🇨🇦',
+      'India': '🇮🇳',
+      'Taiwan': '🇹🇼',
+      'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+      'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+      'Australia': '🇦🇺',
+      'France': '🇫🇷',
+      'Germany': '🇩🇪',
+      'Netherlands': '🇳🇱',
+      'Sweden': '🇸🇪',
+      'Finland': '🇫🇮',
+      'Denmark': '🇩🇰',
+      'South Africa': '🇿🇦',
+      'Brazil': '🇧🇷',
+      'Argentina': '🇦🇷',
+      'Chile': '🇨🇱',
+      'New Zealand': '🇳🇿',
+      'Mexico': '🇲🇽',
+      'Israel': '🇮🇱',
+      'Czech Republic': '🇨🇿',
+      'Austria': '🇦🇹',
+      'Switzerland': '🇨🇭',
+      'Belgium': '🇧🇪',
+      'Spain': '🇪🇸',
+      'Italy': '🇮🇹',
+      'Turkey': '🇹🇷',
+      'China': '🇨🇳',
+      'South Korea': '🇰🇷',
+      'Thailand': '🇹🇭',
+      'Pakistan': '🇵🇰',
+      'Tasmania': '🇦🇺', // Tasmania is part of Australia
+      'Kentucky': '🇺🇸', // Kentucky is in USA
+      'Tennessee': '🇺🇸', // Tennessee is in USA
+      'Speyside': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', // Speyside is in Scotland
+      'Highlands': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', // Highlands is in Scotland
+      'Islay': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', // Islay is in Scotland
+      'Lowlands': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', // Lowlands is in Scotland
+      'Campbeltown': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', // Campbeltown is in Scotland
+      'Islands': '🏴󠁧󠁢󠁳󠁣󠁴󠁿', // Islands (Scottish) is in Scotland
+    };
+    return countryFlags[region] || '🌍'; // Default to world emoji if region not found
+  };
+
+  const formatLocation = (whisky: WhiskyRow): string => {
+    const parts = [];
+    if (whisky.location) parts.push(whisky.location);
+    if (whisky.region) parts.push(whisky.region);
+    return parts.join(', ');
+  };
 
   const { data: whiskies, isLoading } = useQuery({
     queryKey: ["explore-whiskies"],
@@ -233,8 +290,8 @@ const Explore = () => {
                   </div>
                   
                   <div className="flex items-center text-xs text-muted-foreground mb-2">
-                    <Flag className="w-3 h-3 mr-1 rounded-full" />
-                    {whisky.region}
+                    <span className="mr-1 text-sm">{getCountryFlag(whisky.region)}</span>
+                    {formatLocation(whisky)}
                   </div>
                 </CardHeader>
                 
