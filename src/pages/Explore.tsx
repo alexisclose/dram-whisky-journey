@@ -39,7 +39,7 @@ const Explore = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState<string>("all");
 
-  // Map regions to country flags
+  // Map regions to country flags  
   const getCountryFlag = (region: string): string => {
     const countryFlags: { [key: string]: string } = {
       'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
