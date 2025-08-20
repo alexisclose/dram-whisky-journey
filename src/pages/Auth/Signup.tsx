@@ -37,11 +37,24 @@ const Signup = () => {
           const formData = new FormData(e.currentTarget as HTMLFormElement);
           const email = String(formData.get("email") ?? "");
           const password = String(formData.get("password") ?? "");
-          const nickname = String(formData.get("nickname") ?? "");
-          if (!email || !password || !nickname) {
+          const username = String(formData.get("username") ?? "").trim();
+          
+          if (!email || !password || !username) {
             toast.error("Please fill in all fields.");
             return;
           }
+          
+          // Basic username validation
+          if (username.length < 3) {
+            toast.error("Username must be at least 3 characters long.");
+            return;
+          }
+          
+          if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+            toast.error("Username can only contain letters, numbers, hyphens, and underscores.");
+            return;
+          }
+          
           setLoading(true);
           const redirectUrl = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
           const { data, error } = await supabase.auth.signUp({
@@ -49,12 +62,16 @@ const Signup = () => {
             password,
             options: {
               emailRedirectTo: redirectUrl,
-              data: { nickname },
+              data: { username, display_name: username },
             },
           });
           setLoading(false);
           if (error) {
-            toast.error(error.message);
+            if (error.message.includes('profiles_username_unique')) {
+              toast.error("Username is already taken. Please choose a different one.");
+            } else {
+              toast.error(error.message);
+            }
             return;
           }
           if (data.session) {
@@ -89,14 +106,16 @@ const Signup = () => {
           />
         </div>
         <div>
-          <Label htmlFor="nickname">Public Nickname</Label>
+          <Label htmlFor="username">Username</Label>
           <Input 
-            id="nickname" 
-            name="nickname" 
+            id="username" 
+            name="username" 
             type="text" 
             required 
-            placeholder="What should we call you?" 
+            placeholder="Choose a unique username" 
             className="mt-1"
+            pattern="[a-zA-Z0-9_-]+"
+            title="Username can only contain letters, numbers, hyphens, and underscores"
           />
         </div>
         <Button type="submit" variant="brand" size="lg" className="w-full min-h-[44px]" disabled={loading}>

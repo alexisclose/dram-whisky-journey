@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MessageCircle, Send, Trash2 } from "lucide-react";
@@ -36,6 +37,7 @@ export function CommentsSection({
   onCommentCountChange 
 }: CommentsSectionProps) {
   const { user } = useAuthSession();
+  const { profile } = useUserProfile();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -185,7 +187,7 @@ export function CommentsSection({
               <Avatar className="w-8 h-8">
                 <AvatarImage src="" alt="You" />
                 <AvatarFallback className="text-xs">
-                  {user.email?.charAt(0)?.toUpperCase() || 'U'}
+                  {profile?.username?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-2">

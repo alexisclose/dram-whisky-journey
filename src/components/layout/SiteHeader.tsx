@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -17,6 +18,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 const SiteHeader = () => {
   const { user, loading } = useAuthSession();
   const { isAdmin } = useUserRole();
+  const { profile } = useUserProfile();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -145,7 +147,7 @@ const SiteHeader = () => {
                   {!loading && user && (
                     <div className="flex flex-col gap-2">
                       <div className="text-xs text-muted-foreground px-3 py-1 truncate">
-                        {user.email}
+                        @{profile?.username || user.email}
                       </div>
                       <Button 
                         onClick={() => {
@@ -179,7 +181,7 @@ const SiteHeader = () => {
             {!loading && user && (
               <>
                 <span className="hidden xl:inline text-xs sm:text-sm text-muted-foreground mr-1 truncate max-w-32">
-                  {user.email}
+                  @{profile?.username || user.email}
                 </span>
                 <Button onClick={handleLogout} variant="outline" size="sm" className="text-xs sm:text-sm">
                   Log out
