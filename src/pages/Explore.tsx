@@ -212,10 +212,10 @@ const Explore = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                        {whisky.distillery}
+                        {whisky.name}
                       </CardTitle>
                       <CardDescription className="text-base font-medium">
-                        {whisky.name}
+                        {whisky.distillery}
                       </CardDescription>
                       {whisky.is_user_submitted && (
                         <Badge variant="secondary" className="text-xs mt-1">
