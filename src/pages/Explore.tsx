@@ -289,8 +289,7 @@ const Explore = () => {
                     )}
                   </div>
                   
-                  <div className="flex items-center text-xs text-muted-foreground mb-2">
-                    <span className="mr-1 text-sm">{getCountryFlag(whisky.region)}</span>
+                  <div className="text-xs text-muted-foreground mb-2">
                     {formatLocation(whisky)}
                   </div>
                 </CardHeader>
