@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Search, Filter, MapPin, Plus } from "lucide-react";
+import { Search, Filter, MapPin, Plus, Flag } from "lucide-react";
 
 type WhiskyRow = {
   id: string;
@@ -232,16 +232,9 @@ const Explore = () => {
                     )}
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {whisky.region}
-                    </Badge>
-                    {whisky.location && (
-                      <Badge variant="outline" className="text-xs">
-                        {whisky.location}
-                      </Badge>
-                    )}
+                  <div className="flex items-center text-xs text-muted-foreground mb-2">
+                    <Flag className="w-3 h-3 mr-1 rounded-full" />
+                    {whisky.region}
                   </div>
                 </CardHeader>
                 
@@ -259,29 +252,7 @@ const Explore = () => {
                     </div>
                   )}
 
-                  {!whisky.is_user_submitted && (whisky.expert_score_fruit || whisky.expert_score_floral || whisky.expert_score_spice) && (
-                    <div className="space-y-2 mb-4">
-                      {whisky.expert_score_fruit && (
-                        <div>
-                          <span className="text-xs font-medium text-muted-foreground">Fruit: </span>
-                          <span className="text-xs">{whisky.expert_score_fruit}/10</span>
-                        </div>
-                      )}
-                      {whisky.expert_score_floral && (
-                        <div>
-                          <span className="text-xs font-medium text-muted-foreground">Floral: </span>
-                          <span className="text-xs">{whisky.expert_score_floral}/10</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs text-muted-foreground">
-                      {whisky.region_location && (
-                        <span>{whisky.region_location}</span>
-                      )}
-                    </div>
+                  <div className="flex justify-end">
                     <Button asChild size="sm">
                       <Link to={`/whisky-dossier/${whisky.id}`}>
                         View Details
