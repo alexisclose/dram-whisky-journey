@@ -82,7 +82,7 @@ export default function Feed() {
       if (allUserIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('user_id, username, display_name')
+          .select('user_id, username, display_name, first_name, last_name')
           .in('user_id', allUserIds);
         
         profiles = profilesData || [];
@@ -91,12 +91,16 @@ export default function Feed() {
       // Format social posts
       const formattedPosts: FeedItem[] = (posts || []).map((post: any) => {
         const profile = profiles.find((p: any) => p.user_id === post.user_id);
+        const displayName = profile?.first_name && profile?.last_name 
+          ? `${profile.first_name} ${profile.last_name}`
+          : profile?.display_name || 'Unknown User';
+        
         return {
           item_id: post.id,
           item_type: 'social_post' as const,
           user_id: post.user_id,
           username: profile?.username || 'unknown',
-          display_name: profile?.display_name || 'Unknown User',
+          display_name: displayName,
           content: post.content,
           image_url: post.image_url,
           created_at: post.created_at,
@@ -110,12 +114,16 @@ export default function Feed() {
       const formattedTastingNotes: FeedItem[] = (tastingNotes || []).map((note: any) => {
         const profile = profiles.find((p: any) => p.user_id === note.user_id);
         const whisky = note.whiskies;
+        const displayName = profile?.first_name && profile?.last_name 
+          ? `${profile.first_name} ${profile.last_name}`
+          : profile?.display_name || 'Unknown User';
+        
         return {
           item_id: note.id,
           item_type: 'tasting_note' as const,
           user_id: note.user_id,
           username: profile?.username || 'unknown',
-          display_name: profile?.display_name || 'Unknown User',
+          display_name: displayName,
           content: note.note || '',
           whisky_name: whisky?.name,
           whisky_distillery: whisky?.distillery,

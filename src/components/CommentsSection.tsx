@@ -69,7 +69,7 @@ export function CommentsSection({
       if (userIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('user_id, username, display_name, avatar_url')
+          .select('user_id, username, display_name, avatar_url, first_name, last_name')
           .in('user_id', userIds);
         
         profiles = profilesData || [];
@@ -77,11 +77,15 @@ export function CommentsSection({
 
       const enrichedComments = (data || []).map(comment => {
         const profile = profiles.find(p => p.user_id === comment.user_id);
+        const displayName = profile?.first_name && profile?.last_name 
+          ? `${profile.first_name} ${profile.last_name}`
+          : profile?.display_name || 'Unknown User';
+        
         return {
           ...comment,
           profiles: {
             username: profile?.username || 'unknown',
-            display_name: profile?.display_name || 'Unknown User',
+            display_name: displayName,
             avatar_url: profile?.avatar_url
           }
         };
@@ -117,15 +121,19 @@ export function CommentsSection({
       // Get the user's profile for the new comment
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('user_id, username, display_name, avatar_url')
+        .select('user_id, username, display_name, avatar_url, first_name, last_name')
         .eq('user_id', user.id)
         .single();
+
+      const displayName = profileData?.first_name && profileData?.last_name 
+        ? `${profileData.first_name} ${profileData.last_name}`
+        : profileData?.display_name || 'Unknown User';
 
       const enrichedComment = {
         ...data,
         profiles: {
           username: profileData?.username || 'unknown',
-          display_name: profileData?.display_name || 'Unknown User',
+          display_name: displayName,
           avatar_url: profileData?.avatar_url
         }
       };
