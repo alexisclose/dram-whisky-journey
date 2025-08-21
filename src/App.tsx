@@ -23,11 +23,11 @@ import SiteHeader from "./components/layout/SiteHeader";
 import WhiskyDossier from "./pages/WhiskyDossier";
 import MyReviews from "./pages/MyReviews";
 import Activate from "./pages/Activate";
-import WhiskyProfile from "./pages/WhiskyProfile";
 import Feed from "./pages/Feed";
 import UserProfile from "./pages/UserProfile";
 import Discover from "./pages/Discover";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import { ActiveSetProvider } from "./context/ActiveSetContext";
 
 const queryClient = new QueryClient();
@@ -57,7 +57,7 @@ const App = () => (
               <Route path="/dossier/:id" element={<WhiskyDossier />} />
               
               <Route path="/reviews" element={<MyReviews />} />
-              <Route path="/profile" element={<WhiskyProfile />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/user/:userId" element={<UserProfile />} />
               <Route path="/discover" element={<Discover />} />
