@@ -137,10 +137,13 @@ const Explore = () => {
 
   // Filter whiskies based on search and filters
   const filteredWhiskies = whiskies?.filter(whisky => {
+    const searchLower = searchTerm.toLowerCase().trim();
     const matchesSearch = searchTerm === "" || 
-      whisky.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      whisky.distillery.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      whisky.region.toLowerCase().includes(searchTerm.toLowerCase());
+      whisky.name?.toLowerCase().includes(searchLower) ||
+      whisky.distillery?.toLowerCase().includes(searchLower) ||
+      whisky.region?.toLowerCase().includes(searchLower) ||
+      whisky.location?.toLowerCase().includes(searchLower) ||
+      whisky.region_location?.toLowerCase().includes(searchLower);
 
     const matchesRegion = selectedRegion === "all" || whisky.region === selectedRegion;
 
