@@ -336,19 +336,7 @@ export default function Profile() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Flavor Profile Numbers */}
-              <div className="grid grid-cols-5 gap-4 text-center">
-                {Object.entries(flavorProfile).map(([flavor, value]) => (
-                  <div key={flavor}>
-                    <div className="text-2xl font-bold text-primary">
-                      {value.toFixed(1)}
-                    </div>
-                    <div className="text-sm text-muted-foreground capitalize">
-                      {flavor}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            
 
               {/* Word Cloud */}
               {wordCloudData.length > 0 && (
