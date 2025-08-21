@@ -242,7 +242,9 @@ export default function Profile() {
               {profile?.display_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
-          <h1 className="text-2xl sm:text-3xl font-bold">{profile?.display_name || user?.email}</h1>
+          <h1 className="text-2xl font-bold">
+  {userProfile?.first_name || session.user.email}
+</h1>
         </div>
         <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>
           <Settings className="w-5 h-5" />
