@@ -188,9 +188,9 @@ const Explore = () => {
             Discover our complete collection of whiskies from around the world
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4">
-            <p className="text-muted-foreground text-sm sm:text-base">
+            {/*<p className="text-muted-foreground text-sm sm:text-base">
               {whiskies?.length || 0} whiskies available • {filteredWhiskies.length} shown
-            </p>
+            </p>*/}
             <Button asChild className="w-full sm:w-auto">
               <Link to="/add-whisky">
                 <Plus className="w-4 h-4 mr-2" />
