@@ -48,8 +48,7 @@ const SiteHeader = () => {
             <NavLink className={navLinkClass} to="/explore">Explore</NavLink>
             {!loading && user && (
               <>
-                <NavLink className={navLinkClass} to="/reviews">My Whiskies</NavLink>
-                <NavLink className={navLinkClass} to="/profile">My Whisky Profile</NavLink>
+                <NavLink className={navLinkClass} to="/profile">Profile</NavLink>
                 {isAdmin && (
                   <NavLink className={navLinkClass} to="/whisky-upload">Upload</NavLink>
                 )}
@@ -108,17 +107,10 @@ const SiteHeader = () => {
                       <div className="border-t my-2"></div>
                       <NavLink 
                         className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                        to="/reviews"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        My Whiskies
-                      </NavLink>
-                      <NavLink 
-                        className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
                         to="/profile"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        My Whisky Profile
+                        Profile
                       </NavLink>
                       {isAdmin && (
                         <NavLink 
