@@ -10,7 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Radar as RechartsRadar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import ReactWordcloud from 'react-wordcloud';
+import { Wordcloud } from '@visx/wordcloud';
+import { scaleLog } from '@visx/scale';
+import { Text } from '@visx/text';
 import WhiskyRecommendations from "@/components/WhiskyRecommendations";
 
 interface TastingNote {
@@ -343,20 +345,40 @@ export default function Profile() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Your Favorite Tasting Notes</h3>
                   <div className="h-48 bg-muted/20 rounded-lg p-4">
-                    <ReactWordcloud
-                      words={wordCloudData}
-                      options={{
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                        fontSizes: [8, 24],
-                        rotations: 0,
-                        rotationAngles: [0, 0],
-                        scale: 'sqrt',
-                        spiral: 'archimedean',
-                        transitionDuration: 500,
-                        padding: 2,
-                        deterministic: true,
-                      }}
-                    />
+                    <svg width="100%" height="100%">
+                      <Wordcloud
+                        words={wordCloudData}
+                        width={400}
+                        height={180}
+                        fontSize={(datum) => {
+                          const fontScale = scaleLog({
+                            domain: [Math.min(...wordCloudData.map(w => w.value)), Math.max(...wordCloudData.map(w => w.value))],
+                            range: [8, 24],
+                          });
+                          return fontScale(datum.value);
+                        }}
+                        rotate={0}
+                        padding={2}
+                      >
+                        {(cloudWords) =>
+                          cloudWords.map((w, i) => {
+                            const originalData = wordCloudData.find(d => d.text === w.text);
+                            return (
+                              <Text
+                                key={w.text}
+                                fill={originalData?.color || '#6366f1'}
+                                textAnchor="middle"
+                                transform={`translate(${w.x}, ${w.y})`}
+                                fontSize={w.size}
+                                fontFamily="Inter, system-ui, sans-serif"
+                              >
+                                {w.text}
+                              </Text>
+                            );
+                          })
+                        }
+                      </Wordcloud>
+                    </svg>
                   </div>
                 </div>
               )}

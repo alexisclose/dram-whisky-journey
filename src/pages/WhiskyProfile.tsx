@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Radar, Cloud } from "lucide-react";
 import { Radar as RechartsRadar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
-import ReactWordcloud from 'react-wordcloud';
+import { Wordcloud } from '@visx/wordcloud';
+import { scaleLog } from '@visx/scale';
+import { Text } from '@visx/text';
 import WhiskyRecommendations from "@/components/WhiskyRecommendations";
 
 interface TastingNote {
@@ -400,20 +402,40 @@ const WhiskyProfile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="h-80 sm:h-96">
-                    <ReactWordcloud
-                      words={wordCloudData}
-                      options={{
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                        fontSizes: [12, 48],
-                        rotations: 0, // Keep all text horizontal
-                        rotationAngles: [0, 0], // Ensure horizontal orientation
-                        scale: 'sqrt',
-                        spiral: 'archimedean',
-                        transitionDuration: 500,
-                        padding: 4,
-                        deterministic: true,
-                      }}
-                    />
+                    <svg width="100%" height="100%">
+                      <Wordcloud
+                        words={wordCloudData}
+                        width={600}
+                        height={300}
+                        fontSize={(datum) => {
+                          const fontScale = scaleLog({
+                            domain: [Math.min(...wordCloudData.map(w => w.value)), Math.max(...wordCloudData.map(w => w.value))],
+                            range: [12, 48],
+                          });
+                          return fontScale(datum.value);
+                        }}
+                        rotate={0}
+                        padding={4}
+                      >
+                        {(cloudWords) =>
+                          cloudWords.map((w, i) => {
+                            const originalData = wordCloudData.find(d => d.text === w.text);
+                            return (
+                              <Text
+                                key={w.text}
+                                fill={originalData?.color || '#6366f1'}
+                                textAnchor="middle"
+                                transform={`translate(${w.x}, ${w.y})`}
+                                fontSize={w.size}
+                                fontFamily="Inter, system-ui, sans-serif"
+                              >
+                                {w.text}
+                              </Text>
+                            );
+                          })
+                        }
+                      </Wordcloud>
+                    </svg>
                   </div>
                   <div className="mt-4 p-3 sm:p-4 bg-muted rounded-lg">
                     <h3 className="font-semibold mb-2 text-sm sm:text-base">How Your Word Cloud Works</h3>
