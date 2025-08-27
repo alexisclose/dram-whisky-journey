@@ -28,6 +28,7 @@ import UserProfile from "./pages/UserProfile";
 import Discover from "./pages/Discover";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import WhiskyInfo from "./pages/WhiskyInfo";
 import { ActiveSetProvider } from "./context/ActiveSetContext";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/my-tasting-box" element={<MyTastingBox />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/whisky-upload" element={<WhiskyUpload />} />
+              <Route path="/whisky-info/:id" element={<WhiskyInfo />} />
               <Route path="/tasting/:id" element={<WhiskyDossier />} />
               <Route path="/whisky-dossier/:id" element={<WhiskyDossier />} />
               <Route path="/dossier/:id" element={<WhiskyDossier />} />
