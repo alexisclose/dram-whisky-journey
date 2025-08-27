@@ -1,7 +1,6 @@
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play } from "lucide-react";
+import { ArrowLeft, Play, ChevronDown } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,137 +28,250 @@ const WhiskyInfo = () => {
 
   if (isLoading) {
     return (
-      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        <div className="animate-pulse">
-          <div className="h-8 bg-muted rounded mb-6 w-1/2"></div>
-          <div className="h-4 bg-muted rounded mb-4"></div>
-          <div className="h-32 bg-muted rounded"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">
+          Loading the story...
         </div>
-      </main>
+      </div>
     );
   }
 
   if (!whisky) {
     return (
-      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        <h1 className="text-2xl font-bold mb-4">Whisky Not Found</h1>
-        <p className="text-muted-foreground mb-6">The whisky you're looking for doesn't exist.</p>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+        <h1 className="text-2xl font-bold mb-4">Story Not Found</h1>
+        <p className="text-muted-foreground mb-6 text-center">The whisky tale you're seeking has yet to be written.</p>
         <Button asChild variant="outline">
           <Link to="/my-tasting-box">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Tasting Box
+            Return to Collection
           </Link>
         </Button>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10 max-w-4xl">
+    <>
       <Helmet>
-        <title>{whisky.distillery} {whisky.name} — Whisky Information</title>
-        <meta name="description" content={`Learn about ${whisky.distillery} ${whisky.name} from ${whisky.region}. ${whisky.overview || 'Discover the story behind this exceptional whisky.'}`} />
+        <title>The Story of {whisky.distillery} {whisky.name}</title>
+        <meta name="description" content={`Discover the provenance and story behind ${whisky.distillery} ${whisky.name} from ${whisky.region}. An immersive journey through craft, tradition, and terroir.`} />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <div className="mb-6">
-        <Button asChild variant="ghost" size="sm" className="mb-4">
+      {/* Fixed Navigation */}
+      <div className="fixed top-4 left-4 z-50">
+        <Button asChild variant="ghost" size="sm" className="bg-background/80 backdrop-blur-sm border border-border/50">
           <Link to="/my-tasting-box">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Tasting Box
+            Back
           </Link>
         </Button>
-        
-        <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-          {whisky.distillery}
-        </h1>
-        <h2 className="text-xl sm:text-2xl text-muted-foreground mb-4">
-          {whisky.name}
-        </h2>
-        
-        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-6">
-          <span className="flex items-center gap-1">
-            <strong>Region:</strong> {whisky.region}
-          </span>
-          {whisky.location && (
-            <span className="flex items-center gap-1">
-              <strong>Location:</strong> {whisky.location}
-            </span>
-          )}
-        </div>
       </div>
 
-      <div className="grid gap-6 lg:gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>About This Whisky</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {whisky.overview ? (
-              <p className="text-muted-foreground leading-relaxed">
-                {whisky.overview}
-              </p>
-            ) : (
-              <p className="text-muted-foreground leading-relaxed">
-                {whisky.distillery} {whisky.name} is a distinctive whisky from the {whisky.region} region of Japan. 
-                This expression showcases the unique character and craftsmanship that defines {whisky.distillery}'s 
-                approach to whisky making. Each sip tells a story of tradition, innovation, and the terroir that 
-                makes Japanese whisky so exceptional.
-              </p>
-            )}
-            
-            {(whisky.pairs_well_with_a || whisky.pairs_well_with_b || whisky.pairs_well_with_c) && (
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <h3 className="font-semibold mb-2">Pairs Well With</h3>
-                <div className="flex flex-wrap gap-2">
-                  {[whisky.pairs_well_with_a, whisky.pairs_well_with_b, whisky.pairs_well_with_c]
-                    .filter(Boolean)
-                    .map((pairing, index) => (
-                      <span key={index} className="px-3 py-1 bg-background rounded-full text-sm">
-                        {pairing}
-                      </span>
-                    ))}
+      {/* Part 1: The Hook - Full Screen Hero */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          {whisky.image_url ? (
+            <img 
+              src={whisky.image_url} 
+              alt=""
+              className="w-full h-full object-cover scale-110"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-b from-muted/30 via-muted/50 to-muted/80" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/80" />
+        </div>
+        
+        {/* Hero Content */}
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+          <div className="mb-8">
+            <p className="text-sm tracking-[0.2em] uppercase text-muted-foreground mb-2">
+              {whisky.region}
+            </p>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-light mb-4 tracking-tight">
+              {whisky.distillery}
+            </h1>
+            <h2 className="text-xl md:text-2xl lg:text-3xl text-muted-foreground font-light">
+              {whisky.name}
+            </h2>
+          </div>
+          
+          {/* Evocative Quote */}
+          <div className="max-w-2xl mx-auto">
+            <blockquote className="text-lg md:text-xl lg:text-2xl font-light leading-relaxed text-foreground/90 italic">
+              "From the ancient mists of {whisky.region}, where tradition meets innovation, a legend emerges."
+            </blockquote>
+          </div>
+        </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <ChevronDown className="h-6 w-6 text-muted-foreground" />
+        </div>
+      </section>
+
+      {/* Part 2: The Journey - Story Chapters */}
+      <section className="bg-background">
+        {/* Chapter 1: The Inspiration */}
+        <div className="py-20 px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="order-2 lg:order-1">
+                <span className="text-sm tracking-[0.2em] uppercase text-primary font-medium">Chapter I</span>
+                <h3 className="text-3xl md:text-4xl font-light mb-6 mt-2">The Inspiration</h3>
+                <div className="space-y-4 text-lg leading-relaxed text-muted-foreground">
+                  <p>
+                    In the heart of {whisky.region}, where ancient traditions flow like the mountain streams, 
+                    the vision for {whisky.name} was born. This wasn't merely about creating another expression—it was about 
+                    capturing the very essence of a place steeped in centuries of whisky-making heritage.
+                  </p>
+                  <p>
+                    {whisky.overview ? whisky.overview : `The master distillers at ${whisky.distillery} sought to honor the terroir of ${whisky.region}, 
+                    allowing the unique character of the land to speak through every drop.`}
+                  </p>
                 </div>
               </div>
+              <div className="order-1 lg:order-2">
+                <div className="aspect-[4/3] bg-muted/20 rounded-lg overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    <span className="text-muted-foreground/60 text-sm">The Vision Begins</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Chapter 2: The Craft */}
+        <div className="py-20 px-6 bg-muted/20">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="order-1">
+                <div className="aspect-[4/3] bg-muted/20 rounded-lg overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center">
+                    <span className="text-muted-foreground/60 text-sm">Artisan's Touch</span>
+                  </div>
+                </div>
+              </div>
+              <div className="order-2">
+                <span className="text-sm tracking-[0.2em] uppercase text-primary font-medium">Chapter II</span>
+                <h3 className="text-3xl md:text-4xl font-light mb-6 mt-2">The Craft</h3>
+                <div className="space-y-4 text-lg leading-relaxed text-muted-foreground">
+                  <p>
+                    Every element of {whisky.name} speaks to the meticulous artistry that defines {whisky.distillery}. 
+                    From the careful selection of ingredients to the patient guidance through each stage of creation, 
+                    this whisky embodies generations of accumulated wisdom.
+                  </p>
+                  <p>
+                    The copper stills breathe life into the spirit, while ancient techniques merge seamlessly with 
+                    modern precision. Each decision in the process is deliberate, purposeful, and steeped in respect 
+                    for the craft.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Chapter 3: The Maturation */}
+        <div className="py-20 px-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="order-2 lg:order-1">
+                <span className="text-sm tracking-[0.2em] uppercase text-primary font-medium">Chapter III</span>
+                <h3 className="text-3xl md:text-4xl font-light mb-6 mt-2">The Maturation</h3>
+                <div className="space-y-4 text-lg leading-relaxed text-muted-foreground">
+                  <p>
+                    Time becomes the silent alchemist in the story of {whisky.name}. Within the embrace of carefully 
+                    selected oak, the spirit undergoes its profound transformation, drawing character from wood that 
+                    has witnessed decades of seasonal change.
+                  </p>
+                  <p>
+                    The unique climate of {whisky.region} plays its part—each season leaving its mark, each year 
+                    adding layers of complexity that no rushing can achieve. This is patience rewarded, 
+                    time honored, and tradition preserved.
+                  </p>
+                </div>
+              </div>
+              <div className="order-1 lg:order-2">
+                <div className="aspect-[4/3] bg-muted/20 rounded-lg overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                    <span className="text-muted-foreground/60 text-sm">The Patient Years</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Part 3: The Home - Distillery & Terroir */}
+      <section className="py-20 px-6 bg-muted/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <h3 className="text-4xl md:text-5xl font-light mb-12">
+            Forged in {whisky.region}
+          </h3>
+          
+          <div className="grid md:grid-cols-2 gap-12 mb-16">
+            <div className="space-y-6">
+              <h4 className="text-2xl font-light">The Terroir</h4>
+              <p className="text-lg leading-relaxed text-muted-foreground">
+                {whisky.location ? `Nestled in ${whisky.location}, within the renowned ${whisky.region} region, ` : `In the heart of ${whisky.region}, `}
+                {whisky.distillery} draws from the unique characteristics of its environment. The local climate, 
+                water sources, and natural surroundings all contribute to the distinctive profile that makes 
+                this whisky unmistakably from this place.
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              <h4 className="text-2xl font-light">The Philosophy</h4>
+              <p className="text-lg leading-relaxed text-muted-foreground">
+                At {whisky.distillery}, whisky-making is more than a craft—it's a responsibility to preserve 
+                and honor the traditions of {whisky.region}. Every bottle of {whisky.name} carries forward 
+                the legacy of master distillers who understood that true excellence comes from patience, 
+                precision, and profound respect for the art.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Part 4: The Legacy - Final CTA */}
+      <section className="py-20 px-6 bg-background">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="mb-12">
+            {whisky.image_url && (
+              <div className="max-w-md mx-auto mb-8">
+                <img 
+                  src={whisky.image_url} 
+                  alt={`${whisky.distillery} ${whisky.name}`}
+                  className="w-full h-auto object-contain"
+                />
+              </div>
             )}
-          </CardContent>
-        </Card>
-
-        {whisky.image_url && (
-          <Card>
-            <CardContent className="p-0">
-              <img 
-                src={whisky.image_url} 
-                alt={`${whisky.distillery} ${whisky.name}`}
-                className="w-full h-64 sm:h-80 object-cover rounded-lg"
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="bg-primary/5 border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Play className="h-5 w-5" />
-              Ready to Begin Your Tasting Journey?
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              Now that you know more about this whisky, it's time to experience it firsthand. 
-              The tasting dossier will guide you through a comprehensive tasting experience 
-              where you can record your impressions, rate flavors, and add personal notes.
+            
+            <h3 className="text-3xl md:text-4xl font-light mb-6">
+              The Story Lives On
+            </h3>
+            <p className="text-lg leading-relaxed text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Every story deserves its moment of discovery. The tale of {whisky.name} has been told—now it's time 
+              to experience it. Your palate will be the final chapter in this narrative, adding your own 
+              impressions to the legacy of {whisky.distillery}.
             </p>
-            <Button asChild size="lg" className="w-full sm:w-auto">
-              <Link to={`/tasting/${whisky.id}`}>
-                <Play className="mr-2 h-4 w-4" />
-                Start Tasting
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+          </div>
+          
+          <Button asChild size="lg" className="px-8 py-6 text-lg">
+            <Link to={`/tasting/${whisky.id}`}>
+              <Play className="mr-2 h-5 w-5" />
+              Begin Your Tasting Journey
+            </Link>
+          </Button>
+        </div>
+      </section>
+    </>
   );
 };
 
