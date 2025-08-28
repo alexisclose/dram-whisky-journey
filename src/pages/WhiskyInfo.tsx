@@ -75,15 +75,17 @@ const WhiskyInfo = () => {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           {whisky.image_url ? (
-            <AdminImageOverlay
-              src={whisky.image_url}
-              alt=""
-              className="w-full h-full object-cover scale-110"
-            />
+            <div className="relative w-full h-full">
+              <AdminImageOverlay
+                src={whisky.image_url}
+                alt=""
+                className="w-full h-full object-cover scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/80 pointer-events-none" />
+            </div>
           ) : (
             <div className="w-full h-full bg-gradient-to-b from-muted/30 via-muted/50 to-muted/80" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/80" />
         </div>
         
         {/* Hero Content */}
@@ -137,9 +139,11 @@ const WhiskyInfo = () => {
               </div>
               <div className="order-1 lg:order-2">
                 <div className="aspect-[4/3] bg-muted/20 rounded-lg overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                    <span className="text-muted-foreground/60 text-sm">The Vision Begins</span>
-                  </div>
+                  <AdminImageOverlay
+                    src={whisky.image_url || "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=600&fit=crop"}
+                    alt="The inspiration behind the whisky"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </div>
@@ -152,9 +156,11 @@ const WhiskyInfo = () => {
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="order-1">
                 <div className="aspect-[4/3] bg-muted/20 rounded-lg overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-accent/10 to-primary/10 flex items-center justify-center">
-                    <span className="text-muted-foreground/60 text-sm">Artisan's Touch</span>
-                  </div>
+                  <AdminImageOverlay
+                    src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&h=600&fit=crop"
+                    alt="Craft and artistry of whisky making"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
               <div className="order-2">
@@ -199,9 +205,11 @@ const WhiskyInfo = () => {
               </div>
               <div className="order-1 lg:order-2">
                 <div className="aspect-[4/3] bg-muted/20 rounded-lg overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
-                    <span className="text-muted-foreground/60 text-sm">The Patient Years</span>
-                  </div>
+                  <AdminImageOverlay
+                    src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&h=600&fit=crop"
+                    alt="Maturation process in oak barrels"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </div>
