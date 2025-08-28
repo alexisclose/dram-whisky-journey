@@ -74,6 +74,7 @@ export default function MediaLibrary() {
             file_size: file.size,
             mime_type: file.type,
             category: "general",
+            uploaded_by: (await supabase.auth.getUser()).data.user?.id,
           });
 
         if (dbError) throw dbError;
