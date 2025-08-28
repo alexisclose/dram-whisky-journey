@@ -29,6 +29,7 @@ import Discover from "./pages/Discover";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import WhiskyInfo from "./pages/WhiskyInfo";
+import MediaLibrary from "./pages/admin/MediaLibrary";
 import { ActiveSetProvider } from "./context/ActiveSetContext";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/quiz" element={<Quiz />} />
               <Route path="/certificate" element={<Certificate />} />
+              <Route path="/admin/media" element={<MediaLibrary />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

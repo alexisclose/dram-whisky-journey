@@ -4,6 +4,7 @@ import { ArrowLeft, Play, ChevronDown } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminImageOverlay } from "@/components/AdminImageOverlay";
 
 const WhiskyInfo = () => {
   const { id } = useParams<{ id: string }>();
@@ -74,8 +75,8 @@ const WhiskyInfo = () => {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           {whisky.image_url ? (
-            <img 
-              src={whisky.image_url} 
+            <AdminImageOverlay
+              src={whisky.image_url}
               alt=""
               className="w-full h-full object-cover scale-110"
             />
@@ -245,8 +246,8 @@ const WhiskyInfo = () => {
           <div className="mb-12">
             {whisky.image_url && (
               <div className="max-w-md mx-auto mb-8">
-                <img 
-                  src={whisky.image_url} 
+                <AdminImageOverlay
+                  src={whisky.image_url}
                   alt={`${whisky.distillery} ${whisky.name}`}
                   className="w-full h-auto object-contain"
                 />

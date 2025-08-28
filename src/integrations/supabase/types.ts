@@ -68,6 +68,63 @@ export type Database = {
         }
         Relationships: []
       }
+      media_library: {
+        Row: {
+          alt_text: string | null
+          bucket_name: string
+          category: string | null
+          created_at: string
+          file_path: string
+          file_size: number | null
+          filename: string
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          mime_type: string | null
+          original_name: string
+          tags: string[] | null
+          updated_at: string
+          uploaded_by: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          bucket_name?: string
+          category?: string | null
+          created_at?: string
+          file_path: string
+          file_size?: number | null
+          filename: string
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          mime_type?: string | null
+          original_name: string
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          bucket_name?: string
+          category?: string | null
+          created_at?: string
+          file_path?: string
+          file_size?: number | null
+          filename?: string
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          mime_type?: string | null
+          original_name?: string
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       post_reactions: {
         Row: {
           created_at: string
@@ -497,6 +554,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_media_usage: {
+        Args: { _media_id: string }
+        Returns: undefined
       }
     }
     Enums: {
