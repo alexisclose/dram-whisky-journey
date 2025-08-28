@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -58,35 +58,58 @@ export function AdminImageOverlay({
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error("You must be logged in to upload images");
+      }
+
+      console.log("User authenticated:", user.id);
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random()}.${fileExt}`;
       const filePath = `admin/${fileName}`;
+
+      console.log("Uploading file:", fileName);
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("whisky-images")
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        throw uploadError;
+      }
+
+      console.log("File uploaded to storage, now adding to database");
 
       // Add to media library
+      const insertData = {
+        filename: fileName,
+        original_name: file.name,
+        file_path: filePath,
+        bucket_name: "whisky-images",
+        file_size: file.size,
+        mime_type: file.type,
+        category: "general",
+        uploaded_by: user.id,
+      };
+
+      console.log("Inserting data:", insertData);
+
       const { data, error: dbError } = await supabase
         .from("media_library")
-        .insert({
-          filename: fileName,
-          original_name: file.name,
-          file_path: filePath,
-          bucket_name: "whisky-images",
-          file_size: file.size,
-          mime_type: file.type,
-          category: "general",
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database insert error:", dbError);
+        throw dbError;
+      }
 
+      console.log("Successfully inserted into database");
       return data;
     },
     onSuccess: (newItem) => {
@@ -160,6 +183,9 @@ export function AdminImageOverlay({
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Replace Image</DialogTitle>
+            <DialogDescription>
+              Choose an existing image from the media library or upload a new one.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">

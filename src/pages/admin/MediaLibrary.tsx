@@ -51,33 +51,57 @@ export default function MediaLibrary() {
 
   const uploadMutation = useMutation({
     mutationFn: async (files: FileList) => {
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error("You must be logged in to upload images");
+      }
+
+      console.log("User authenticated:", user.id);
+
       const uploads = Array.from(files).map(async (file) => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random()}.${fileExt}`;
         const filePath = `admin/${fileName}`;
+
+        console.log("Uploading file:", fileName);
 
         // Upload to storage
         const { error: uploadError } = await supabase.storage
           .from("whisky-images")
           .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Storage upload error:", uploadError);
+          throw uploadError;
+        }
+
+        console.log("File uploaded to storage, now adding to database");
 
         // Add to media library
+        const insertData = {
+          filename: fileName,
+          original_name: file.name,
+          file_path: filePath,
+          bucket_name: "whisky-images",
+          file_size: file.size,
+          mime_type: file.type,
+          category: "general",
+          uploaded_by: user.id,
+        };
+
+        console.log("Inserting data:", insertData);
+
         const { error: dbError } = await supabase
           .from("media_library")
-          .insert({
-            filename: fileName,
-            original_name: file.name,
-            file_path: filePath,
-            bucket_name: "whisky-images",
-            file_size: file.size,
-            mime_type: file.type,
-            category: "general",
-            uploaded_by: (await supabase.auth.getUser()).data.user?.id,
-          });
+          .insert(insertData);
 
-        if (dbError) throw dbError;
+        if (dbError) {
+          console.error("Database insert error:", dbError);
+          throw dbError;
+        }
+
+        console.log("Successfully inserted into database");
       });
 
       await Promise.all(uploads);
