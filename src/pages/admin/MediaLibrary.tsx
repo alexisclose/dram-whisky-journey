@@ -52,12 +52,23 @@ export default function MediaLibrary() {
   const uploadMutation = useMutation({
     mutationFn: async (files: FileList) => {
       // Check authentication first
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.user) {
+        console.error("Session error:", sessionError);
         throw new Error("You must be logged in to upload images");
       }
 
-      console.log("User authenticated:", user.id);
+      console.log("User authenticated:", session.user.id);
+      console.log("Session:", session);
+
+      // Test database authentication
+      const { data: authTest, error: authTestError } = await supabase
+        .rpc('check_user_admin_status');
+      
+      console.log("Auth test result:", authTest);
+      if (authTestError) {
+        console.error("Auth test error:", authTestError);
+      }
 
       const uploads = Array.from(files).map(async (file) => {
         const fileExt = file.name.split('.').pop();
@@ -87,7 +98,7 @@ export default function MediaLibrary() {
           file_size: file.size,
           mime_type: file.type,
           category: "general",
-          uploaded_by: user.id,
+          uploaded_by: session.user.id,
         };
 
         console.log("Inserting data:", insertData);
