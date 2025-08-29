@@ -485,6 +485,19 @@ export type Database = {
           set_code: string
         }[]
       }
+      admin_insert_media: {
+        Args: {
+          p_bucket_name: string
+          p_category: string
+          p_file_path: string
+          p_file_size: number
+          p_filename: string
+          p_mime_type: string
+          p_original_name: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       check_user_admin_status: {
         Args: Record<PropertyKey, never>
         Returns: {

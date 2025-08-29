@@ -84,33 +84,36 @@ export function AdminImageOverlay({
 
       console.log("File uploaded to storage, now adding to database");
 
-      // Add to media library
-      const insertData = {
-        filename: fileName,
-        original_name: file.name,
-        file_path: filePath,
-        bucket_name: "whisky-images",
-        file_size: file.size,
-        mime_type: file.type,
-        category: "general",
-        uploaded_by: user.id,
-      };
-
-      console.log("Inserting data:", insertData);
-
-      const { data, error: dbError } = await supabase
-        .from("media_library")
-        .insert(insertData)
-        .select()
-        .single();
+      // Add to media library using admin function to bypass RLS
+      const { data: result, error: dbError } = await supabase
+        .rpc('admin_insert_media', {
+          p_filename: fileName,
+          p_original_name: file.name,
+          p_file_path: filePath,
+          p_bucket_name: "whisky-images",
+          p_file_size: file.size,
+          p_mime_type: file.type,
+          p_category: "general",
+          p_user_id: user.id
+        });
 
       if (dbError) {
         console.error("Database insert error:", dbError);
         throw dbError;
       }
 
-      console.log("Successfully inserted into database");
-      return data;
+      console.log("Successfully inserted into database with ID:", result);
+      
+      // Return a media item structure for the UI
+      return {
+        id: result,
+        filename: fileName,
+        file_path: filePath,
+        bucket_name: "whisky-images",
+        category: "general",
+        alt_text: null,
+        original_name: file.name
+      };
     },
     onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: ["media-library"] });

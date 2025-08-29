@@ -103,16 +103,25 @@ export default function MediaLibrary() {
 
         console.log("Inserting data:", insertData);
 
-        const { error: dbError } = await supabase
-          .from("media_library")
-          .insert(insertData);
+        // Use the admin function instead of direct insert to bypass RLS issues
+        const { data: result, error: dbError } = await supabase
+          .rpc('admin_insert_media', {
+            p_filename: fileName,
+            p_original_name: file.name,
+            p_file_path: filePath,
+            p_bucket_name: "whisky-images",
+            p_file_size: file.size,
+            p_mime_type: file.type,
+            p_category: "general",
+            p_user_id: session.user.id
+          });
 
         if (dbError) {
           console.error("Database insert error:", dbError);
           throw dbError;
         }
 
-        console.log("Successfully inserted into database");
+        console.log("Successfully inserted into database with ID:", result);
       });
 
       await Promise.all(uploads);
