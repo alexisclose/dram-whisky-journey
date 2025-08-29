@@ -84,7 +84,7 @@ export type Database = {
           original_name: string
           tags: string[] | null
           updated_at: string
-          uploaded_by: string | null
+          uploaded_by: string
           usage_count: number | null
         }
         Insert: {
@@ -102,7 +102,7 @@ export type Database = {
           original_name: string
           tags?: string[] | null
           updated_at?: string
-          uploaded_by?: string | null
+          uploaded_by: string
           usage_count?: number | null
         }
         Update: {
@@ -120,7 +120,7 @@ export type Database = {
           original_name?: string
           tags?: string[] | null
           updated_at?: string
-          uploaded_by?: string | null
+          uploaded_by?: string
           usage_count?: number | null
         }
         Relationships: []
@@ -483,6 +483,14 @@ export type Database = {
           activated: boolean
           name: string
           set_code: string
+        }[]
+      }
+      check_user_admin_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          has_admin_role: boolean
+          roles: string[]
+          user_id: string
         }[]
       }
       get_current_user_role: {
