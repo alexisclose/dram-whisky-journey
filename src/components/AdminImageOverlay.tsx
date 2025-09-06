@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -36,10 +36,16 @@ export function AdminImageOverlay({
 }: AdminImageOverlayProps) {
   const { isAdmin } = useUserRole();
   const [showModal, setShowModal] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Update currentSrc when src prop changes
+  useEffect(() => {
+    setCurrentSrc(src);
+  }, [src]);
 
   const { data: mediaItems = [] } = useQuery({
     queryKey: ["media-library"],
@@ -118,6 +124,7 @@ export function AdminImageOverlay({
     onSuccess: (newItem) => {
       queryClient.invalidateQueries({ queryKey: ["media-library"] });
       const newUrl = getImageUrl(newItem);
+      setCurrentSrc(newUrl);
       onImageChange?.(newUrl);
       setShowModal(false);
       toast({ title: "Image uploaded and replaced successfully" });
@@ -140,6 +147,7 @@ export function AdminImageOverlay({
 
   const handleImageSelect = (item: MediaItem) => {
     const newUrl = getImageUrl(item);
+    setCurrentSrc(newUrl);
     onImageChange?.(newUrl);
     setShowModal(false);
     toast({ title: "Image replaced successfully" });
@@ -162,13 +170,13 @@ export function AdminImageOverlay({
   const categories = ["all", ...Array.from(new Set(mediaItems.map(item => item.category)))];
 
   if (!isAdmin) {
-    return children || <img src={src} alt={alt} className={className} />;
+    return children || <img src={currentSrc} alt={alt} className={className} />;
   }
 
   return (
     <>
       <div className="relative group">
-        {children || <img src={src} alt={alt} className={className} />}
+        {children || <img src={currentSrc} alt={alt} className={className} />}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <Button
             size="sm"
