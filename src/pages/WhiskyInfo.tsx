@@ -193,6 +193,7 @@ const WhiskyInfo = () => {
                     src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&h=600&fit=crop"
                     alt="Craft and artistry of whisky making"
                     className="w-full h-full object-cover"
+                    onImageChange={handleImageChange}
                   />
                 </div>
               </div>
@@ -242,6 +243,7 @@ const WhiskyInfo = () => {
                     src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&h=600&fit=crop"
                     alt="Maturation process in oak barrels"
                     className="w-full h-full object-cover"
+                    onImageChange={handleImageChange}
                   />
                 </div>
               </div>
