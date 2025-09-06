@@ -2,13 +2,16 @@ import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, ChevronDown } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminImageOverlay } from "@/components/AdminImageOverlay";
+import { useToast } from "@/hooks/use-toast";
 
 const WhiskyInfo = () => {
   const { id } = useParams<{ id: string }>();
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/whisky-info/${id}` : `/whisky-info/${id}`;
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: whisky, isLoading } = useQuery({
     queryKey: ["whisky-info", id],
@@ -26,6 +29,34 @@ const WhiskyInfo = () => {
     },
     enabled: !!id
   });
+
+  const handleImageChange = async (newUrl: string) => {
+    if (!id || !whisky) return;
+    
+    try {
+      const { error } = await supabase
+        .from("whiskies")
+        .update({ image_url: newUrl })
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      // Update the local query cache
+      queryClient.setQueryData(["whisky-info", id], {
+        ...whisky,
+        image_url: newUrl
+      });
+      
+      toast({ title: "Image updated successfully" });
+    } catch (error) {
+      console.error("Failed to update whisky image:", error);
+      toast({ 
+        title: "Failed to update image", 
+        description: "Please try again",
+        variant: "destructive" 
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -80,6 +111,7 @@ const WhiskyInfo = () => {
                 src={whisky.image_url}
                 alt=""
                 className="w-full h-full object-cover scale-110"
+                onImageChange={handleImageChange}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background/80 pointer-events-none" />
             </div>
@@ -143,6 +175,7 @@ const WhiskyInfo = () => {
                     src={whisky.image_url || "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=600&fit=crop"}
                     alt="The inspiration behind the whisky"
                     className="w-full h-full object-cover"
+                    onImageChange={handleImageChange}
                   />
                 </div>
               </div>
@@ -258,6 +291,7 @@ const WhiskyInfo = () => {
                   src={whisky.image_url}
                   alt={`${whisky.distillery} ${whisky.name}`}
                   className="w-full h-auto object-contain"
+                  onImageChange={handleImageChange}
                 />
               </div>
             )}
