@@ -175,7 +175,6 @@ const WhiskyInfo = () => {
                     src={whisky.image_url || "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=600&fit=crop"}
                     alt="The inspiration behind the whisky"
                     className="w-full h-full object-cover"
-                    onImageChange={handleImageChange}
                   />
                 </div>
               </div>
@@ -193,7 +192,6 @@ const WhiskyInfo = () => {
                     src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&h=600&fit=crop"
                     alt="Craft and artistry of whisky making"
                     className="w-full h-full object-cover"
-                    onImageChange={handleImageChange}
                   />
                 </div>
               </div>
@@ -243,7 +241,6 @@ const WhiskyInfo = () => {
                     src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&h=600&fit=crop"
                     alt="Maturation process in oak barrels"
                     className="w-full h-full object-cover"
-                    onImageChange={handleImageChange}
                   />
                 </div>
               </div>
@@ -293,7 +290,6 @@ const WhiskyInfo = () => {
                   src={whisky.image_url}
                   alt={`${whisky.distillery} ${whisky.name}`}
                   className="w-full h-auto object-contain"
-                  onImageChange={handleImageChange}
                 />
               </div>
             )}
