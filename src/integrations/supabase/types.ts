@@ -499,7 +499,7 @@ export type Database = {
         Returns: string
       }
       check_user_admin_status: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           has_admin_role: boolean
           roles: string[]
@@ -507,7 +507,7 @@ export type Database = {
         }[]
       }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_flavor_distribution: {
@@ -576,10 +576,21 @@ export type Database = {
         }
         Returns: boolean
       }
-      increment_media_usage: {
-        Args: { _media_id: string }
-        Returns: undefined
+      increment_media_usage: { Args: { _media_id: string }; Returns: undefined }
+      insert_media_as_admin: {
+        Args: {
+          p_alt_text?: string
+          p_bucket_name?: string
+          p_category?: string
+          p_file_path: string
+          p_file_size?: number
+          p_filename: string
+          p_mime_type?: string
+          p_original_name: string
+        }
+        Returns: string
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
