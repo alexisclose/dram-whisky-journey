@@ -15,6 +15,7 @@ import { Star, ArrowLeft, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
+import { AdminImageOverlay } from "@/components/AdminImageOverlay";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
@@ -126,6 +127,35 @@ const WhiskyDossier = () => {
     enabled: !!whiskyId,
   });
   const whisky = dbWhisky;
+
+  const handleProfileImageChange = async (newUrl: string) => {
+    if (!whisky || !whisky.id) return;
+
+    // Only allow editing core whiskies here for now
+    if (whisky.is_user_submitted) {
+      toast.error("Profile images for community-added whiskies can't be edited yet.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("whiskies")
+        .update({ image_url: newUrl })
+        .eq("id", whisky.id);
+
+      if (error) throw error;
+
+      queryClient.setQueryData(["whisky-by-id", whiskyId], {
+        ...whisky,
+        image_url: newUrl,
+      });
+
+      toast.success("Whisky profile image updated");
+    } catch (error) {
+      console.error("Failed to update whisky image:", error);
+      toast.error("Failed to update profile image");
+    }
+  };
 
   // Load user's tasting notes to calculate their flavor profile
   const { data: userTastingNotes } = useQuery({
@@ -542,13 +572,11 @@ const WhiskyDossier = () => {
           <div className="w-full max-w-sm mx-auto">
             {/* Bottle Image - Mobile Optimized */}
             <div className="flex justify-center mb-8">
-              <img
+              <AdminImageOverlay
                 src={whisky.image_url || "/placeholder.svg"}
                 alt={`${whisky.distillery} ${whisky.name} bottle`}
                 className="w-32 h-auto max-h-48 object-contain drop-shadow-2xl"
-                onError={(e) => {
-                  e.currentTarget.src = "/placeholder.svg";
-                }}
+                onImageChange={handleProfileImageChange}
               />
             </div>
 
