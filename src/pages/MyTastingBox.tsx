@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import { Star, CheckCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import WhiskyMap from "@/components/Map";
@@ -121,11 +121,17 @@ const MyTastingBox = () => {
 
       <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {whiskies?.map(w => (
-          <Card key={w.id}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
+          <Card key={w.id} className="relative">
+            {ratings[w.id] && (
+              <div className="absolute top-3 right-3 flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                <CheckCircle className="h-3.5 w-3.5" />
+                Tasted
+              </div>
+            )}
+            <CardHeader className="pr-24">
+              <CardTitle className="flex flex-col gap-1">
                 <span>{w.distillery} — {w.name}</span>
-                <span className="text-sm text-muted-foreground">{w.region || ""}</span>
+                <span className="text-sm font-normal text-muted-foreground">{w.region || ""}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
