@@ -49,10 +49,10 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/add-whisky" element={<AddWhisky />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/university" element={<University />} />
+              {/* MVP Hidden: <Route path="/university" element={<University />} /> */}
               <Route path="/tasting" element={<Tasting />} />
               <Route path="/my-tasting-box" element={<MyTastingBox />} />
-              <Route path="/explore" element={<Explore />} />
+              {/* MVP Hidden: <Route path="/explore" element={<Explore />} /> */}
               <Route path="/whisky-upload" element={<WhiskyUpload />} />
               <Route path="/whisky-info/:id" element={<WhiskyInfo />} />
               <Route path="/tasting/:id" element={<WhiskyDossier />} />
@@ -61,11 +61,11 @@ const App = () => (
               
               <Route path="/reviews" element={<MyReviews />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/feed" element={<Feed />} />
+              {/* MVP Hidden: <Route path="/feed" element={<Feed />} /> */}
               <Route path="/user/:userId" element={<UserProfile />} />
-              <Route path="/discover" element={<Discover />} />
+              {/* MVP Hidden: <Route path="/discover" element={<Discover />} /> */}
               <Route path="/settings" element={<Settings />} />
-              <Route path="/quiz" element={<Quiz />} />
+              {/* MVP Hidden: <Route path="/quiz" element={<Quiz />} /> */}
               <Route path="/certificate" element={<Certificate />} />
               <Route path="/admin/media" element={<MediaLibrary />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

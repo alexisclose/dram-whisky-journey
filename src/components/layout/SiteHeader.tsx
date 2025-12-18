@@ -42,13 +42,11 @@ const SiteHeader = () => {
           
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
-            <NavLink className={navLinkClass} to="/feed">Feed</NavLink>
-            <NavLink className={navLinkClass} to="/discover">Discover</NavLink>
+            <NavLink className={navLinkClass} to="/my-tasting-box">My Tasting Box</NavLink>
             <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
-            <NavLink className={navLinkClass} to="/explore">Explore</NavLink>
             {!loading && user && (
               <>
-                <NavLink className={navLinkClass} to="/profile">Profile</NavLink>
+                <NavLink className={navLinkClass} to="/profile">Whisky Profile</NavLink>
                 {isAdmin && (
                   <NavLink className={navLinkClass} to="/whisky-upload">Upload</NavLink>
                 )}
@@ -75,17 +73,10 @@ const SiteHeader = () => {
                 <nav className="flex flex-col gap-2">
                   <NavLink 
                     className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    to="/feed"
+                    to="/my-tasting-box"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Feed
-                  </NavLink>
-                  <NavLink 
-                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    to="/discover"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Discover
+                    My Tasting Box
                   </NavLink>
                   <NavLink 
                     className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
@@ -93,13 +84,6 @@ const SiteHeader = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Tasting Journey
-                  </NavLink>
-                  <NavLink 
-                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    to="/explore"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Explore
                   </NavLink>
                   
                   {!loading && user && (
@@ -110,7 +94,7 @@ const SiteHeader = () => {
                         to="/profile"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Profile
+                        Whisky Profile
                       </NavLink>
                       {isAdmin && (
                         <NavLink 
