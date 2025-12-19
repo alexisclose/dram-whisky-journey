@@ -591,6 +591,14 @@ export type Database = {
         Returns: string
       }
       is_admin: { Args: never; Returns: boolean }
+      validate_activation_code: {
+        Args: { _code: string }
+        Returns: {
+          name: string
+          set_code: string
+          valid: boolean
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"

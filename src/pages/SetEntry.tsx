@@ -18,21 +18,17 @@ const SetEntry = () => {
         return;
       }
 
-      // Validate code exists in activation_codes (code is the unique QR identifier)
+      // Use the public RPC function to validate the code
       const { data, error } = await supabase
-        .from("activation_codes")
-        .select("code, set_code, name, is_active")
-        .eq("code", setCode)
-        .eq("is_active", true)
-        .maybeSingle();
+        .rpc("validate_activation_code", { _code: setCode });
 
-      if (error || !data) {
+      if (error || !data || data.length === 0 || !data[0].valid) {
         setStatus("error");
         return;
       }
 
       // Valid code - store the associated set_code and redirect to welcome
-      setActiveSet(data.set_code);
+      setActiveSet(data[0].set_code);
       setStatus("success");
       
       // Brief delay to show success, then redirect
