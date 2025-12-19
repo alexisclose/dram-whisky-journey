@@ -246,7 +246,7 @@ const MyTastingBox = () => {
             </Card>
             
             {/* Profile teaser appears after 3rd whisky */}
-            {index === 2 && user && (
+            {index === 0 && user && (
               <div className="col-span-1 sm:col-span-2 lg:col-span-3">
                 <WhiskyProfileTeaser 
                   flavorProfile={flavorProfile} 
