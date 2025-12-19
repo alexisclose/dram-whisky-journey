@@ -11,6 +11,7 @@ import { Wordcloud } from '@visx/wordcloud';
 import { scaleLog } from '@visx/scale';
 import { Text } from '@visx/text';
 import WhiskyRecommendations from "@/components/WhiskyRecommendations";
+import ShareProfileButton from "@/components/ShareProfileButton";
 
 interface TastingNote {
   id: string;
@@ -298,20 +299,25 @@ const WhiskyProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
-            className="p-2 self-start"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Your Whisky Profile</h1>
-            <p className="text-lg sm:text-xl text-muted-foreground mt-1 sm:mt-2">
-              Discover your unique flavor preferences
-            </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="p-2 self-start"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">Your Whisky Profile</h1>
+              <p className="text-lg sm:text-xl text-muted-foreground mt-1 sm:mt-2">
+                Discover your unique flavor preferences
+              </p>
+            </div>
           </div>
+          {flavorProfile && (
+            <ShareProfileButton flavorProfile={flavorProfile} />
+          )}
         </div>
 
         {!flavorProfile ? (
