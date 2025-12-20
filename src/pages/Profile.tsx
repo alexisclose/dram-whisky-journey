@@ -6,6 +6,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Settings, Wine, Star, Bookmark, ChevronRight, Radar, Cloud } from "lucide-react";
+import ShareProfileButton from "@/components/ShareProfileButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -244,10 +245,14 @@ export default function Profile() {
               {profile?.display_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
-<h1 className="text-2xl font-bold">{profile?.first_name || user?.email}</h1>        </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>
-          <Settings className="w-5 h-5" />
-        </Button>
+          <h1 className="text-2xl font-bold">{profile?.first_name || user?.email}</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          {flavorProfile && <ShareProfileButton flavorProfile={flavorProfile} />}
+          <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>
+            <Settings className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
