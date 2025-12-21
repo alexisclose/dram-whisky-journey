@@ -43,7 +43,6 @@ const SiteHeader = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
             <NavLink className={navLinkClass} to="/my-tasting-box">My Tasting Box</NavLink>
-            <NavLink className={navLinkClass} to="/tasting">Tasting Journey</NavLink>
             {!loading && user && (
               <>
                 <NavLink className={navLinkClass} to="/profile">Whisky Profile</NavLink>
@@ -77,13 +76,6 @@ const SiteHeader = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     My Tasting Box
-                  </NavLink>
-                  <NavLink 
-                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    to="/tasting"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Tasting Journey
                   </NavLink>
                   
                   {!loading && user && (
