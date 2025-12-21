@@ -64,7 +64,7 @@ const App = () => (
                     <Route path="/my-tasting-box" element={<MyTastingBox />} />
                     {/* MVP Hidden: <Route path="/explore" element={<Explore />} /> */}
                     <Route path="/whisky-upload" element={<WhiskyUpload />} />
-                    <Route path="/whisky-info/:id" element={<WhiskyInfo />} />
+                    {/* MVP Hidden: <Route path="/whisky-info/:id" element={<WhiskyInfo />} /> */}
                     <Route path="/tasting/:id" element={<WhiskyDossier />} />
                     <Route path="/whisky-dossier/:id" element={<WhiskyDossier />} />
                     <Route path="/dossier/:id" element={<WhiskyDossier />} />

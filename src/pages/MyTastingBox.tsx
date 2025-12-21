@@ -236,7 +236,7 @@ const MyTastingBox = () => {
                 </div>
                 <Button asChild variant="outline" size="sm">
                   <Link
-                    to={`/whisky-info/${w.id}`}
+                    to={`/whisky-dossier/${w.id}`}
                     aria-label={`Open dossier for ${w.distillery} ${w.name}`}
                   >
                     Open Dossier
