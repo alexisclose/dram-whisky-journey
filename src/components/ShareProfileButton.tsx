@@ -307,8 +307,14 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
-    // Use wa.me with noopener for security
-    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+    // Use web.whatsapp.com which doesn't block iframe contexts
+    const whatsappUrl = `https://web.whatsapp.com/send?text=${text}`;
+    // Open in new window/tab - this bypasses iframe restrictions
+    const newWindow = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    if (!newWindow) {
+      // Fallback: try direct navigation
+      window.location.href = `whatsapp://send?text=${text}`;
+    }
   };
 
   const shareToTelegram = () => {
