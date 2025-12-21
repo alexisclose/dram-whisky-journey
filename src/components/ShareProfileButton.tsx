@@ -307,7 +307,8 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
-    window.open(`https://wa.me/?text=${text}`, "_blank");
+    // Use wa.me with noopener for security
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
   const shareToTelegram = () => {
