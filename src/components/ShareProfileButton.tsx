@@ -302,30 +302,53 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
   const shareToFacebook = () => {
     const url = encodeURIComponent(getShareUrl());
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+    // Try to open - if blocked in iframe, copy link instead
+    const newWindow = window.open(shareUrl, "_blank", "noopener,noreferrer,width=600,height=400");
+    if (!newWindow || newWindow.closed) {
+      navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
+      toast.info("Link copied! Paste it on Facebook to share.");
+    }
   };
 
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
-    // Use web.whatsapp.com which doesn't block iframe contexts
-    const whatsappUrl = `https://web.whatsapp.com/send?text=${text}`;
-    // Open in new window/tab - this bypasses iframe restrictions
-    const newWindow = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    if (!newWindow) {
-      // Fallback: try direct navigation
+    // Try native protocol first (works on mobile), fallback to web
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
       window.location.href = `whatsapp://send?text=${text}`;
+    } else {
+      const newWindow = window.open(`https://web.whatsapp.com/send?text=${text}`, "_blank", "noopener,noreferrer");
+      if (!newWindow || newWindow.closed) {
+        navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
+        toast.info("Link copied! Paste it in WhatsApp to share.");
+      }
     }
   };
 
   const shareToTelegram = () => {
     const text = encodeURIComponent(getShareText());
     const url = encodeURIComponent(getShareUrl());
-    window.open(`https://t.me/share/url?url=${url}&text=${text}`, "_blank");
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.location.href = `tg://msg_url?url=${url}&text=${text}`;
+    } else {
+      const newWindow = window.open(`https://t.me/share/url?url=${url}&text=${text}`, "_blank", "noopener,noreferrer");
+      if (!newWindow || newWindow.closed) {
+        navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
+        toast.info("Link copied! Paste it in Telegram to share.");
+      }
+    }
   };
 
   const shareToLinkedIn = () => {
     const url = encodeURIComponent(getShareUrl());
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank");
+    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+    const newWindow = window.open(shareUrl, "_blank", "noopener,noreferrer,width=600,height=400");
+    if (!newWindow || newWindow.closed) {
+      navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
+      toast.info("Link copied! Paste it on LinkedIn to share.");
+    }
   };
 
   const shareToInstagram = () => {
