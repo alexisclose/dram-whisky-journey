@@ -20,7 +20,6 @@ type WhiskyRow = {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  set_code: string;
 };
 
 interface FlavorProfile {
@@ -48,12 +47,22 @@ const MyTastingBox = () => {
   const { data: whiskies } = useQuery({
     queryKey: ["db-whiskies", activeSet],
     queryFn: async () => {
+      // Query through the junction table to get whiskies for this set
       const { data, error } = await supabase
-        .from("whiskies")
-        .select("id, distillery, name, region, location, latitude, longitude, set_code")
-        .eq("set_code", activeSet);
+        .from("whisky_sets")
+        .select(`
+          display_order,
+          whiskies (
+            id, distillery, name, region, location, latitude, longitude
+          )
+        `)
+        .eq("set_code", activeSet)
+        .order("display_order", { ascending: true });
       if (error) throw error;
-      return (data || []) as WhiskyRow[];
+      // Flatten the joined data
+      return (data || [])
+        .map(row => row.whiskies)
+        .filter((w): w is NonNullable<typeof w> => w !== null) as WhiskyRow[];
     }
   });
 
