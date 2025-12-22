@@ -448,6 +448,38 @@ export type Database = {
         }
         Relationships: []
       }
+      whisky_sets: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          set_code: string
+          whisky_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          set_code: string
+          whisky_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          set_code?: string
+          whisky_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whisky_sets_whisky_id_fkey"
+            columns: ["whisky_id"]
+            isOneToOne: false
+            referencedRelation: "whiskies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wishlists: {
         Row: {
           created_at: string
