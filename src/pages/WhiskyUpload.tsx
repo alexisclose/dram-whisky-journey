@@ -308,57 +308,72 @@ const WhiskyUploadContent = () => {
       const csvContent = await readFileContent(selectedFile);
       
       setUploadProgress(40);
-      const whiskies = parseDelimitedFile(csvContent, selectedFile.name);
+      const parsedWhiskies = parseDelimitedFile(csvContent, selectedFile.name);
       
       setUploadProgress(60);
       toast({
         title: "Parsing successful",
-        description: `Parsed ${whiskies.length} whiskies. ${replaceMode ? 'Upserting' : 'Uploading'} to database...`,
+        description: `Parsed ${parsedWhiskies.length} whiskies. ${replaceMode ? 'Upserting' : 'Uploading'} to database...`,
       });
 
-      setUploadProgress(80);
+      // Separate set_code from whisky data for the junction table
+      const whiskiesForDb = parsedWhiskies.map(({ set_code, ...whiskyData }) => whiskyData);
+      const setCodes = parsedWhiskies.map(w => w.set_code || 'classic');
+
+      setUploadProgress(70);
       
-      if (replaceMode) {
-        // Use upsert to handle duplicates by updating existing records
-        const { data, error } = await supabase
-          .from("whiskies")
-          .upsert(whiskies as any[], {
-            onConflict: 'distillery,name',
-            ignoreDuplicates: false
-          })
-          .select();
+      // Always use upsert to handle the unique constraint on distillery+name
+      const { data: upsertedWhiskies, error: whiskyError } = await supabase
+        .from("whiskies")
+        .upsert(whiskiesForDb as any[], {
+          onConflict: 'distillery,name',
+          ignoreDuplicates: false
+        })
+        .select('id, distillery, name');
 
-        if (error) {
-          throw error;
-        }
-
-        // Get statistics (simplified - actual counts would need additional queries)
-        setUploadStats({ inserted: data.length, updated: 0 });
-        
-        setUploadProgress(100);
-        toast({
-          title: "Update successful",
-          description: `Successfully processed ${data.length} whiskies (updated existing records with matching distillery/name)`,
-        });
-      } else {
-        // Regular insert operation
-        const { data, error } = await supabase
-          .from("whiskies")
-          .insert(whiskies as any[])
-          .select();
-
-        if (error) {
-          throw error;
-        }
-
-        setUploadStats({ inserted: data.length, updated: 0 });
-        
-        setUploadProgress(100);
-        toast({
-          title: "Upload successful",
-          description: `Successfully uploaded ${data.length} new whiskies to the database`,
-        });
+      if (whiskyError) {
+        throw whiskyError;
       }
+
+      setUploadProgress(85);
+
+      // Now handle the whisky_sets junction table
+      if (upsertedWhiskies && upsertedWhiskies.length > 0) {
+        // Create mapping from distillery+name to set_code
+        const whiskySetMappings = upsertedWhiskies.map((whisky, index) => ({
+          whisky_id: whisky.id,
+          set_code: setCodes[index] || 'classic',
+          display_order: index
+        }));
+
+        // Upsert into whisky_sets (delete existing entries for these whiskies first if replacing)
+        if (replaceMode) {
+          const whiskyIds = upsertedWhiskies.map(w => w.id);
+          await supabase
+            .from("whisky_sets")
+            .delete()
+            .in('whisky_id', whiskyIds);
+        }
+
+        const { error: setsError } = await supabase
+          .from("whisky_sets")
+          .upsert(whiskySetMappings, {
+            onConflict: 'whisky_id,set_code',
+            ignoreDuplicates: !replaceMode
+          });
+
+        if (setsError) {
+          console.warn("Warning: Could not update whisky_sets:", setsError);
+        }
+      }
+
+      setUploadStats({ inserted: upsertedWhiskies?.length || 0, updated: 0 });
+      
+      setUploadProgress(100);
+      toast({
+        title: replaceMode ? "Update successful" : "Upload successful",
+        description: `Successfully processed ${upsertedWhiskies?.length || 0} whiskies`,
+      });
 
       clearFile();
     } catch (error: any) {
