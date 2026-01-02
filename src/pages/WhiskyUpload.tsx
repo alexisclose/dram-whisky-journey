@@ -77,7 +77,7 @@ const WhiskyUploadContent = () => {
       "Dark chocolate",
       "Grilled salmon",
       "Highland cheese",
-      "classic|premium"
+      "\"classic,premium\""
     ];
 
     const csvContent = [headers.join(","), exampleRow.join(",")].join("\n");
@@ -126,7 +126,7 @@ const WhiskyUploadContent = () => {
       "Dark chocolate",
       "Grilled salmon",
       "Highland cheese",
-      "classic|premium"
+      "classic,premium"
     ];
 
     const tsvContent = [headers.join("\t"), exampleRow.join("\t")].join("\n");
@@ -317,10 +317,10 @@ const WhiskyUploadContent = () => {
       });
 
       // Separate set_code from whisky data for the junction table
-      // set_code can be pipe-delimited for multiple sets (e.g., "classic|premium")
+      // set_code can be comma-delimited for multiple sets (e.g., "classic,premium")
       const whiskiesForDb = parsedWhiskies.map(({ set_code, ...whiskyData }) => whiskyData);
       const setCodesPerWhisky = parsedWhiskies.map(w => 
-        (w.set_code || 'classic').split('|').map(s => s.trim()).filter(Boolean)
+        (w.set_code || 'classic').split(',').map(s => s.trim()).filter(Boolean)
       );
 
       setUploadProgress(70);
@@ -452,7 +452,7 @@ const WhiskyUploadContent = () => {
                   <li>• <strong>Pairs well with A</strong> - First pairing suggestion</li>
                   <li>• <strong>Pairs well with B</strong> - Second pairing suggestion</li>
                   <li>• <strong>Pairs well with C</strong> - Third pairing suggestion</li>
-                  <li>• <strong>set_code</strong> - Set classification(s), use <code>|</code> for multiple sets (e.g., "classic|premium")</li>
+                  <li>• <strong>set_code</strong> - Set classification(s), use comma for multiple sets (e.g., "classic,premium")</li>
                 </ul>
               </div>
 
