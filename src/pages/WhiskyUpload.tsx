@@ -77,7 +77,7 @@ const WhiskyUploadContent = () => {
       "Dark chocolate",
       "Grilled salmon",
       "Highland cheese",
-      "classic"
+      "classic|premium"
     ];
 
     const csvContent = [headers.join(","), exampleRow.join(",")].join("\n");
@@ -126,7 +126,7 @@ const WhiskyUploadContent = () => {
       "Dark chocolate",
       "Grilled salmon",
       "Highland cheese",
-      "classic"
+      "classic|premium"
     ];
 
     const tsvContent = [headers.join("\t"), exampleRow.join("\t")].join("\n");
@@ -317,8 +317,11 @@ const WhiskyUploadContent = () => {
       });
 
       // Separate set_code from whisky data for the junction table
+      // set_code can be pipe-delimited for multiple sets (e.g., "classic|premium")
       const whiskiesForDb = parsedWhiskies.map(({ set_code, ...whiskyData }) => whiskyData);
-      const setCodes = parsedWhiskies.map(w => w.set_code || 'classic');
+      const setCodesPerWhisky = parsedWhiskies.map(w => 
+        (w.set_code || 'classic').split('|').map(s => s.trim()).filter(Boolean)
+      );
 
       setUploadProgress(70);
       
@@ -339,14 +342,21 @@ const WhiskyUploadContent = () => {
 
       // Now handle the whisky_sets junction table
       if (upsertedWhiskies && upsertedWhiskies.length > 0) {
-        // Create mapping from distillery+name to set_code
-        const whiskySetMappings = upsertedWhiskies.map((whisky, index) => ({
-          whisky_id: whisky.id,
-          set_code: setCodes[index] || 'classic',
-          display_order: index
-        }));
+        // Create mappings for each whisky to all its sets
+        const whiskySetMappings: { whisky_id: string; set_code: string; display_order: number }[] = [];
+        
+        upsertedWhiskies.forEach((whisky, index) => {
+          const setCodes = setCodesPerWhisky[index] || ['classic'];
+          setCodes.forEach(setCode => {
+            whiskySetMappings.push({
+              whisky_id: whisky.id,
+              set_code: setCode,
+              display_order: index
+            });
+          });
+        });
 
-        // Upsert into whisky_sets (delete existing entries for these whiskies first if replacing)
+        // Delete existing entries for these whiskies if replacing
         if (replaceMode) {
           const whiskyIds = upsertedWhiskies.map(w => w.id);
           await supabase
@@ -442,7 +452,7 @@ const WhiskyUploadContent = () => {
                   <li>• <strong>Pairs well with A</strong> - First pairing suggestion</li>
                   <li>• <strong>Pairs well with B</strong> - Second pairing suggestion</li>
                   <li>• <strong>Pairs well with C</strong> - Third pairing suggestion</li>
-                  <li>• <strong>set_code</strong> - Set classification (defaults to "classic")</li>
+                  <li>• <strong>set_code</strong> - Set classification(s), use <code>|</code> for multiple sets (e.g., "classic|premium")</li>
                 </ul>
               </div>
 
