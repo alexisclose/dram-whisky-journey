@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
 import { AdminImageOverlay } from "@/components/AdminImageOverlay";
+import { TastingFlowExperience } from "@/components/TastingFlowExperience";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
@@ -74,6 +75,9 @@ const WhiskyDossier = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting/${whiskyId}` : `/tasting/${whiskyId}`;
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
+
+  // State to force showing regular dossier after completing tasting flow
+  const [showFullDossier, setShowFullDossier] = useState(false);
 
   const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
   const [rating, setRating] = useState<number | null>(null);
@@ -543,6 +547,33 @@ const WhiskyDossier = () => {
         </Helmet>
         <p className="text-muted-foreground">That whisky wasn't found. <Link className="underline" to="/tasting">Back to the Tasting Journey</Link></p>
       </main>
+    );
+  }
+
+  // Show tasting flow for tasting box whiskies that haven't been reviewed yet
+  const shouldShowTastingFlow = isInUserTastingBox && !hasUserReviewed && !showFullDossier && user;
+  
+  if (shouldShowTastingFlow) {
+    return (
+      <>
+        <Helmet>
+          <title>{`Taste — ${whisky.distillery} ${whisky.name}`}</title>
+          <meta name="robots" content="noindex" />
+        </Helmet>
+        <TastingFlowExperience
+          whisky={{
+            id: whisky.id,
+            distillery: whisky.distillery,
+            name: whisky.name,
+            region: whisky.region,
+            image_url: whisky.image_url,
+          }}
+          userId={user.id}
+          communityFlavors={community}
+          ratingStats={ratingStats}
+          onComplete={() => setShowFullDossier(true)}
+        />
+      </>
     );
   }
 
