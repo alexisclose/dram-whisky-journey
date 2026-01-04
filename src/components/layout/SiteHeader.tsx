@@ -7,7 +7,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X, Settings } from "lucide-react";
+import { Menu, X, Settings, Plus } from "lucide-react";
 import { useState } from "react";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -135,6 +135,17 @@ const SiteHeader = () => {
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         Settings
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        className="justify-start"
+                        onClick={() => {
+                          navigate("/activate");
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Activate Set
                       </Button>
                       <Button 
                         onClick={() => {

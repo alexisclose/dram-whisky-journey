@@ -15,8 +15,8 @@ const Login = () => {
   const { user } = useAuthSession();
 
   if (user) {
-    // Already logged in, send to dashboard
-    navigate("/dashboard");
+    // Already logged in, send to My Tasting Box
+    navigate("/my-tasting-box");
   }
 
   return (
@@ -49,7 +49,7 @@ const Login = () => {
             return;
           }
           toast.success("Logged in!");
-          navigate("/dashboard");
+          navigate("/my-tasting-box");
         }}
       >
         <div>
