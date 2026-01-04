@@ -73,7 +73,7 @@ const WhiskyDossier = () => {
   const { id } = useParams();
   const whiskyId = (id as string) || "";
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting/${whiskyId}` : `/tasting/${whiskyId}`;
-  const { user } = useAuthSession();
+  const { user, loading: authLoading } = useAuthSession();
   const queryClient = useQueryClient();
 
   // State to force showing regular dossier after completing tasting flow
@@ -538,6 +538,18 @@ const WhiskyDossier = () => {
   }, [userReviews]);
 
   // IMPORTANT: Handle conditional returns AFTER all hooks are called
+  // Wait for auth to load before making decisions about tasting flow
+  if (authLoading || whiskyLoading) {
+    return (
+      <main className="container mx-auto px-6 py-10 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
   if (!whisky) {
     return (
       <main className="container mx-auto px-6 py-10">
