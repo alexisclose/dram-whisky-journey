@@ -75,6 +75,7 @@ const App = () => (
                     <Route path="/user/:userId" element={<UserProfile />} />
                     {/* MVP Hidden: <Route path="/discover" element={<Discover />} /> */}
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/activate" element={<Activate />} />
                     {/* MVP Hidden: <Route path="/quiz" element={<Quiz />} /> */}
                     <Route path="/certificate" element={<Certificate />} />
                     <Route path="/admin/media" element={<MediaLibrary />} />
