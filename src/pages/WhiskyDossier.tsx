@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Star, ArrowLeft, Heart } from "lucide-react";
+import { Star, ArrowLeft, Heart, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { toast } from "sonner";
@@ -440,6 +440,32 @@ const WhiskyDossier = () => {
     onError: (error) => {
       console.error("Save error:", error);
       toast.error("Failed to save tasting note");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!existingNote?.id) throw new Error("No note to delete");
+      const { error } = await supabase
+        .from("tasting_notes")
+        .delete()
+        .eq("id", existingNote.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Tasting note deleted");
+      setSelectedFlavors([]);
+      setRating(null);
+      setNotes("");
+      setIntensityRatings({ fruit: 2, floral: 2, oak: 2, smoke: 2, spice: 2 });
+      queryClient.invalidateQueries({ queryKey: ["user-note"] });
+      queryClient.invalidateQueries({ queryKey: ["community-flavors"] });
+      queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["user-reviews"] });
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete tasting note");
     },
   });
 
@@ -986,14 +1012,31 @@ const WhiskyDossier = () => {
 
               {/* Mobile-Optimized Save Button */}
               {user ? (
-                <Button 
-                  onClick={() => saveMutation.mutate()} 
-                  disabled={saveMutation.isPending} 
-                  className="w-full h-12 text-base font-semibold"
-                  size="lg"
-                >
-                  {saveMutation.isPending ? "Saving..." : existingNote ? "Update note" : "Save note"}
-                </Button>
+                <div className="space-y-3">
+                  <Button 
+                    onClick={() => saveMutation.mutate()} 
+                    disabled={saveMutation.isPending} 
+                    className="w-full h-12 text-base font-semibold"
+                    size="lg"
+                  >
+                    {saveMutation.isPending ? "Saving..." : existingNote ? "Update note" : "Save note"}
+                  </Button>
+                  {existingNote && (
+                    <Button 
+                      variant="ghost"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete your tasting note?")) {
+                          deleteMutation.mutate();
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {deleteMutation.isPending ? "Deleting..." : "Delete my review"}
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground">
