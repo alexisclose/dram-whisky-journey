@@ -4,9 +4,11 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 type TastingNote = {
   id: string;
@@ -28,6 +30,27 @@ const MyReviews = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/reviews` : "/reviews";
   const navigate = useNavigate();
   const { user, loading } = useAuthSession();
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase
+        .from("tasting_notes")
+        .delete()
+        .eq("id", noteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Review deleted");
+      queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["user-note"] });
+      queryClient.invalidateQueries({ queryKey: ["community-flavors"] });
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete review");
+    },
+  });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["my-reviews", user?.id],
@@ -214,9 +237,32 @@ const MyReviews = () => {
                       </div>
                     )}
                     {tn.whisky && (
-                      <div className="pt-2">
+                      <div className="pt-2 flex gap-2">
                         <Button variant="outline" size="sm" asChild>
                           <Link to={`/whisky-dossier/${tn.whisky.id}`}>View Dossier</Link>
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteMutation.mutate(tn.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    {!tn.whisky && (
+                      <div className="pt-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteMutation.mutate(tn.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     )}
