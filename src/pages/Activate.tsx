@@ -15,7 +15,7 @@ const Activate = () => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setActiveSet } = useActiveSet();
+  const { addSet } = useActiveSet();
   const { user } = useAuthSession();
 
   const handleActivate = async () => {
@@ -42,7 +42,7 @@ const Activate = () => {
       }
 
       const setCode = result.set_code as string;
-      setActiveSet(setCode);
+      addSet(setCode);
       toast.success(`Activated: ${result.name || setCode}`);
       navigate("/tasting");
     } catch (e: any) {
