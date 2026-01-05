@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Star, CheckCircle } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -20,6 +21,7 @@ type WhiskyRow = {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  set_code?: string;
 };
 
 interface FlavorProfile {
@@ -41,29 +43,46 @@ const MyTastingBox = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/my-tasting-box` : "/my-tasting-box";
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
-  const { activeSet } = useActiveSet();
+  const { allSets } = useActiveSet();
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
+  // Get all set codes the user has activated
+  const setCodes = useMemo(() => allSets.map(s => s.set_code), [allSets]);
+
   const { data: whiskies } = useQuery({
-    queryKey: ["db-whiskies", activeSet],
+    queryKey: ["db-whiskies-all-sets", setCodes.join(",")],
     queryFn: async () => {
-      // Query through the junction table to get whiskies for this set
+      if (setCodes.length === 0) return [];
+      
+      // Query through the junction table to get whiskies for ALL activated sets
       const { data, error } = await supabase
         .from("whisky_sets")
         .select(`
           display_order,
+          set_code,
           whiskies (
             id, distillery, name, region, location, latitude, longitude
           )
         `)
-        .eq("set_code", activeSet)
+        .in("set_code", setCodes)
         .order("display_order", { ascending: true });
+      
       if (error) throw error;
-      // Flatten the joined data
-      return (data || [])
-        .map(row => row.whiskies)
-        .filter((w): w is NonNullable<typeof w> => w !== null) as WhiskyRow[];
-    }
+      
+      // Flatten and deduplicate whiskies (same whisky might be in multiple sets)
+      const whiskyMap = new Map<string, WhiskyRow>();
+      (data || []).forEach(row => {
+        if (row.whiskies) {
+          const w = row.whiskies as any;
+          if (!whiskyMap.has(w.id)) {
+            whiskyMap.set(w.id, { ...w, set_code: row.set_code });
+          }
+        }
+      });
+      
+      return Array.from(whiskyMap.values());
+    },
+    enabled: setCodes.length > 0
   });
 
   const whiskyIds = useMemo(() => whiskies ? whiskies.map(w => w.id) : [], [whiskies]);
@@ -185,97 +204,133 @@ const MyTastingBox = () => {
     }
   });
 
+  const hasNoSets = setCodes.length === 0;
+
   return (
     <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <Helmet>
-        <title>My Tasting Box — Explore 12 Drams</title>
-        <meta name="description" content="Browse your curated set of 12 whiskies. Open dossiers, record your palate and add ratings as you taste." />
+        <title>My Tasting Box — Explore Your Drams</title>
+        <meta name="description" content="Browse your curated sets of whiskies. Open dossiers, record your palate and add ratings as you taste." />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">My Tasting Box</h1>
-      <p className="text-muted-foreground mb-6 text-sm sm:text-base">Explore the interactive map of Japan and open dossiers. Add quick ratings below.</p>
+      
+      {/* Show activated sets */}
+      {allSets.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2 items-center">
+          <span className="text-sm text-muted-foreground">Activated sets:</span>
+          {allSets.map(s => (
+            <Badge key={s.set_code} variant="secondary" className="capitalize">
+              {s.set_code}
+            </Badge>
+          ))}
+          <Button asChild variant="ghost" size="sm" className="text-xs">
+            <Link to="/activate">+ Add another set</Link>
+          </Button>
+        </div>
+      )}
 
-      <div className="mb-6 sm:mb-8 animate-fade-in">
-        <WhiskyMap whiskies={whiskies || []} />
-      </div>
+      {hasNoSets ? (
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle>No Sets Activated</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>You haven't activated any tasting sets yet. Enter your activation code to unlock your whiskies.</p>
+            <Button asChild>
+              <Link to="/activate">Activate a Set</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <p className="text-muted-foreground mb-6 text-sm sm:text-base">
+            Explore the interactive map and open dossiers. You have {whiskies?.length || 0} whiskies from {allSets.length} set{allSets.length !== 1 ? 's' : ''}.
+          </p>
 
-      <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {whiskies?.map((w, index) => (
-          <Fragment key={w.id}>
-            <Card className="relative">
-              {ratings[w.id] && (
-                <div className="absolute top-3 right-3 flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  Tasted
-                </div>
-              )}
-              <CardHeader className="pr-24">
-                <CardTitle className="flex flex-col gap-1">
-                  <span>{w.distillery} — {w.name}</span>
-                  <span className="text-sm font-normal text-muted-foreground">{w.region || ""}</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                {w.location || "Location not specified"}
-              </CardContent>
-              <CardFooter className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <button
-                      key={n}
-                      aria-label={`Rate ${n} star`}
-                      className={`p-1 rounded ${
-                        ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"
-                      }`}
-                      onClick={() => {
-                        if (!user) {
-                          toast.info("Log in to save your rating");
-                          return;
-                        }
-                        saveRating.mutate({ whiskyId: w.id, n });
-                      }}
-                    >
-                      <Star
-                        className="h-5 w-5"
-                        fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"}
-                      />
-                    </button>
-                  ))}
-                </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link
-                    to={`/whisky-dossier/${w.id}`}
-                    aria-label={`Open dossier for ${w.distillery} ${w.name}`}
-                  >
-                    Open Dossier
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            {/* Profile teaser appears after 3rd whisky */}
-            {index === 0 && user && (
-              <div className="col-span-1 sm:col-span-2 lg:col-span-3">
-                <WhiskyProfileTeaser 
-                  flavorProfile={flavorProfile} 
-                  tastingsCount={tastingsCount} 
-                />
-              </div>
+          <div className="mb-6 sm:mb-8 animate-fade-in">
+            <WhiskyMap whiskies={whiskies || []} />
+          </div>
+
+          <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {whiskies?.map((w, index) => (
+              <Fragment key={w.id}>
+                <Card className="relative">
+                  {ratings[w.id] && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      Tasted
+                    </div>
+                  )}
+                  <CardHeader className="pr-24">
+                    <CardTitle className="flex flex-col gap-1">
+                      <span>{w.distillery} — {w.name}</span>
+                      <span className="text-sm font-normal text-muted-foreground">{w.region || ""}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground">
+                    {w.location || "Location not specified"}
+                  </CardContent>
+                  <CardFooter className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <button
+                          key={n}
+                          aria-label={`Rate ${n} star`}
+                          className={`p-1 rounded ${
+                            ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"
+                          }`}
+                          onClick={() => {
+                            if (!user) {
+                              toast.info("Log in to save your rating");
+                              return;
+                            }
+                            saveRating.mutate({ whiskyId: w.id, n });
+                          }}
+                        >
+                          <Star
+                            className="h-5 w-5"
+                            fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                      <Link
+                        to={`/whisky-dossier/${w.id}`}
+                        aria-label={`Open dossier for ${w.distillery} ${w.name}`}
+                      >
+                        Open Dossier
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+                
+                {/* Profile teaser appears after 1st whisky */}
+                {index === 0 && user && (
+                  <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                    <WhiskyProfileTeaser 
+                      flavorProfile={flavorProfile} 
+                      tastingsCount={tastingsCount} 
+                    />
+                  </div>
+                )}
+              </Fragment>
+            ))}
+          </section>
+
+          <aside className="mt-10 text-sm text-muted-foreground">
+            {!user ? (
+              <span>
+                <Link to="/login" className="underline">Log in</Link> to save ratings and palate notes.
+              </span>
+            ) : (
+              <span>Your ratings are saved to your profile.</span>
             )}
-          </Fragment>
-        ))}
-      </section>
-
-      <aside className="mt-10 text-sm text-muted-foreground">
-        {!user ? (
-          <span>
-            <Link to="/login" className="underline">Log in</Link> to save ratings and palate notes.
-          </span>
-        ) : (
-          <span>Your ratings are saved to your profile.</span>
-        )}
-      </aside>
+          </aside>
+        </>
+      )}
     </main>
   );
 };
