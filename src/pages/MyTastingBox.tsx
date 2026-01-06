@@ -2,9 +2,9 @@ import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, CheckCircle } from "lucide-react";
+import { Star, CheckCircle, ArrowLeft } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import WhiskyMap from "@/components/Map";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,18 +43,20 @@ const MyTastingBox = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/my-tasting-box` : "/my-tasting-box";
   const { user } = useAuthSession();
   const queryClient = useQueryClient();
-  const { allSets } = useActiveSet();
+  const { activeSet, allSets } = useActiveSet();
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
-  // Get all set codes the user has activated
-  const setCodes = useMemo(() => allSets.map(s => s.set_code), [allSets]);
+  // If no sets, redirect to MySets page
+  if (allSets.length === 0) {
+    return <Navigate to="/my-sets" replace />;
+  }
 
   const { data: whiskies } = useQuery({
-    queryKey: ["db-whiskies-all-sets", setCodes.join(",")],
+    queryKey: ["db-whiskies-set", activeSet],
     queryFn: async () => {
-      if (setCodes.length === 0) return [];
+      if (!activeSet) return [];
       
-      // Query through the junction table to get whiskies for ALL activated sets
+      // Query whiskies for the SELECTED set only
       const { data, error } = await supabase
         .from("whisky_sets")
         .select(`
@@ -64,25 +66,16 @@ const MyTastingBox = () => {
             id, distillery, name, region, location, latitude, longitude
           )
         `)
-        .in("set_code", setCodes)
+        .eq("set_code", activeSet)
         .order("display_order", { ascending: true });
       
       if (error) throw error;
       
-      // Flatten and deduplicate whiskies (same whisky might be in multiple sets)
-      const whiskyMap = new Map<string, WhiskyRow>();
-      (data || []).forEach(row => {
-        if (row.whiskies) {
-          const w = row.whiskies as any;
-          if (!whiskyMap.has(w.id)) {
-            whiskyMap.set(w.id, { ...w, set_code: row.set_code });
-          }
-        }
-      });
-      
-      return Array.from(whiskyMap.values());
+      return (data || [])
+        .filter(row => row.whiskies)
+        .map(row => ({ ...(row.whiskies as any), set_code: row.set_code }));
     },
-    enabled: setCodes.length > 0
+    enabled: !!activeSet
   });
 
   const whiskyIds = useMemo(() => whiskies ? whiskies.map(w => w.id) : [], [whiskies]);
@@ -204,50 +197,31 @@ const MyTastingBox = () => {
     }
   });
 
-  const hasNoSets = setCodes.length === 0;
-
   return (
     <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
       <Helmet>
-        <title>My Tasting Box — Explore Your Drams</title>
-        <meta name="description" content="Browse your curated sets of whiskies. Open dossiers, record your palate and add ratings as you taste." />
+        <title>{activeSet} Set — My Tasting Box</title>
+        <meta name="description" content={`Explore whiskies from your ${activeSet} tasting set.`} />
         <link rel="canonical" href={canonical} />
       </Helmet>
 
-      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">My Tasting Box</h1>
-      
-      {/* Show activated sets */}
-      {allSets.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2 items-center">
-          <span className="text-sm text-muted-foreground">Activated sets:</span>
-          {allSets.map(s => (
-            <Badge key={s.set_code} variant="secondary" className="capitalize">
-              {s.set_code}
-            </Badge>
-          ))}
-          <Button asChild variant="ghost" size="sm" className="text-xs">
-            <Link to="/activate">+ Add another set</Link>
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center gap-3 mb-4">
+        <Button asChild variant="ghost" size="sm" className="gap-1">
+          <Link to="/my-sets">
+            <ArrowLeft className="h-4 w-4" />
+            All Sets
+          </Link>
+        </Button>
+      </div>
 
-      {hasNoSets ? (
-        <Card className="max-w-lg">
-          <CardHeader>
-            <CardTitle>No Sets Activated</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>You haven't activated any tasting sets yet. Enter your activation code to unlock your whiskies.</p>
-            <Button asChild>
-              <Link to="/activate">Activate a Set</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <p className="text-muted-foreground mb-6 text-sm sm:text-base">
-            Explore the interactive map and open dossiers. You have {whiskies?.length || 0} whiskies from {allSets.length} set{allSets.length !== 1 ? 's' : ''}.
-          </p>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold capitalize">{activeSet} Set</h1>
+        <Badge variant="secondary">{whiskies?.length || 0} whiskies</Badge>
+      </div>
+      
+      <p className="text-muted-foreground mb-6 text-sm sm:text-base">
+        Explore the interactive map and open dossiers.
+      </p>
 
           <div className="mb-6 sm:mb-8 animate-fade-in">
             <WhiskyMap whiskies={whiskies || []} />
@@ -320,17 +294,15 @@ const MyTastingBox = () => {
             ))}
           </section>
 
-          <aside className="mt-10 text-sm text-muted-foreground">
-            {!user ? (
-              <span>
-                <Link to="/login" className="underline">Log in</Link> to save ratings and palate notes.
-              </span>
-            ) : (
-              <span>Your ratings are saved to your profile.</span>
-            )}
-          </aside>
-        </>
-      )}
+        <aside className="mt-10 text-sm text-muted-foreground">
+          {!user ? (
+            <span>
+              <Link to="/login" className="underline">Log in</Link> to save ratings and palate notes.
+            </span>
+          ) : (
+            <span>Your ratings are saved to your profile.</span>
+          )}
+        </aside>
     </main>
   );
 };
