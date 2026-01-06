@@ -12,6 +12,7 @@ import Login from "./pages/Auth/Login";
 import Dashboard from "./pages/Dashboard";
 import University from "./pages/University";
 import Tasting from "./pages/Tasting";
+import MySets from "./pages/MySets";
 import MyTastingBox from "./pages/MyTastingBox";
 import Explore from "./pages/Explore";
 import WhiskyUpload from "./pages/WhiskyUpload";
@@ -61,6 +62,7 @@ const App = () => (
                     <Route path="/dashboard" element={<Dashboard />} />
                     {/* MVP Hidden: <Route path="/university" element={<University />} /> */}
                     <Route path="/tasting" element={<Tasting />} />
+                    <Route path="/my-sets" element={<MySets />} />
                     <Route path="/my-tasting-box" element={<MyTastingBox />} />
                     {/* MVP Hidden: <Route path="/explore" element={<Explore />} /> */}
                     <Route path="/whisky-upload" element={<WhiskyUpload />} />
