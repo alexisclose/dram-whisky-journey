@@ -591,6 +591,23 @@ const WhiskyDossier = () => {
   // Show tasting flow for tasting box whiskies that haven't been reviewed yet
   const shouldShowTastingFlow = isInUserTastingBox && !hasUserReviewed && !showFullDossier && user;
   
+  // Compute ratingStats specifically for TastingFlowExperience using real community reviews
+  // This ensures we include ALL other users' reviews (not just first 10)
+  const communityRatingStats = useMemo(() => {
+    // Use userReviews but filter out the current user's review
+    const otherUsersReviews = userReviews?.filter(review => review.user_id !== user?.id) || [];
+    const ratingsWithValues = otherUsersReviews.filter(review => review.rating !== null);
+    
+    if (ratingsWithValues.length === 0) {
+      return { averageRating: null, totalReviews: 0 };
+    }
+
+    const totalRating = ratingsWithValues.reduce((sum, review) => sum + (review.rating || 0), 0);
+    const averageRating = Math.round((totalRating / ratingsWithValues.length) * 10) / 10;
+    
+    return { averageRating, totalReviews: ratingsWithValues.length };
+  }, [userReviews, user?.id]);
+  
   if (shouldShowTastingFlow) {
     return (
       <>
@@ -608,7 +625,7 @@ const WhiskyDossier = () => {
           }}
           userId={user.id}
           communityFlavors={community}
-          ratingStats={ratingStats}
+          ratingStats={communityRatingStats}
           onComplete={() => setShowFullDossier(true)}
         />
       </>
