@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Star, Sparkles, TrendingUp, Users, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { IntensityRadarChart } from "@/components/IntensityRadarChart";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
@@ -50,6 +51,7 @@ interface TastingFlowExperienceProps {
   };
   userId: string;
   communityFlavors: Record<string, number>;
+  communityIntensity: Record<string, number>;
   ratingStats: { averageRating: number | null; totalReviews: number };
   onComplete: () => void;
 }
@@ -58,6 +60,7 @@ export const TastingFlowExperience = ({
   whisky,
   userId,
   communityFlavors,
+  communityIntensity,
   ratingStats,
   onComplete,
 }: TastingFlowExperienceProps) => {
@@ -321,7 +324,7 @@ export const TastingFlowExperience = ({
             <Users className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Community average</span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
@@ -342,6 +345,15 @@ export const TastingFlowExperience = ({
                 {ratingStats.totalReviews} review{ratingStats.totalReviews !== 1 ? "s" : ""}
               </p>
             </div>
+          </div>
+          
+          {/* Intensity Radar Chart */}
+          <div className="pt-2">
+            <p className="text-sm text-muted-foreground mb-3 text-center">Your intensity vs community</p>
+            <IntensityRadarChart
+              userRatings={intensityRatings}
+              communityRatings={communityIntensity}
+            />
           </div>
         </div>
 
