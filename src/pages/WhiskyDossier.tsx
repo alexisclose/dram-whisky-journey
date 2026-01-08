@@ -212,6 +212,52 @@ const WhiskyDossier = () => {
     enabled: !!dbWhisky?.id,
   });
 
+  // Load community average intensity ratings
+  const { data: communityIntensityRatings } = useQuery({
+    queryKey: ["community-intensity", dbWhisky?.id],
+    queryFn: async () => {
+      if (!dbWhisky?.id) return null;
+      const { data, error } = await supabase
+        .from("tasting_notes")
+        .select("intensity_ratings")
+        .eq("whisky_id", dbWhisky.id)
+        .not("intensity_ratings", "is", null);
+      
+      if (error) throw error;
+      if (!data || data.length === 0) return null;
+
+      // Calculate averages for each axis
+      const axes = ["fruit", "floral", "oak", "smoke", "spice"];
+      const sums: Record<string, number> = {};
+      const counts: Record<string, number> = {};
+
+      axes.forEach(axis => {
+        sums[axis] = 0;
+        counts[axis] = 0;
+      });
+
+      data.forEach(note => {
+        const ratings = note.intensity_ratings as Record<string, number> | null;
+        if (ratings) {
+          axes.forEach(axis => {
+            if (typeof ratings[axis] === "number") {
+              sums[axis] += ratings[axis];
+              counts[axis] += 1;
+            }
+          });
+        }
+      });
+
+      const averages: Record<string, number> = {};
+      axes.forEach(axis => {
+        averages[axis] = counts[axis] > 0 ? sums[axis] / counts[axis] : 2;
+      });
+
+      return averages;
+    },
+    enabled: !!dbWhisky?.id,
+  });
+
   // Load all user tasting notes for this whisky
   const { data: userReviews } = useQuery({
     queryKey: ["user-reviews", dbWhisky?.id],
@@ -640,6 +686,7 @@ const WhiskyDossier = () => {
           }}
           userId={user.id}
           communityFlavors={community}
+          communityIntensity={communityIntensityRatings || { fruit: 2, floral: 2, oak: 2, smoke: 2, spice: 2 }}
           ratingStats={communityRatingStats}
           onComplete={() => {
             setShowFullDossier(true);
