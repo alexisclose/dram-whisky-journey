@@ -552,17 +552,31 @@ const WhiskyDossier = () => {
       return { averageRating: null, totalReviews: 0 };
     }
 
-    const ratingsWithValues = userReviews.filter(review => review.rating !== null);
+    const ratingsWithValues = userReviews.filter((review) => review.rating !== null);
     if (ratingsWithValues.length === 0) {
       return { averageRating: null, totalReviews: 0 };
     }
 
     const totalRating = ratingsWithValues.reduce((sum, review) => sum + (review.rating || 0), 0);
     const averageRating = Math.round((totalRating / ratingsWithValues.length) * 10) / 10;
-    
+
     return { averageRating, totalReviews: ratingsWithValues.length };
   }, [userReviews]);
 
+  // Rating stats for the “reveal” experience: excludes the current user's own review
+  const communityRatingStats = useMemo(() => {
+    const otherUsersReviews = (userReviews || []).filter((review) => review.user_id !== user?.id);
+    const ratingsWithValues = otherUsersReviews.filter((review) => review.rating !== null);
+
+    if (ratingsWithValues.length === 0) {
+      return { averageRating: null, totalReviews: 0 };
+    }
+
+    const totalRating = ratingsWithValues.reduce((sum, review) => sum + (review.rating || 0), 0);
+    const averageRating = Math.round((totalRating / ratingsWithValues.length) * 10) / 10;
+
+    return { averageRating, totalReviews: ratingsWithValues.length };
+  }, [userReviews, user?.id]);
   // IMPORTANT: Handle conditional returns AFTER all hooks are called
   // Wait for auth to load before making decisions about tasting flow
   if (authLoading || whiskyLoading) {
@@ -587,23 +601,6 @@ const WhiskyDossier = () => {
       </main>
     );
   }
-
-  // Compute ratingStats specifically for TastingFlowExperience using real community reviews
-  // This ensures we include ALL other users' reviews (not just first 10)
-  const communityRatingStats = useMemo(() => {
-    // Use userReviews but filter out the current user's review
-    const otherUsersReviews = userReviews?.filter(review => review.user_id !== user?.id) || [];
-    const ratingsWithValues = otherUsersReviews.filter(review => review.rating !== null);
-    
-    if (ratingsWithValues.length === 0) {
-      return { averageRating: null, totalReviews: 0 };
-    }
-
-    const totalRating = ratingsWithValues.reduce((sum, review) => sum + (review.rating || 0), 0);
-    const averageRating = Math.round((totalRating / ratingsWithValues.length) * 10) / 10;
-    
-    return { averageRating, totalReviews: ratingsWithValues.length };
-  }, [userReviews, user?.id]);
 
   // Show tasting flow for tasting box whiskies that haven't been reviewed yet
   const shouldShowTastingFlow = isInUserTastingBox && !hasUserReviewed && !showFullDossier && user;
