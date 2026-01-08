@@ -588,9 +588,6 @@ const WhiskyDossier = () => {
     );
   }
 
-  // Show tasting flow for tasting box whiskies that haven't been reviewed yet
-  const shouldShowTastingFlow = isInUserTastingBox && !hasUserReviewed && !showFullDossier && user;
-  
   // Compute ratingStats specifically for TastingFlowExperience using real community reviews
   // This ensures we include ALL other users' reviews (not just first 10)
   const communityRatingStats = useMemo(() => {
@@ -607,6 +604,9 @@ const WhiskyDossier = () => {
     
     return { averageRating, totalReviews: ratingsWithValues.length };
   }, [userReviews, user?.id]);
+
+  // Show tasting flow for tasting box whiskies that haven't been reviewed yet
+  const shouldShowTastingFlow = isInUserTastingBox && !hasUserReviewed && !showFullDossier && user;
   
   if (shouldShowTastingFlow) {
     return (
