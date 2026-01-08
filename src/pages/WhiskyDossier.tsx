@@ -79,6 +79,9 @@ const WhiskyDossier = () => {
   // State to force showing regular dossier after completing tasting flow
   const [showFullDossier, setShowFullDossier] = useState(false);
 
+  // Keep the tasting flow mounted once it starts (even after the review is saved)
+  const [showTastingFlow, setShowTastingFlow] = useState(false);
+
   const [selectedFlavors, setSelectedFlavors] = useState<string[]>([]);
   const [rating, setRating] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
@@ -364,6 +367,20 @@ const WhiskyDossier = () => {
   const hasUserReviewed = !!existingNote?.rating;
   const shouldHideCommunityContent = isInUserTastingBox && !hasUserReviewed;
 
+  // Reset flow state when navigating to a different whisky dossier
+  useEffect(() => {
+    setShowFullDossier(false);
+    setShowTastingFlow(false);
+  }, [whiskyId]);
+
+  // If this whisky is in the tasting box and not yet reviewed, start the tasting flow.
+  // After saving, hasUserReviewed becomes true, but we keep showTastingFlow=true so the reveal can render.
+  useEffect(() => {
+    if (user && isInUserTastingBox && !hasUserReviewed && !showFullDossier) {
+      setShowTastingFlow(true);
+    }
+  }, [user?.id, isInUserTastingBox, hasUserReviewed, showFullDossier]);
+
   const toggleWishlist = useMutation({
     mutationFn: async () => {
       if (!user || !dbWhisky?.id) throw new Error("Missing required data");
@@ -602,8 +619,9 @@ const WhiskyDossier = () => {
     );
   }
 
-  // Show tasting flow for tasting box whiskies that haven't been reviewed yet
-  const shouldShowTastingFlow = isInUserTastingBox && !hasUserReviewed && !showFullDossier && user;
+  // Show tasting flow for tasting box whiskies.
+  // IMPORTANT: once the flow starts we keep showing it (via showTastingFlow) so the reveal step isn't replaced by the dossier.
+  const shouldShowTastingFlow = isInUserTastingBox && user && !showFullDossier && (showTastingFlow || !hasUserReviewed);
   
   if (shouldShowTastingFlow) {
     return (
@@ -623,7 +641,10 @@ const WhiskyDossier = () => {
           userId={user.id}
           communityFlavors={community}
           ratingStats={communityRatingStats}
-          onComplete={() => setShowFullDossier(true)}
+          onComplete={() => {
+            setShowFullDossier(true);
+            setShowTastingFlow(false);
+          }}
         />
       </>
     );
