@@ -5,7 +5,7 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Settings, Wine, Star, Bookmark, ChevronRight, Radar, Cloud } from "lucide-react";
+import { Settings, Wine, Star, ChevronRight } from "lucide-react";
 import ShareProfileButton from "@/components/ShareProfileButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -255,47 +255,19 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/reviews')}>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Wine className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm font-medium">My Whiskies</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-muted-foreground">{counts.whiskies}</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/reviews')}>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Star className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm font-medium">Ratings</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-muted-foreground">{counts.ratings}</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/reviews')}>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Bookmark className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm font-medium">Wishlist</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-muted-foreground">{counts.wishlist}</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* My Whisky Ratings Button */}
+      <Card className="cursor-pointer hover:bg-muted/50 transition-colors mb-8" onClick={() => navigate('/reviews')}>
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <Star className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-medium">My Whisky Ratings</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-muted-foreground">{counts.ratings}</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Taste Profile Section */}
       <Card className="mb-8">
