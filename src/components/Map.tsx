@@ -22,8 +22,9 @@ const LOCATION_COORDINATES: Record<string, [number, number]> = {
   // Japan - Hokkaido
   "Hokkaido": [143.2085, 43.2203],
   "Sapporo": [141.3469, 43.0642],
+  "Yoichi": [140.8516, 43.1957],
   
-  // Japan - Honshu regions
+  // Japan - Honshu regions (including distillery-specific locations)
   "Miyagi": [141.1355, 38.7222],
   "Sendai": [140.8694, 38.2682],
   "Yamanashi": [138.5684, 35.6938],
@@ -33,6 +34,12 @@ const LOCATION_COORDINATES: Record<string, [number, number]> = {
   "Osaka": [135.5023, 34.6937],
   "Kyoto": [135.7681, 35.0116],
   "Hyogo": [135.1832, 34.6913],
+  "Shimamoto": [135.6580, 34.8778], // Yamazaki distillery
+  "Hokuto": [138.4261, 35.7814], // Hakushu distillery
+  "Saitama": [139.6489, 35.8617], // Chichibu distillery
+  "Tottori": [134.2378, 35.5036], // Matsui Shuzo
+  "Aichi": [136.9066, 35.1802], // Chita distillery
+  "Miyagikyo": [140.6500, 38.2100], // Miyagikyo distillery
   
   // Japan - Kyushu
   "Kagoshima": [130.5581, 31.5966],
@@ -75,6 +82,7 @@ const LOCATION_COORDINATES: Record<string, [number, number]> = {
   
   // Default centers
   "Japan": [138.2529, 36.2048],
+  "Various": [138.2529, 36.2048], // Blended whiskies default to Japan center
   "World": [0, 20]
 };
 
@@ -107,9 +115,10 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
         // Use precise coordinates
         coordinates.push([whisky.longitude, whisky.latitude]);
       } else {
-        // Use fallback coordinates
-        const location = whisky.location || whisky.region || "World";
-        const fallbackCoords = LOCATION_COORDINATES[location] || LOCATION_COORDINATES["World"];
+        // Use fallback coordinates - check region first, then location
+        const region = whisky.region || "";
+        const location = whisky.location || "";
+        const fallbackCoords = LOCATION_COORDINATES[region] || LOCATION_COORDINATES[location] || LOCATION_COORDINATES["World"];
         coordinates.push(fallbackCoords);
       }
       
@@ -266,9 +275,10 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
       if (whisky.latitude && whisky.longitude) {
         coordinates = [whisky.longitude, whisky.latitude];
       } else {
-        // Fallback to region-based coordinates
-        const location = whisky.location || whisky.region || "World";
-        coordinates = LOCATION_COORDINATES[location] || LOCATION_COORDINATES["World"];
+        // Fallback to region-based coordinates - check region first, then location
+        const region = whisky.region || "";
+        const location = whisky.location || "";
+        coordinates = LOCATION_COORDINATES[region] || LOCATION_COORDINATES[location] || LOCATION_COORDINATES["World"];
       }
       
       // Create custom marker element
