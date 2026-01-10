@@ -1,9 +1,10 @@
 
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useActiveSet } from "@/context/ActiveSetContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -19,8 +20,21 @@ const SiteHeader = () => {
   const { user, loading } = useAuthSession();
   const { isAdmin } = useUserRole();
   const { profile } = useUserProfile();
+  const { allSets, loading: setsLoading } = useActiveSet();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Navigate to my-sets if multiple sets, otherwise directly to my-tasting-box
+  const handleTastingBoxClick = () => {
+    if (allSets.length > 1) {
+      navigate("/my-sets");
+    } else {
+      navigate("/my-tasting-box");
+    }
+  };
+
+  const isTastingBoxActive = location.pathname === "/my-tasting-box" || location.pathname === "/my-sets";
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -40,9 +54,15 @@ const SiteHeader = () => {
             Dram Discoverer
           </Link>
           
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
-            <NavLink className={navLinkClass} to="/my-tasting-box">My Tasting Box</NavLink>
+            <button 
+              onClick={handleTastingBoxClick}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isTastingBoxActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              My Tasting Box
+            </button>
             {!loading && user && (
               <>
                 <NavLink className={navLinkClass} to="/profile">Whisky Profile</NavLink>
@@ -70,13 +90,17 @@ const SiteHeader = () => {
                 </div>
                 
                 <nav className="flex flex-col gap-2">
-                  <NavLink 
-                    className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent"
-                    to="/my-tasting-box"
-                    onClick={() => setMobileMenuOpen(false)}
+                  <button 
+                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent text-left ${
+                      isTastingBoxActive ? "text-foreground" : ""
+                    }`}
+                    onClick={() => {
+                      handleTastingBoxClick();
+                      setMobileMenuOpen(false);
+                    }}
                   >
                     My Tasting Box
-                  </NavLink>
+                  </button>
                   
                   {!loading && user && (
                     <>
