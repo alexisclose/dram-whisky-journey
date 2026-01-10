@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,9 +13,10 @@ import {
   Check,
   Mail,
   MessageCircle,
-  Link2
+  X
 } from "lucide-react";
 import { toast } from "sonner";
+import html2canvas from "html2canvas";
 
 interface FlavorProfile {
   fruit: number;
@@ -70,8 +71,8 @@ const LinkedInIcon = () => (
 const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps) => {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const previewCardRef = useRef<HTMLDivElement>(null);
 
   const getTopFlavors = () => {
     const entries = Object.entries(flavorProfile) as [keyof FlavorProfile, number][];
@@ -87,211 +88,66 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   };
 
   const getShareUrl = () => {
-    return typeof window !== "undefined" ? window.location.origin : "";
+    return typeof window !== "undefined" ? window.location.href : "";
   };
 
-  const generateShareImage = async () => {
-    if (generatedImageUrl) return; // Already generated
-    
-    setIsGenerating(true);
-    
+  const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
+
+  const handleNativeShare = useCallback(async () => {
     try {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Could not get canvas context");
-
-      // Set canvas size (Instagram story size)
-      canvas.width = 1080;
-      canvas.height = 1920;
-
-      // Background gradient
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, "#1a1a2e");
-      gradient.addColorStop(0.5, "#16213e");
-      gradient.addColorStop(1, "#0f0f23");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Add decorative circles
-      ctx.strokeStyle = "rgba(255, 165, 0, 0.08)";
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.arc(canvas.width / 2, canvas.height / 2, 150 + i * 100, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      // Title
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 72px system-ui, -apple-system, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("My Whisky Profile", canvas.width / 2, 280);
-
-      // Whisky glass emoji
-      ctx.font = "140px serif";
-      ctx.fillText("🥃", canvas.width / 2, 480);
-
-      // Draw radar chart
-      const centerX = canvas.width / 2;
-      const centerY = 820;
-      const radius = 300;
-      const flavors = ["Fruit", "Floral", "Oak", "Smoke", "Spice"];
-      const values = [
-        flavorProfile.fruit,
-        flavorProfile.floral,
-        flavorProfile.oak,
-        flavorProfile.smoke,
-        flavorProfile.spice,
-      ];
-
-      // Draw grid rings
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-      ctx.lineWidth = 1;
-      for (let ring = 1; ring <= 5; ring++) {
-        ctx.beginPath();
-        for (let i = 0; i <= 5; i++) {
-          const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-          const x = centerX + Math.cos(angle) * (radius * ring) / 5;
-          const y = centerY + Math.sin(angle) * (radius * ring) / 5;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.stroke();
-      }
-
-      // Draw spokes
-      for (let i = 0; i < 5; i++) {
-        const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
-        ctx.stroke();
-      }
-
-      // Draw data polygon with glow
-      ctx.shadowColor = "rgba(255, 165, 0, 0.5)";
-      ctx.shadowBlur = 20;
-      ctx.fillStyle = "rgba(255, 165, 0, 0.25)";
-      ctx.strokeStyle = "#ffa500";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      for (let i = 0; i <= 5; i++) {
-        const index = i % 5;
-        const angle = (index * 2 * Math.PI) / 5 - Math.PI / 2;
-        const value = values[index] / 10;
-        const x = centerX + Math.cos(angle) * radius * value;
-        const y = centerY + Math.sin(angle) * radius * value;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // Draw labels
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 38px system-ui, -apple-system, sans-serif";
-      ctx.textAlign = "center";
-      for (let i = 0; i < 5; i++) {
-        const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-        const labelRadius = radius + 70;
-        const x = centerX + Math.cos(angle) * labelRadius;
-        const y = centerY + Math.sin(angle) * labelRadius + 14;
-        ctx.fillText(flavors[i], x, y);
-      }
-
-      // Score cards row
-      const cardY = 1240;
-      const cardWidth = 170;
-      const cardGap = 16;
-      const totalWidth = 5 * cardWidth + 4 * cardGap;
-      const startX = (canvas.width - totalWidth) / 2;
-
-      flavors.forEach((flavor, i) => {
-        const x = startX + i * (cardWidth + cardGap);
-        
-        // Card background
-        ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-        ctx.beginPath();
-        ctx.roundRect(x, cardY, cardWidth, 130, 16);
-        ctx.fill();
-
-        // Score
-        ctx.fillStyle = "#ffa500";
-        ctx.font = "bold 44px system-ui, -apple-system, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(values[i].toFixed(1), x + cardWidth / 2, cardY + 55);
-
-        // Label
-        ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-        ctx.font = "22px system-ui, -apple-system, sans-serif";
-        ctx.fillText(flavor, x + cardWidth / 2, cardY + 100);
+      await navigator.share({
+        title: "My Whisky Profile",
+        text: getShareText(),
+        url: getShareUrl(),
       });
-
-      // Top flavors insight
-      const topFlavors = getTopFlavors();
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "38px system-ui, -apple-system, sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(
-        `I prefer ${topFlavors[0].toLowerCase()} & ${topFlavors[1].toLowerCase()} notes`,
-        canvas.width / 2,
-        1480
-      );
-
-      // Divider line
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(canvas.width / 2 - 200, 1560);
-      ctx.lineTo(canvas.width / 2 + 200, 1560);
-      ctx.stroke();
-
-      // Branding
-      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-      ctx.font = "28px system-ui, -apple-system, sans-serif";
-      ctx.fillText("Discover your whisky profile", canvas.width / 2, 1680);
-      ctx.fillStyle = "#ffa500";
-      ctx.font = "bold 34px system-ui, -apple-system, sans-serif";
-      ctx.fillText(getShareUrl().replace("https://", "").replace("http://", ""), canvas.width / 2, 1740);
-
-      // Convert to data URL
-      const imageUrl = canvas.toDataURL("image/png");
-      setGeneratedImageUrl(imageUrl);
     } catch (error) {
-      console.error("Error generating image:", error);
-      toast.error("Failed to generate image");
-    } finally {
-      setIsGenerating(false);
+      // User cancelled or share failed - open fallback dialog
+      if ((error as Error).name !== "AbortError") {
+        setIsOpen(true);
+      }
+    }
+  }, []);
+
+  const handleShareClick = () => {
+    if (supportsNativeShare) {
+      handleNativeShare();
+    } else {
+      setIsOpen(true);
     }
   };
 
-  // Generate image when dialog opens
-  useEffect(() => {
-    if (isOpen && !generatedImageUrl) {
-      generateShareImage();
+  const handleSaveImage = async () => {
+    if (!previewCardRef.current) return;
+    
+    setIsSaving(true);
+    try {
+      const canvas = await html2canvas(previewCardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+      });
+      
+      const link = document.createElement("a");
+      link.download = "my-whisky-profile.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("Image saved!");
+    } catch (error) {
+      console.error("Error saving image:", error);
+      toast.error("Failed to save image");
+    } finally {
+      setIsSaving(false);
     }
-  }, [isOpen]);
-
-  const handleDownloadImage = () => {
-    if (!generatedImageUrl) return;
-    const link = document.createElement("a");
-    link.download = "my-whisky-profile.png";
-    link.href = generatedImageUrl;
-    link.click();
-    toast.success("Image downloaded!");
   };
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
+      await navigator.clipboard.writeText(getShareUrl());
       setCopied(true);
-      toast.success("Link copied!");
+      toast.success("Link copied to clipboard!");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Failed to copy");
+      toast.error("Failed to copy link");
     }
   };
 
@@ -302,27 +158,16 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
   const shareToFacebook = () => {
     const url = encodeURIComponent(getShareUrl());
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-    // Try to open - if blocked in iframe, copy link instead
-    const newWindow = window.open(shareUrl, "_blank", "noopener,noreferrer,width=600,height=400");
-    if (!newWindow || newWindow.closed) {
-      navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
-      toast.info("Link copied! Paste it on Facebook to share.");
-    }
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
   };
 
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
-    // Try native protocol first (works on mobile), fallback to web
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
       window.location.href = `whatsapp://send?text=${text}`;
     } else {
-      const newWindow = window.open(`https://web.whatsapp.com/send?text=${text}`, "_blank", "noopener,noreferrer");
-      if (!newWindow || newWindow.closed) {
-        navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
-        toast.info("Link copied! Paste it in WhatsApp to share.");
-      }
+      window.open(`https://web.whatsapp.com/send?text=${text}`, "_blank");
     }
   };
 
@@ -333,27 +178,18 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     if (isMobile) {
       window.location.href = `tg://msg_url?url=${url}&text=${text}`;
     } else {
-      const newWindow = window.open(`https://t.me/share/url?url=${url}&text=${text}`, "_blank", "noopener,noreferrer");
-      if (!newWindow || newWindow.closed) {
-        navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
-        toast.info("Link copied! Paste it in Telegram to share.");
-      }
+      window.open(`https://t.me/share/url?url=${url}&text=${text}`, "_blank");
     }
   };
 
   const shareToLinkedIn = () => {
     const url = encodeURIComponent(getShareUrl());
-    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
-    const newWindow = window.open(shareUrl, "_blank", "noopener,noreferrer,width=600,height=400");
-    if (!newWindow || newWindow.closed) {
-      navigator.clipboard.writeText(`${getShareText()} ${getShareUrl()}`);
-      toast.info("Link copied! Paste it on LinkedIn to share.");
-    }
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank");
   };
 
   const shareToInstagram = () => {
-    handleDownloadImage();
-    toast.info("Image downloaded! Open Instagram to share it.", { duration: 4000 });
+    handleSaveImage();
+    toast.info("Image saved! Open Instagram to share it.", { duration: 4000 });
   };
 
   const shareViaEmail = () => {
@@ -362,36 +198,10 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     window.open(`mailto:?subject=${subject}&body=${body}`);
   };
 
-  const handleNativeShare = async () => {
-    if (!navigator.share) return;
-    
-    try {
-      if (generatedImageUrl) {
-        const response = await fetch(generatedImageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], "whisky-profile.png", { type: "image/png" });
-        
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
-            title: "My Whisky Profile",
-            text: getShareText(),
-            files: [file],
-          });
-          return;
-        }
-      }
-      
-      await navigator.share({
-        title: "My Whisky Profile",
-        text: getShareText(),
-        url: getShareUrl(),
-      });
-    } catch {
-      // User cancelled
-    }
+  const shareViaMessage = () => {
+    const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
+    window.location.href = `sms:?&body=${text}`;
   };
-
-  const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
   const socialButtons = [
     { icon: <InstagramIcon />, label: "Instagram", onClick: shareToInstagram, color: "bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400" },
@@ -401,51 +211,152 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     { icon: <TelegramIcon />, label: "Telegram", onClick: shareToTelegram, color: "bg-[#0088cc]" },
     { icon: <LinkedInIcon />, label: "LinkedIn", onClick: shareToLinkedIn, color: "bg-[#0A66C2]" },
     { icon: <Mail className="h-5 w-5" />, label: "Email", onClick: shareViaEmail, color: "bg-gray-600" },
-    { icon: <MessageCircle className="h-5 w-5" />, label: "Message", onClick: handleNativeShare, color: "bg-green-600", hidden: !supportsNativeShare },
+    { icon: <MessageCircle className="h-5 w-5" />, label: "Message", onClick: shareViaMessage, color: "bg-green-600" },
   ];
+
+  const flavors = ["Fruit", "Floral", "Oak", "Smoke", "Spice"];
+  const values = [
+    flavorProfile.fruit,
+    flavorProfile.floral,
+    flavorProfile.oak,
+    flavorProfile.smoke,
+    flavorProfile.spice,
+  ];
+
+  // Calculate radar chart points
+  const getRadarPoints = (radius: number) => {
+    return values.map((value, i) => {
+      const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+      const r = (value / 10) * radius;
+      return {
+        x: Math.cos(angle) * r,
+        y: Math.sin(angle) * r,
+      };
+    });
+  };
+
+  const getPolygonPoints = (radius: number) => {
+    const points = getRadarPoints(radius);
+    return points.map(p => `${p.x},${p.y}`).join(" ");
+  };
 
   return (
     <>
-      <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsOpen(true)}>
+      <Button variant="outline" size="sm" className="gap-2" onClick={handleShareClick}>
         <Share2 className="h-4 w-4" />
         Share
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden">
-          <DialogHeader className="p-4 pb-2">
-            <DialogTitle className="text-center">Share Your Profile</DialogTitle>
+          <DialogHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Share Your Profile</DialogTitle>
           </DialogHeader>
           
           <div className="px-4 pb-4 space-y-4">
-            {/* Image Preview */}
-            <div className="relative rounded-xl overflow-hidden border bg-muted aspect-[9/16] max-h-[320px]">
-              {isGenerating ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-                </div>
-              ) : generatedImageUrl ? (
-                <img 
-                  src={generatedImageUrl} 
-                  alt="Whisky Profile Card" 
-                  className="w-full h-full object-cover"
-                />
-              ) : null}
+            {/* Preview Card */}
+            <div 
+              ref={previewCardRef}
+              className="rounded-xl overflow-hidden p-6"
+              style={{ 
+                background: "linear-gradient(135deg, #1e3a5f 0%, #0f2744 50%, #0a1929 100%)" 
+              }}
+            >
+              <h3 className="text-white text-center text-lg font-semibold mb-4">
+                Whisky Profile
+              </h3>
+              
+              {/* Radar Chart */}
+              <div className="flex justify-center mb-4">
+                <svg width="200" height="200" viewBox="-110 -110 220 220">
+                  {/* Grid rings */}
+                  {[1, 2, 3, 4, 5].map((ring) => (
+                    <polygon
+                      key={ring}
+                      points={Array.from({ length: 5 }, (_, i) => {
+                        const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                        const r = (ring / 5) * 80;
+                        return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
+                      }).join(" ")}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.15)"
+                      strokeWidth="1"
+                    />
+                  ))}
+                  
+                  {/* Spokes */}
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                    return (
+                      <line
+                        key={i}
+                        x1="0"
+                        y1="0"
+                        x2={Math.cos(angle) * 80}
+                        y2={Math.sin(angle) * 80}
+                        stroke="rgba(255,255,255,0.15)"
+                        strokeWidth="1"
+                      />
+                    );
+                  })}
+                  
+                  {/* Data polygon */}
+                  <polygon
+                    points={getPolygonPoints(80)}
+                    fill="rgba(255, 165, 0, 0.3)"
+                    stroke="#ffa500"
+                    strokeWidth="2"
+                  />
+                  
+                  {/* Labels */}
+                  {flavors.map((flavor, i) => {
+                    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                    const labelR = 100;
+                    return (
+                      <text
+                        key={flavor}
+                        x={Math.cos(angle) * labelR}
+                        y={Math.sin(angle) * labelR}
+                        fill="white"
+                        fontSize="11"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        {flavor}
+                      </text>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              {/* Stats Row */}
+              <div className="flex justify-between gap-2">
+                {flavors.map((flavor, i) => (
+                  <div 
+                    key={flavor} 
+                    className="flex-1 text-center p-2 rounded-lg"
+                    style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+                  >
+                    <div className="text-orange-400 font-bold text-sm">{values[i].toFixed(1)}</div>
+                    <div className="text-white/60 text-[10px]">{flavor}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Download Button */}
+            {/* Save Image Button */}
             <Button 
-              onClick={handleDownloadImage} 
-              className="w-full gap-2" 
-              disabled={!generatedImageUrl}
+              onClick={handleSaveImage} 
+              className="w-full gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+              disabled={isSaving}
             >
               <Download className="h-4 w-4" />
-              Save Image
+              {isSaving ? "Saving..." : "Save Image"}
             </Button>
 
             {/* Social Share Grid */}
             <div className="grid grid-cols-4 gap-3">
-              {socialButtons.filter(b => !b.hidden).map((button) => (
+              {socialButtons.map((button) => (
                 <button
                   key={button.label}
                   onClick={button.onClick}
@@ -463,7 +374,7 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
               className="w-full gap-2" 
               onClick={handleCopyLink}
             >
-              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Link2 className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               {copied ? "Copied!" : "Copy Link"}
             </Button>
           </div>
