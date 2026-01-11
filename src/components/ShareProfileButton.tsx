@@ -92,21 +92,68 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   };
 
   const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
+  const supportsFileShare = typeof navigator !== "undefined" && !!navigator.canShare;
 
-  const handleNativeShare = useCallback(async () => {
+  const generateProfileImage = async (): Promise<File | null> => {
+    if (!previewCardRef.current) return null;
+    
     try {
-      await navigator.share({
-        title: "My Whisky Profile",
-        text: getShareText(),
-        url: getShareUrl(),
+      const canvas = await html2canvas(previewCardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+      });
+      
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], "my-whisky-profile.png", { type: "image/png" }));
+          } else {
+            resolve(null);
+          }
+        }, "image/png");
       });
     } catch (error) {
-      // User cancelled or share failed - open fallback dialog
-      if ((error as Error).name !== "AbortError") {
-        setIsOpen(true);
-      }
+      console.error("Error generating image:", error);
+      return null;
     }
-  }, []);
+  };
+
+  const handleNativeShare = useCallback(async () => {
+    // First, we need to open the dialog briefly to render the preview card for capture
+    setIsOpen(true);
+    
+    // Wait for the dialog to render
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      const imageFile = await generateProfileImage();
+      
+      if (imageFile && supportsFileShare && navigator.canShare({ files: [imageFile] })) {
+        // Share with image file
+        await navigator.share({
+          files: [imageFile],
+          title: "My Whisky Profile",
+          text: getShareText(),
+        });
+        setIsOpen(false);
+      } else if (supportsNativeShare) {
+        // Fallback to text-only share
+        setIsOpen(false);
+        await navigator.share({
+          title: "My Whisky Profile",
+          text: getShareText(),
+          url: getShareUrl(),
+        });
+      }
+    } catch (error) {
+      // User cancelled or share failed - keep dialog open for fallback
+      if ((error as Error).name === "AbortError") {
+        setIsOpen(false);
+      }
+      // Dialog stays open for manual sharing options
+    }
+  }, [supportsFileShare, supportsNativeShare]);
 
   const handleShareClick = () => {
     if (supportsNativeShare) {
