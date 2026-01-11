@@ -72,7 +72,9 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const previewCardRef = useRef<HTMLDivElement>(null);
+  const hiddenPreviewRef = useRef<HTMLDivElement>(null);
 
   const getTopFlavors = () => {
     const entries = Object.entries(flavorProfile) as [keyof FlavorProfile, number][];
@@ -94,11 +96,12 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
   const supportsFileShare = typeof navigator !== "undefined" && !!navigator.canShare;
 
-  const generateProfileImage = async (): Promise<File | null> => {
-    if (!previewCardRef.current) return null;
+  const generateProfileImage = async (useHidden = false): Promise<File | null> => {
+    const targetRef = useHidden ? hiddenPreviewRef.current : previewCardRef.current;
+    if (!targetRef) return null;
     
     try {
-      const canvas = await html2canvas(previewCardRef.current, {
+      const canvas = await html2canvas(targetRef, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
@@ -120,14 +123,11 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   };
 
   const handleNativeShare = useCallback(async () => {
-    // First, we need to open the dialog briefly to render the preview card for capture
-    setIsOpen(true);
-    
-    // Wait for the dialog to render
-    await new Promise(resolve => setTimeout(resolve, 100));
+    setIsSharing(true);
     
     try {
-      const imageFile = await generateProfileImage();
+      // Use the hidden preview card which is always rendered
+      const imageFile = await generateProfileImage(true);
       
       if (imageFile && supportsFileShare && navigator.canShare({ files: [imageFile] })) {
         // Share with image file
@@ -136,22 +136,25 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
           title: "My Whisky Profile",
           text: getShareText(),
         });
-        setIsOpen(false);
       } else if (supportsNativeShare) {
-        // Fallback to text-only share
-        setIsOpen(false);
+        // Fallback to text-only share if file sharing not supported
         await navigator.share({
           title: "My Whisky Profile",
           text: getShareText(),
           url: getShareUrl(),
         });
+      } else {
+        // No native share available, open dialog
+        setIsOpen(true);
       }
     } catch (error) {
-      // User cancelled or share failed - keep dialog open for fallback
-      if ((error as Error).name === "AbortError") {
-        setIsOpen(false);
+      // User cancelled or share failed
+      if ((error as Error).name !== "AbortError") {
+        // Open fallback dialog for other errors
+        setIsOpen(true);
       }
-      // Dialog stays open for manual sharing options
+    } finally {
+      setIsSharing(false);
     }
   }, [supportsFileShare, supportsNativeShare]);
 
@@ -287,11 +290,109 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     return points.map(p => `${p.x},${p.y}`).join(" ");
   };
 
+  // Render the preview card content (reused for both hidden and visible versions)
+  const renderPreviewCardContent = () => (
+    <>
+      <h3 className="text-white text-center text-lg font-semibold mb-4">
+        Whisky Profile
+      </h3>
+      
+      {/* Radar Chart */}
+      <div className="flex justify-center mb-4">
+        <svg width="200" height="200" viewBox="-110 -110 220 220">
+          {/* Grid rings */}
+          {[1, 2, 3, 4, 5].map((ring) => (
+            <polygon
+              key={ring}
+              points={Array.from({ length: 5 }, (_, i) => {
+                const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                const r = (ring / 5) * 80;
+                return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
+              }).join(" ")}
+              fill="none"
+              stroke="rgba(255,255,255,0.15)"
+              strokeWidth="1"
+            />
+          ))}
+          
+          {/* Spokes */}
+          {Array.from({ length: 5 }, (_, i) => {
+            const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+            return (
+              <line
+                key={i}
+                x1="0"
+                y1="0"
+                x2={Math.cos(angle) * 80}
+                y2={Math.sin(angle) * 80}
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth="1"
+              />
+            );
+          })}
+          
+          {/* Data polygon */}
+          <polygon
+            points={getPolygonPoints(80)}
+            fill="rgba(255, 165, 0, 0.3)"
+            stroke="#ffa500"
+            strokeWidth="2"
+          />
+          
+          {/* Labels */}
+          {flavors.map((flavor, i) => {
+            const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+            const labelR = 100;
+            return (
+              <text
+                key={flavor}
+                x={Math.cos(angle) * labelR}
+                y={Math.sin(angle) * labelR}
+                fill="white"
+                fontSize="11"
+                textAnchor="middle"
+                dominantBaseline="middle"
+              >
+                {flavor}
+              </text>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Stats Row */}
+      <div className="flex justify-between gap-2">
+        {flavors.map((flavor, i) => (
+          <div 
+            key={flavor} 
+            className="flex-1 text-center p-2 rounded-lg"
+            style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+          >
+            <div className="text-orange-400 font-bold text-sm">{values[i].toFixed(1)}</div>
+            <div className="text-white/60 text-[10px]">{flavor}</div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
   return (
     <>
-      <Button variant="outline" size="sm" className="gap-2" onClick={handleShareClick}>
+      {/* Hidden off-screen preview card for image generation */}
+      <div 
+        ref={hiddenPreviewRef}
+        className="fixed -left-[9999px] top-0 rounded-xl overflow-hidden p-6 w-[350px]"
+        style={{ 
+          background: "linear-gradient(135deg, #1e3a5f 0%, #0f2744 50%, #0a1929 100%)" 
+        }}
+        aria-hidden="true"
+      >
+        {renderPreviewCardContent()}
+      </div>
+
+      <Button variant="outline" size="sm" className="gap-2" onClick={handleShareClick} disabled={isSharing}>
         <Share2 className="h-4 w-4" />
-        Share
+        {isSharing ? "Sharing..." : "Share"}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -309,86 +410,7 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
                 background: "linear-gradient(135deg, #1e3a5f 0%, #0f2744 50%, #0a1929 100%)" 
               }}
             >
-              <h3 className="text-white text-center text-lg font-semibold mb-4">
-                Whisky Profile
-              </h3>
-              
-              {/* Radar Chart */}
-              <div className="flex justify-center mb-4">
-                <svg width="200" height="200" viewBox="-110 -110 220 220">
-                  {/* Grid rings */}
-                  {[1, 2, 3, 4, 5].map((ring) => (
-                    <polygon
-                      key={ring}
-                      points={Array.from({ length: 5 }, (_, i) => {
-                        const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-                        const r = (ring / 5) * 80;
-                        return `${Math.cos(angle) * r},${Math.sin(angle) * r}`;
-                      }).join(" ")}
-                      fill="none"
-                      stroke="rgba(255,255,255,0.15)"
-                      strokeWidth="1"
-                    />
-                  ))}
-                  
-                  {/* Spokes */}
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-                    return (
-                      <line
-                        key={i}
-                        x1="0"
-                        y1="0"
-                        x2={Math.cos(angle) * 80}
-                        y2={Math.sin(angle) * 80}
-                        stroke="rgba(255,255,255,0.15)"
-                        strokeWidth="1"
-                      />
-                    );
-                  })}
-                  
-                  {/* Data polygon */}
-                  <polygon
-                    points={getPolygonPoints(80)}
-                    fill="rgba(255, 165, 0, 0.3)"
-                    stroke="#ffa500"
-                    strokeWidth="2"
-                  />
-                  
-                  {/* Labels */}
-                  {flavors.map((flavor, i) => {
-                    const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-                    const labelR = 100;
-                    return (
-                      <text
-                        key={flavor}
-                        x={Math.cos(angle) * labelR}
-                        y={Math.sin(angle) * labelR}
-                        fill="white"
-                        fontSize="11"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        {flavor}
-                      </text>
-                    );
-                  })}
-                </svg>
-              </div>
-
-              {/* Stats Row */}
-              <div className="flex justify-between gap-2">
-                {flavors.map((flavor, i) => (
-                  <div 
-                    key={flavor} 
-                    className="flex-1 text-center p-2 rounded-lg"
-                    style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-                  >
-                    <div className="text-orange-400 font-bold text-sm">{values[i].toFixed(1)}</div>
-                    <div className="text-white/60 text-[10px]">{flavor}</div>
-                  </div>
-                ))}
-              </div>
+              {renderPreviewCardContent()}
             </div>
 
             {/* Save Image Button */}
