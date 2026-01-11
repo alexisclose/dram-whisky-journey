@@ -827,23 +827,25 @@ const WhiskyDossier = () => {
         </div>
       </div>
 
-      {/* Floating Review Button - Mobile Optimized */}
-      <div className="fixed bottom-4 left-4 right-4 z-50 md:bottom-6 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2">
-        <Button 
-          size="lg" 
-          className="w-full md:w-auto rounded-2xl px-6 py-4 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl border border-white/20 backdrop-blur-sm"
-          disabled={!user}
-          onClick={() => {
-            // Scroll to review section
-            const reviewSection = document.getElementById('review-section');
-            if (reviewSection) {
-              reviewSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
-        >
-          {user ? 'Leave a review' : 'Log in to review'}
-        </Button>
-      </div>
+      {/* Floating Review Button - Mobile Optimized - Only show if user hasn't reviewed yet */}
+      {!hasUserReviewed && (
+        <div className="fixed bottom-4 left-4 right-4 z-50 md:bottom-6 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2">
+          <Button 
+            size="lg" 
+            className="w-full md:w-auto rounded-2xl px-6 py-4 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl border border-white/20 backdrop-blur-sm"
+            disabled={!user}
+            onClick={() => {
+              // Scroll to review section
+              const reviewSection = document.getElementById('review-section');
+              if (reviewSection) {
+                reviewSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            {user ? 'Leave a review' : 'Log in to review'}
+          </Button>
+        </div>
+      )}
 
       {/* Additional Content Below - Mobile-First Layout */}
       <div className="container mx-auto px-4 py-8">
