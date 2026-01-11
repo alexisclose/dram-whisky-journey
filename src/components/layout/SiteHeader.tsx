@@ -50,9 +50,12 @@ const SiteHeader = () => {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2 sm:gap-6">
-          <Link to="/" className="font-bold tracking-tight text-base sm:text-lg">
+          <button 
+            onClick={handleTastingBoxClick}
+            className="font-bold tracking-tight text-base sm:text-lg hover:opacity-80 transition-opacity"
+          >
             Dram Discoverer
-          </Link>
+          </button>
           
           <nav className="hidden lg:flex items-center gap-1" aria-label="Main Navigation">
             <button 
