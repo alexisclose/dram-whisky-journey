@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,17 +6,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  Share2, 
-  Download, 
-  Copy, 
+import {
+  Share2,
+  Download,
+  Copy,
   Check,
   Mail,
   MessageCircle,
-  X
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
+import { Capacitor } from "@capacitor/core";
+import { Share } from "@capacitor/share";
+import { Filesystem, Directory } from "@capacitor/filesystem";
 
 interface FlavorProfile {
   fruit: number;
@@ -95,18 +98,19 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
   const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
   const supportsFileShare = typeof navigator !== "undefined" && !!navigator.canShare;
+  const isNative = Capacitor.isNativePlatform();
 
   const generateProfileImage = async (useHidden = false): Promise<File | null> => {
     const targetRef = useHidden ? hiddenPreviewRef.current : previewCardRef.current;
     if (!targetRef) return null;
-    
+
     try {
       const canvas = await html2canvas(targetRef, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
       });
-      
+
       return new Promise((resolve) => {
         canvas.toBlob((blob) => {
           if (blob) {
@@ -122,45 +126,96 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     }
   };
 
-  const handleNativeShare = useCallback(async () => {
-    setIsSharing(true);
-    
+  const generateProfileImageDataUrl = async (useHidden = false): Promise<string | null> => {
+    const targetRef = useHidden ? hiddenPreviewRef.current : previewCardRef.current;
+    if (!targetRef) return null;
+
     try {
-      // Use the hidden preview card which is always rendered
+      const canvas = await html2canvas(targetRef, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+      });
+      return canvas.toDataURL("image/png");
+    } catch (error) {
+      console.error("Error generating image data URL:", error);
+      return null;
+    }
+  };
+
+  const handleNativeShare = async () => {
+    setIsSharing(true);
+    try {
+      // Create a real on-device file and share via Capacitor Share plugin.
+      const dataUrl = await generateProfileImageDataUrl(true);
+      if (!dataUrl) {
+        setIsOpen(true);
+        return;
+      }
+
+      const base64 = dataUrl.split(",")[1];
+      const path = `my-whisky-profile-${Date.now()}.png`;
+
+      await Filesystem.writeFile({
+        path,
+        data: base64,
+        directory: Directory.Cache,
+      });
+
+      const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache });
+
+      await Share.share({
+        title: "My Whisky Profile",
+        text: getShareText(),
+        url: getShareUrl(),
+        files: [uri],
+      });
+    } catch (error) {
+      // If sharing fails for any reason, open the fallback dialog.
+      console.error("Native share failed:", error);
+      setIsOpen(true);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const handleWebShare = async () => {
+    setIsSharing(true);
+    try {
       const imageFile = await generateProfileImage(true);
-      
+
       if (imageFile && supportsFileShare && navigator.canShare({ files: [imageFile] })) {
-        // Share with image file
         await navigator.share({
           files: [imageFile],
           title: "My Whisky Profile",
           text: getShareText(),
         });
       } else if (supportsNativeShare) {
-        // Fallback to text-only share if file sharing not supported
         await navigator.share({
           title: "My Whisky Profile",
           text: getShareText(),
           url: getShareUrl(),
         });
       } else {
-        // No native share available, open dialog
         setIsOpen(true);
       }
     } catch (error) {
-      // User cancelled or share failed
       if ((error as Error).name !== "AbortError") {
-        // Open fallback dialog for other errors
         setIsOpen(true);
       }
     } finally {
       setIsSharing(false);
     }
-  }, [supportsFileShare, supportsNativeShare]);
+  };
 
   const handleShareClick = () => {
+    if (isNative) {
+      void handleNativeShare();
+      return;
+    }
+
     if (supportsNativeShare) {
-      handleNativeShare();
+      void handleWebShare();
     } else {
       setIsOpen(true);
     }
