@@ -96,8 +96,19 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     return typeof window !== "undefined" ? window.location.href : "";
   };
 
-  const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
-  const supportsFileShare = typeof navigator !== "undefined" && !!navigator.canShare;
+  const isEmbedded = (() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.self !== window.top;
+    } catch {
+      // Cross-origin iframe access throws; treat as embedded
+      return true;
+    }
+  })();
+
+  // Web Share API is blocked inside Lovable's embedded preview iframe (Feature-Policy).
+  const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share && !isEmbedded;
+  const supportsFileShare = typeof navigator !== "undefined" && !!navigator.canShare && !isEmbedded;
   const isNative = Capacitor.isNativePlatform();
 
   const generateProfileImage = async (useHidden = false): Promise<File | null> => {
@@ -230,6 +241,12 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   const handleShareClick = () => {
     if (isNative) {
       void handleNativeShare();
+      return;
+    }
+
+    if (isEmbedded) {
+      toast.info("System share is blocked in the embedded preview. Open the app in a new tab (or on your phone) to use the native share sheet.");
+      setIsOpen(true);
       return;
     }
 
@@ -519,6 +536,15 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
             >
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               {copied ? "Copied!" : "Copy Link"}
+            </Button>
+
+            {/* Open in new tab (required for system share in embedded preview) */}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => window.open(getShareUrl(), "_blank", "noopener,noreferrer")}
+            >
+              Open in new tab
             </Button>
           </div>
         </DialogContent>
