@@ -76,6 +76,7 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [shareDebug, setShareDebug] = useState<string | null>(null);
   const previewCardRef = useRef<HTMLDivElement>(null);
   const hiddenPreviewRef = useRef<HTMLDivElement>(null);
 
@@ -192,44 +193,52 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
   const handleWebShare = async () => {
     setIsSharing(true);
+
+    const debug: string[] = [];
+    const push = (label: string, value: unknown) => {
+      debug.push(`${label} ${String(value)}`);
+      setShareDebug(debug.join("\n"));
+    };
+
     try {
-      console.log("[Share] Starting web share...");
-      console.log("[Share] supportsFileShare:", supportsFileShare);
-      console.log("[Share] supportsNativeShare:", supportsNativeShare);
+      push("embedded:", isEmbedded);
+      push("supportsFileShare:", supportsFileShare);
+      push("supportsNativeShare:", supportsNativeShare);
 
       const imageFile = await generateProfileImage(true);
-      console.log("[Share] Image generated:", imageFile ? `${imageFile.size} bytes` : "null");
+      push("image:", imageFile ? `${imageFile.size} bytes (${imageFile.type})` : "null");
 
       if (imageFile && supportsFileShare) {
         const canShareFiles = navigator.canShare({ files: [imageFile] });
-        console.log("[Share] canShare files:", canShareFiles);
+        push("canShare(files):", canShareFiles);
 
         if (canShareFiles) {
-          console.log("[Share] Sharing with file...");
+          push("share path:", "navigator.share(files)");
           await navigator.share({
             files: [imageFile],
             title: "My Whisky Profile",
             text: getShareText(),
           });
-          console.log("[Share] File share succeeded");
+          push("result:", "file share succeeded");
           return;
         }
       }
 
       if (supportsNativeShare) {
-        console.log("[Share] Falling back to text-only share...");
+        push("share path:", "navigator.share(text/url)");
         await navigator.share({
           title: "My Whisky Profile",
           text: getShareText(),
           url: getShareUrl(),
         });
-        console.log("[Share] Text share succeeded");
+        push("result:", "text share succeeded");
       } else {
-        console.log("[Share] No native share, opening dialog");
+        push("share path:", "dialog fallback");
         setIsOpen(true);
       }
     } catch (error) {
-      console.error("[Share] Error:", error);
+      const err = error as { name?: string; message?: string };
+      push("error:", `${err?.name ?? "Error"}: ${err?.message ?? "Unknown"}`);
       if ((error as Error).name !== "AbortError") {
         setIsOpen(true);
       }
@@ -245,7 +254,16 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     }
 
     if (isEmbedded) {
-      toast.info("System share is blocked in the embedded preview. Open the app in a new tab (or on your phone) to use the native share sheet.");
+      setShareDebug(
+        [
+          "embedded: true",
+          "reason: Web Share API is blocked inside the embedded preview iframe",
+          "fix: tap 'Open in new tab' then share from there",
+        ].join("\n")
+      );
+      toast.info(
+        "System share is blocked in the embedded preview. Open the app in a new tab (or on your phone) to use the native share sheet."
+      );
       setIsOpen(true);
       return;
     }
@@ -289,6 +307,16 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Failed to copy link");
+    }
+  };
+
+  const handleCopyDebug = async () => {
+    if (!shareDebug) return;
+    try {
+      await navigator.clipboard.writeText(shareDebug);
+      toast.success("Debug info copied!");
+    } catch {
+      toast.error("Failed to copy debug info");
     }
   };
 
@@ -513,6 +541,18 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
               <Download className="h-4 w-4" />
               {isSaving ? "Saving..." : "Save Image"}
             </Button>
+
+            {shareDebug && (
+              <div className="rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">Share debug</p>
+                  <Button variant="outline" size="sm" onClick={handleCopyDebug}>
+                    Copy
+                  </Button>
+                </div>
+                <pre className="mt-2 text-xs whitespace-pre-wrap break-words">{shareDebug}</pre>
+              </div>
+            )}
 
             {/* Social Share Grid */}
             <div className="grid grid-cols-4 gap-3">
