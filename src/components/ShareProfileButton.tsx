@@ -182,24 +182,43 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   const handleWebShare = async () => {
     setIsSharing(true);
     try {
-      const imageFile = await generateProfileImage(true);
+      console.log("[Share] Starting web share...");
+      console.log("[Share] supportsFileShare:", supportsFileShare);
+      console.log("[Share] supportsNativeShare:", supportsNativeShare);
 
-      if (imageFile && supportsFileShare && navigator.canShare({ files: [imageFile] })) {
-        await navigator.share({
-          files: [imageFile],
-          title: "My Whisky Profile",
-          text: getShareText(),
-        });
-      } else if (supportsNativeShare) {
+      const imageFile = await generateProfileImage(true);
+      console.log("[Share] Image generated:", imageFile ? `${imageFile.size} bytes` : "null");
+
+      if (imageFile && supportsFileShare) {
+        const canShareFiles = navigator.canShare({ files: [imageFile] });
+        console.log("[Share] canShare files:", canShareFiles);
+
+        if (canShareFiles) {
+          console.log("[Share] Sharing with file...");
+          await navigator.share({
+            files: [imageFile],
+            title: "My Whisky Profile",
+            text: getShareText(),
+          });
+          console.log("[Share] File share succeeded");
+          return;
+        }
+      }
+
+      if (supportsNativeShare) {
+        console.log("[Share] Falling back to text-only share...");
         await navigator.share({
           title: "My Whisky Profile",
           text: getShareText(),
           url: getShareUrl(),
         });
+        console.log("[Share] Text share succeeded");
       } else {
+        console.log("[Share] No native share, opening dialog");
         setIsOpen(true);
       }
     } catch (error) {
+      console.error("[Share] Error:", error);
       if ((error as Error).name !== "AbortError") {
         setIsOpen(true);
       }
