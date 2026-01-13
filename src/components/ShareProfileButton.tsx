@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -286,15 +286,53 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     }
   };
 
-  const handleShareClick = () => {
+  // Pre-generate image on mount so it's ready when user taps Share
+  useEffect(() => {
+    // Small delay to ensure hidden preview is rendered
+    const timer = setTimeout(() => {
+      void preGenerateImage();
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleShareClick = async () => {
     if (isNative) {
       void handleNativeShare();
       return;
     }
 
-    // Always open dialog – the "Share with Image" button inside handles native share
+    // If we have a pre-generated image and file share is supported, share immediately
+    if (preGeneratedImage && supportsFileShare) {
+      const canShareFiles = navigator.canShare?.({ files: [preGeneratedImage] });
+      if (canShareFiles) {
+        setIsSharing(true);
+        try {
+          await navigator.share({
+            files: [preGeneratedImage],
+            title: "My Whisky Profile",
+            text: getShareText(),
+            url: getShareUrl(),
+          });
+          setIsSharing(false);
+          return; // Success – don't open dialog
+        } catch (error) {
+          setIsSharing(false);
+          const err = error as { name?: string };
+          if (err?.name === "AbortError") {
+            // User closed share sheet – that's fine
+            return;
+          }
+          // Fall through to dialog on other errors
+        }
+      }
+    }
+
+    // Fallback: open dialog with manual share options
     setIsOpen(true);
-    void preGenerateImage();
+    if (!preGeneratedImage) {
+      void preGenerateImage();
+    }
   };
 
   const handleSaveImage = async () => {
