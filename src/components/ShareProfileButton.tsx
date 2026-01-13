@@ -77,6 +77,8 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareDebug, setShareDebug] = useState<string | null>(null);
+  const [preGeneratedImage, setPreGeneratedImage] = useState<File | null>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const previewCardRef = useRef<HTMLDivElement>(null);
   const hiddenPreviewRef = useRef<HTMLDivElement>(null);
 
@@ -191,8 +193,26 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
     }
   };
 
-  const handleWebShare = async () => {
-    setIsSharing(true);
+  // Pre-generate image when dialog opens (so share can happen immediately on tap)
+  const preGenerateImage = async () => {
+    if (preGeneratedImage) return; // Already have one
+    setIsGeneratingImage(true);
+    try {
+      const imageFile = await generateProfileImage(true);
+      setPreGeneratedImage(imageFile);
+    } catch {
+      console.error("Failed to pre-generate image");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  // Called immediately on user tap – no async work before navigator.share()
+  const handleShareWithImage = async () => {
+    if (!preGeneratedImage) {
+      toast.error("Image not ready. Try again.");
+      return;
+    }
 
     const debug: string[] = [];
     const push = (label: string, value: unknown) => {
@@ -200,50 +220,32 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
       setShareDebug(debug.join("\n"));
     };
 
+    push("embedded:", isEmbedded);
+    push("supportsFileShare:", supportsFileShare);
+    push("image:", `${preGeneratedImage.size} bytes`);
+
     try {
-      push("embedded:", isEmbedded);
-      push("supportsFileShare:", supportsFileShare);
-      push("supportsNativeShare:", supportsNativeShare);
+      const canShareFiles = navigator.canShare?.({ files: [preGeneratedImage] });
+      push("canShare(files):", canShareFiles);
 
-      const imageFile = await generateProfileImage(true);
-      push("image:", imageFile ? `${imageFile.size} bytes (${imageFile.type})` : "null");
-
-      if (imageFile && supportsFileShare) {
-        const canShareFiles = navigator.canShare({ files: [imageFile] });
-        push("canShare(files):", canShareFiles);
-
-        if (canShareFiles) {
-          push("share path:", "navigator.share(files)");
-          await navigator.share({
-            files: [imageFile],
-            title: "My Whisky Profile",
-            text: getShareText(),
-          });
-          push("result:", "file share succeeded");
-          return;
-        }
-      }
-
-      if (supportsNativeShare) {
-        push("share path:", "navigator.share(text/url)");
+      if (canShareFiles) {
+        push("share path:", "navigator.share(files)");
         await navigator.share({
+          files: [preGeneratedImage],
           title: "My Whisky Profile",
           text: getShareText(),
-          url: getShareUrl(),
         });
-        push("result:", "text share succeeded");
+        push("result:", "success");
       } else {
-        push("share path:", "dialog fallback");
-        setIsOpen(true);
+        push("result:", "canShare returned false");
+        toast.error("Your browser doesn't support sharing images.");
       }
     } catch (error) {
       const err = error as { name?: string; message?: string };
       push("error:", `${err?.name ?? "Error"}: ${err?.message ?? "Unknown"}`);
-      if ((error as Error).name !== "AbortError") {
-        setIsOpen(true);
+      if (err?.name !== "AbortError") {
+        toast.error("Share failed. Try saving the image instead.");
       }
-    } finally {
-      setIsSharing(false);
     }
   };
 
@@ -253,26 +255,9 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
       return;
     }
 
-    if (isEmbedded) {
-      setShareDebug(
-        [
-          "embedded: true",
-          "reason: Web Share API is blocked inside the embedded preview iframe",
-          "fix: tap 'Open in new tab' then share from there",
-        ].join("\n")
-      );
-      toast.info(
-        "System share is blocked in the embedded preview. Open the app in a new tab (or on your phone) to use the native share sheet."
-      );
-      setIsOpen(true);
-      return;
-    }
-
-    if (supportsNativeShare) {
-      void handleWebShare();
-    } else {
-      setIsOpen(true);
-    }
+    // Always open dialog – the "Share with Image" button inside handles native share
+    setIsOpen(true);
+    void preGenerateImage();
   };
 
   const handleSaveImage = async () => {
@@ -531,6 +516,18 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
             >
               {renderPreviewCardContent()}
             </div>
+
+            {/* Share with Image Button (native share) */}
+            {supportsFileShare && (
+              <Button 
+                onClick={handleShareWithImage} 
+                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={isGeneratingImage || !preGeneratedImage}
+              >
+                <Share2 className="h-4 w-4" />
+                {isGeneratingImage ? "Preparing..." : "Share with Image"}
+              </Button>
+            )}
 
             {/* Save Image Button */}
             <Button 
