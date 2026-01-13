@@ -90,9 +90,10 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
       .map(([flavor]) => flavor.charAt(0).toUpperCase() + flavor.slice(1));
   };
 
-  const getShareText = () => {
+  const getShareText = (includeUrl = false) => {
     const topFlavors = getTopFlavors();
-    return `🥃 My Whisky Profile: I prefer ${topFlavors[0].toLowerCase()} and ${topFlavors[1].toLowerCase()} notes! Discover yours at`;
+    const base = `🥃 My Whisky Profile: I prefer ${topFlavors[0].toLowerCase()} and ${topFlavors[1].toLowerCase()} notes! Discover yours`;
+    return includeUrl ? `${base} at ${getShareUrl()}` : base;
   };
 
   const getShareUrl = () => {
@@ -180,8 +181,7 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
       await Share.share({
         title: "My Whisky Profile",
-        text: getShareText(),
-        url: getShareUrl(),
+        text: getShareText(true),
         files: [uri],
       });
     } catch (error) {
@@ -235,12 +235,11 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
       }
 
       push("share path:", "navigator.share(files)");
-      await navigator.share({
-        files: [preGeneratedImage],
-        title: "My Whisky Profile",
-        text: getShareText(),
-        url: getShareUrl(),
-      });
+        await navigator.share({
+          files: [preGeneratedImage],
+          title: "My Whisky Profile",
+          text: getShareText(true),
+        });
       push("result:", "success");
     } catch (error) {
       const err = error as { name?: string; message?: string };
@@ -308,11 +307,11 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
       if (canShareFiles) {
         setIsSharing(true);
         try {
+          // Share only file + text (with URL embedded). Avoids "1 link + 1 image" UI.
           await navigator.share({
             files: [preGeneratedImage],
             title: "My Whisky Profile",
-            text: getShareText(),
-            url: getShareUrl(),
+            text: getShareText(true),
           });
           setIsSharing(false);
           return; // Success – don't open dialog
@@ -381,7 +380,7 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   };
 
   const shareToTwitter = () => {
-    const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
+    const text = encodeURIComponent(getShareText(true));
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
   };
 
@@ -391,7 +390,7 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   };
 
   const shareToWhatsApp = () => {
-    const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
+    const text = encodeURIComponent(getShareText(true));
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
       window.location.href = `whatsapp://send?text=${text}`;
@@ -401,7 +400,7 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
   };
 
   const shareToTelegram = () => {
-    const text = encodeURIComponent(getShareText());
+    const text = encodeURIComponent(getShareText(true));
     const url = encodeURIComponent(getShareUrl());
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
@@ -423,12 +422,12 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
   const shareViaEmail = () => {
     const subject = encodeURIComponent("Check out my Whisky Profile!");
-    const body = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
+    const body = encodeURIComponent(getShareText(true));
     window.open(`mailto:?subject=${subject}&body=${body}`);
   };
 
   const shareViaMessage = () => {
-    const text = encodeURIComponent(`${getShareText()} ${getShareUrl()}`);
+    const text = encodeURIComponent(getShareText(true));
     window.location.href = `sms:?&body=${text}`;
   };
 
