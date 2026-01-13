@@ -228,24 +228,61 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
       const canShareFiles = navigator.canShare?.({ files: [preGeneratedImage] });
       push("canShare(files):", canShareFiles);
 
-      if (canShareFiles) {
-        push("share path:", "navigator.share(files)");
-        await navigator.share({
-          files: [preGeneratedImage],
-          title: "My Whisky Profile",
-          text: getShareText(),
-        });
-        push("result:", "success");
-      } else {
+      if (!canShareFiles) {
         push("result:", "canShare returned false");
         toast.error("Your browser doesn't support sharing images.");
+        return;
       }
+
+      push("share path:", "navigator.share(files)");
+      await navigator.share({
+        files: [preGeneratedImage],
+        title: "My Whisky Profile",
+        text: getShareText(),
+        url: getShareUrl(),
+      });
+      push("result:", "success");
     } catch (error) {
       const err = error as { name?: string; message?: string };
       push("error:", `${err?.name ?? "Error"}: ${err?.message ?? "Unknown"}`);
-      if (err?.name !== "AbortError") {
-        toast.error("Share failed. Try saving the image instead.");
+
+      // AbortError is what browsers throw when the user closes the share sheet.
+      if (err?.name === "AbortError") {
+        toast.info("Share sheet was closed.");
+        return;
       }
+
+      toast.error("Share failed. Try 'Share link' or save the image.");
+    }
+  };
+
+  // Link-only share (more compatible than file share in some in-app browsers)
+  const handleShareLink = async () => {
+    const debug: string[] = [];
+    const push = (label: string, value: unknown) => {
+      debug.push(`${label} ${String(value)}`);
+      setShareDebug(debug.join("\n"));
+    };
+
+    push("embedded:", isEmbedded);
+    push("supportsNativeShare:", supportsNativeShare);
+
+    try {
+      push("share path:", "navigator.share(text/url)");
+      await navigator.share({
+        title: "My Whisky Profile",
+        text: getShareText(),
+        url: getShareUrl(),
+      });
+      push("result:", "success");
+    } catch (error) {
+      const err = error as { name?: string; message?: string };
+      push("error:", `${err?.name ?? "Error"}: ${err?.message ?? "Unknown"}`);
+      if (err?.name === "AbortError") {
+        toast.info("Share sheet was closed.");
+        return;
+      }
+      toast.error("Share failed. Try copying the link instead.");
     }
   };
 
@@ -519,13 +556,21 @@ const ShareProfileButton = ({ flavorProfile, username }: ShareProfileButtonProps
 
             {/* Share with Image Button (native share) */}
             {supportsFileShare && (
-              <Button 
-                onClick={handleShareWithImage} 
-                className="w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+              <Button
+                onClick={handleShareWithImage}
+                className="w-full gap-2"
                 disabled={isGeneratingImage || !preGeneratedImage}
               >
                 <Share2 className="h-4 w-4" />
                 {isGeneratingImage ? "Preparing..." : "Share with Image"}
+              </Button>
+            )}
+
+            {/* Share Link (fallback when file share is blocked) */}
+            {supportsNativeShare && (
+              <Button variant="outline" onClick={handleShareLink} className="w-full gap-2">
+                <Share2 className="h-4 w-4" />
+                Share link
               </Button>
             )}
 
