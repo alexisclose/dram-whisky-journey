@@ -48,7 +48,7 @@ const WhiskyProfileTeaser = ({ flavorProfile, tastingsCount }: WhiskyProfileTeas
   const insight = getInsight(flavorProfile);
 
   return (
-    <Link to="/whisky-profile" className="block">
+    <Link to="/profile" className="block">
       <Card className="bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border-primary/20 hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 cursor-pointer group">
         <CardContent className="p-4 sm:p-5">
           <div className="flex items-center justify-between gap-4">
