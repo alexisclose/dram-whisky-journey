@@ -32,6 +32,7 @@ import Profile from "./pages/Profile";
 import WhiskyInfo from "./pages/WhiskyInfo";
 import MediaLibrary from "./pages/admin/MediaLibrary";
 import SetEntry from "./pages/SetEntry";
+import WhiskyProfile from "./pages/WhiskyProfile";
 import Welcome from "./pages/Welcome";
 import { ActiveSetProvider } from "./context/ActiveSetContext";
 
@@ -77,6 +78,7 @@ const App = () => (
                     <Route path="/user/:userId" element={<UserProfile />} />
                     {/* MVP Hidden: <Route path="/discover" element={<Discover />} /> */}
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/whisky-profile" element={<WhiskyProfile />} />
                     <Route path="/activate" element={<Activate />} />
                     {/* MVP Hidden: <Route path="/quiz" element={<Quiz />} /> */}
                     <Route path="/certificate" element={<Certificate />} />
