@@ -65,8 +65,15 @@ export const ActiveSetProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (!error && data && data.length > 0) {
         setAllSets(data);
         localStorage.setItem(LS_ALL_SETS_KEY, JSON.stringify(data));
-        // Set most recently activated as the current active set
-        setActiveSet(data[0].set_code);
+        
+        // Only set active set if there's no valid selection in localStorage
+        const storedActiveSet = localStorage.getItem(LS_KEY);
+        const isStoredSetValid = storedActiveSet && data.some(s => s.set_code === storedActiveSet);
+        
+        if (!isStoredSetValid) {
+          // No valid stored selection, use most recently activated
+          setActiveSet(data[0].set_code);
+        }
       }
       setLoading(false);
     };
