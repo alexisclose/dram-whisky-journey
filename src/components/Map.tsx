@@ -310,16 +310,25 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
         markerEl.style.marginTop = '0px';
       });
       
+      const popup = new mapboxgl.Popup({ offset: 15 })
+        .setHTML(`
+          <div style="padding: 8px; font-size: 14px;">
+            <strong>${whisky.distillery}</strong><br>
+            <em>${whisky.name}</em><br>
+            <small style="color: #666;">${whisky.region || whisky.location || 'Unknown'}</small>
+            <div style="margin-top: 8px;">
+              <a href="/whisky-dossier/${whisky.id}" 
+                 style="color: hsl(var(--primary)); text-decoration: none; font-weight: 500; font-size: 12px;"
+                 class="whisky-dossier-link">
+                View Dossier →
+              </a>
+            </div>
+          </div>
+        `);
+      
       const marker = new mapboxgl.Marker(markerEl)
         .setLngLat(coordinates)
-        .setPopup(new mapboxgl.Popup({ offset: 15 })
-          .setHTML(`
-            <div style="padding: 8px; font-size: 14px;">
-              <strong>${whisky.distillery}</strong><br>
-              <em>${whisky.name}</em><br>
-              <small style="color: #666;">${whisky.region || whisky.location || 'Unknown'}</small>
-            </div>
-          `))
+        .setPopup(popup)
         .addTo(mapRef.current);
         
       markersRef.current.push(marker);
