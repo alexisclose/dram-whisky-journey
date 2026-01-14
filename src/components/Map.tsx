@@ -281,33 +281,40 @@ const Map: React.FC<MapProps> = ({ whiskies = [] }) => {
         coordinates = LOCATION_COORDINATES[region] || LOCATION_COORDINATES[location] || LOCATION_COORDINATES["World"];
       }
       
-      // Create custom marker element
+      // Create custom marker element with larger hitbox for easier clicking
       const markerEl = document.createElement('div');
       markerEl.className = 'whisky-marker';
       markerEl.style.cssText = `
-        width: 12px;
-        height: 12px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      `;
+      
+      // Inner visible dot
+      const innerDot = document.createElement('div');
+      innerDot.style.cssText = `
+        width: 14px;
+        height: 14px;
         background: hsl(var(--primary));
         border: 2px solid white;
         border-radius: 50%;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        cursor: pointer;
         transition: all 0.2s ease;
-        transform-origin: center center;
+        pointer-events: none;
       `;
+      markerEl.appendChild(innerDot);
       
       markerEl.addEventListener('mouseenter', () => {
-        markerEl.style.width = '14px';
-        markerEl.style.height = '14px';
-        markerEl.style.marginLeft = '-1px';
-        markerEl.style.marginTop = '-1px';
+        innerDot.style.width = '18px';
+        innerDot.style.height = '18px';
       });
       
       markerEl.addEventListener('mouseleave', () => {
-        markerEl.style.width = '12px';
-        markerEl.style.height = '12px';
-        markerEl.style.marginLeft = '0px';
-        markerEl.style.marginTop = '0px';
+        innerDot.style.width = '14px';
+        innerDot.style.height = '14px';
       });
       
       const popup = new mapboxgl.Popup({ offset: 15 })
