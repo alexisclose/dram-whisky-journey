@@ -90,14 +90,9 @@ const MySets = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {whiskyCounts?.[set.set_code] || 0} whiskies
-                    </span>
-                    <Badge variant="secondary" className="text-xs">
-                      {new Date(set.activated_at).toLocaleDateString()}
-                    </Badge>
-                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {whiskyCounts?.[set.set_code] || 0} whiskies
+                  </span>
                 </CardContent>
               </Card>
             ))}
