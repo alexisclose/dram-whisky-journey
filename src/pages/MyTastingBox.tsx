@@ -234,14 +234,10 @@ const MyTastingBox = () => {
           <section className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
             {whiskies?.map((w, index) => <Fragment key={w.id}>
                 <Link to={`/whisky-dossier/${w.id}`} className="block">
-                  <Card className="relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-                    {ratings[w.id] && <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        Tasted
-                      </div>}
+                  <Card className={`relative overflow-hidden hover:shadow-lg transition-all cursor-pointer ${ratings[w.id] ? 'ring-2 ring-primary/40' : ''}`}>
                     <div className="flex">
                       {/* Square whisky image */}
-                      <div className="w-40 h-40 sm:w-48 sm:h-48 flex-shrink-0 bg-muted">
+                      <div className="w-40 h-40 sm:w-48 sm:h-48 flex-shrink-0 bg-muted relative">
                         {w.image_url ? (
                           <img 
                             src={w.image_url} 
@@ -253,6 +249,11 @@ const MyTastingBox = () => {
                             <span className="text-4xl">🥃</span>
                           </div>
                         )}
+                        {ratings[w.id] && (
+                          <div className="absolute bottom-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5">
+                            <CheckCircle className="h-4 w-4" />
+                          </div>
+                        )}
                       </div>
                       
                       {/* Text and rating on the right */}
@@ -262,12 +263,12 @@ const MyTastingBox = () => {
                           <p className="text-sm text-muted-foreground mt-2">{w.region || ""}</p>
                         </div>
                         
-                        <div className="flex items-center gap-1.5 mt-3" onClick={(e) => e.preventDefault()}>
+                        <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
                           {[1, 2, 3, 4, 5].map(n => (
                             <button 
                               key={n} 
                               aria-label={`Rate ${n} star`} 
-                              className={`p-1 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"}`} 
+                              className={`p-0.5 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground/50"}`} 
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -281,7 +282,7 @@ const MyTastingBox = () => {
                                 });
                               }}
                             >
-                              <Star className="h-6 w-6" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />
+                              <Star className="h-5 w-5" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />
                             </button>
                           ))}
                         </div>
