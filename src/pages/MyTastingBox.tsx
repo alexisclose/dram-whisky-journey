@@ -258,7 +258,7 @@ const MyTastingBox = () => {
                       {/* Text and rating on the right */}
                       <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
                         <div>
-                          <h3 className="font-semibold text-base sm:text-lg leading-tight">{w.distillery} — {w.name}</h3>
+                          <h3 className="font-semibold text-lg sm:text-xl leading-tight">{w.name}</h3>
                           <p className="text-sm text-muted-foreground mt-2">{w.region || ""}</p>
                         </div>
                         
