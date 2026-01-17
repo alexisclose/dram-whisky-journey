@@ -20,6 +20,7 @@ type WhiskyRow = {
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  image_url?: string | null;
   set_code?: string;
 };
 interface FlavorProfile {
@@ -58,19 +59,19 @@ const MyTastingBox = () => {
     queryFn: async () => {
       if (!activeSet) return [];
 
-      // Query whiskies for the SELECTED set only
-      const {
-        data,
-        error
-      } = await supabase.from("whisky_sets").select(`
-          display_order,
-          set_code,
-          whiskies (
-            id, distillery, name, region, location, latitude, longitude
-          )
-        `).eq("set_code", activeSet).order("display_order", {
-        ascending: true
-      });
+          // Query whiskies for the SELECTED set only
+          const {
+            data,
+            error
+          } = await supabase.from("whisky_sets").select(`
+              display_order,
+              set_code,
+              whiskies (
+                id, distillery, name, region, location, latitude, longitude, image_url
+              )
+            `).eq("set_code", activeSet).order("display_order", {
+            ascending: true
+          });
       if (error) throw error;
       return (data || []).filter(row => row.whiskies).map(row => ({
         ...(row.whiskies as any),
@@ -232,40 +233,62 @@ const MyTastingBox = () => {
 
           <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {whiskies?.map((w, index) => <Fragment key={w.id}>
-                <Card className="relative">
-                  {ratings[w.id] && <div className="absolute top-3 right-3 flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      Tasted
-                    </div>}
-                  <CardHeader className="pr-24">
-                    <CardTitle className="flex flex-col gap-1">
-                      <span>{w.distillery} — {w.name}</span>
-                      <span className="text-sm font-normal text-muted-foreground">{w.region || ""}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  
-                  <CardFooter className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map(n => <button key={n} aria-label={`Rate ${n} star`} className={`p-1 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"}`} onClick={() => {
-                if (!user) {
-                  toast.info("Log in to save your rating");
-                  return;
-                }
-                saveRating.mutate({
-                  whiskyId: w.id,
-                  n
-                });
-              }}>
-                          <Star className="h-5 w-5" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />
-                        </button>)}
+                <Link to={`/whisky-dossier/${w.id}`} className="block">
+                  <Card className="relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                    {ratings[w.id] && <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs font-medium">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Tasted
+                      </div>}
+                    <div className="flex">
+                      {/* Square whisky image */}
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 bg-muted">
+                        {w.image_url ? (
+                          <img 
+                            src={w.image_url} 
+                            alt={`${w.distillery} ${w.name}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <span className="text-2xl">🥃</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Text and rating on the right */}
+                      <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between">
+                        <div>
+                          <h3 className="font-semibold text-sm sm:text-base leading-tight">{w.distillery} — {w.name}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">{w.region || ""}</p>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 mt-2" onClick={(e) => e.preventDefault()}>
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <button 
+                              key={n} 
+                              aria-label={`Rate ${n} star`} 
+                              className={`p-0.5 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"}`} 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (!user) {
+                                  toast.info("Log in to save your rating");
+                                  return;
+                                }
+                                saveRating.mutate({
+                                  whiskyId: w.id,
+                                  n
+                                });
+                              }}
+                            >
+                              <Star className="h-4 w-4 sm:h-5 sm:w-5" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={`/whisky-dossier/${w.id}`} aria-label={`Open dossier for ${w.distillery} ${w.name}`}>
-                        Open Dossier
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                  </Card>
+                </Link>
                 
                 {/* Profile teaser appears after 1st whisky */}
                 {index === 0 && user && <div className="col-span-1 sm:col-span-2 lg:col-span-3">
