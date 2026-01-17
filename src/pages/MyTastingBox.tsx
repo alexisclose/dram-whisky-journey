@@ -231,7 +231,7 @@ const MyTastingBox = () => {
             <WhiskyMap whiskies={whiskies || []} />
           </div>
 
-          <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <section className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
             {whiskies?.map((w, index) => <Fragment key={w.id}>
                 <Link to={`/whisky-dossier/${w.id}`} className="block">
                   <Card className="relative overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
@@ -241,7 +241,7 @@ const MyTastingBox = () => {
                       </div>}
                     <div className="flex">
                       {/* Square whisky image */}
-                      <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 bg-muted">
+                      <div className="w-40 h-40 sm:w-48 sm:h-48 flex-shrink-0 bg-muted">
                         {w.image_url ? (
                           <img 
                             src={w.image_url} 
@@ -250,24 +250,24 @@ const MyTastingBox = () => {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                            <span className="text-2xl">🥃</span>
+                            <span className="text-4xl">🥃</span>
                           </div>
                         )}
                       </div>
                       
                       {/* Text and rating on the right */}
-                      <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between">
+                      <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
                         <div>
-                          <h3 className="font-semibold text-sm sm:text-base leading-tight">{w.distillery} — {w.name}</h3>
-                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">{w.region || ""}</p>
+                          <h3 className="font-semibold text-base sm:text-lg leading-tight">{w.distillery} — {w.name}</h3>
+                          <p className="text-sm text-muted-foreground mt-2">{w.region || ""}</p>
                         </div>
                         
-                        <div className="flex items-center gap-1 mt-2" onClick={(e) => e.preventDefault()}>
+                        <div className="flex items-center gap-1.5 mt-3" onClick={(e) => e.preventDefault()}>
                           {[1, 2, 3, 4, 5].map(n => (
                             <button 
                               key={n} 
                               aria-label={`Rate ${n} star`} 
-                              className={`p-0.5 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"}`} 
+                              className={`p-1 rounded ${ratings[w.id] && ratings[w.id] >= n ? "text-primary" : "text-muted-foreground"}`} 
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -281,7 +281,7 @@ const MyTastingBox = () => {
                                 });
                               }}
                             >
-                              <Star className="h-4 w-4 sm:h-5 sm:w-5" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />
+                              <Star className="h-6 w-6" fill={ratings[w.id] && ratings[w.id] >= n ? "currentColor" : "none"} />
                             </button>
                           ))}
                         </div>
@@ -291,7 +291,7 @@ const MyTastingBox = () => {
                 </Link>
                 
                 {/* Profile teaser appears after 1st whisky */}
-                {index === 0 && user && <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                {index === 0 && user && <div className="col-span-1 lg:col-span-2">
                     <WhiskyProfileTeaser flavorProfile={flavorProfile} tastingsCount={tastingsCount} />
                   </div>}
               </Fragment>)}
