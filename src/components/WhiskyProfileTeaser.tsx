@@ -24,19 +24,58 @@ const getTopFlavors = (profile: FlavorProfile): string[] => {
 };
 
 const getInsight = (profile: FlavorProfile): string => {
-  const topFlavors = getTopFlavors(profile);
-  const descriptors: Record<string, string> = {
-    Fruit: "fruity",
-    Floral: "delicate",
-    Oak: "rich",
-    Smoke: "bold",
-    Spice: "complex"
-  };
-
-  const flavor1 = descriptors[topFlavors[0]] || topFlavors[0].toLowerCase();
-  const flavor2 = descriptors[topFlavors[1]] || topFlavors[1].toLowerCase();
+  const entries = Object.entries(profile) as [keyof FlavorProfile, number][];
+  const sorted = entries.sort((a, b) => b[1] - a[1]);
   
-  return `You prefer ${flavor1}, ${flavor2} notes`;
+  // Calculate variance to detect balanced profiles
+  const values = entries.map(([, v]) => v);
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+  
+  // If variance is very low, it's a balanced profile
+  if (variance < 1) {
+    return "You prefer well-rounded spirits where no single flavor overpowers the rest.";
+  }
+  
+  const primary = sorted[0][0].charAt(0).toUpperCase() + sorted[0][0].slice(1);
+  const secondary = sorted[1][0].charAt(0).toUpperCase() + sorted[1][0].slice(1);
+  const primaryValue = sorted[0][1];
+  const secondaryValue = sorted[1][1];
+  
+  // Pure profile if primary is significantly higher (>2 points difference)
+  const isPure = (primaryValue - secondaryValue) > 2;
+  
+  // Text mappings
+  const pureTexts: Record<string, string> = {
+    Smoke: "You prefer uncompromising powerhouses of iodine, ash, and maritime salt.",
+    Fruit: "You prefer vibrant explosions of fresh pears, citrus, and sweet confectionary.",
+    Oak: "You prefer dry, dignified spirits focused on vanilla and toasted coconut.",
+    Floral: "You prefer crisp, clean spirits reminiscent of hay, honeysuckle, and fresh linen.",
+    Spice: "You prefer sharp, invigorating profiles defined by black pepper and a long finish."
+  };
+  
+  const comboTexts: Record<string, string> = {
+    "Smoke+Fruit": "You prefer sweet and savory profiles where rich smoke is softened by fruit.",
+    "Smoke+Oak": "You prefer intense whiskies with heavy char and a robust, earthy backbone.",
+    "Smoke+Spice": "You prefer punchy, warming drams mixing peat with a sharp, peppery finish.",
+    "Smoke+Floral": "You prefer delicate contrasts where light heather notes float over a campfire base.",
+    "Fruit+Oak": "You prefer classic profiles balancing juicy sweetness with deep vanilla wood.",
+    "Fruit+Floral": "You prefer bright, summery whiskies bursting with blossoms and green apples.",
+    "Fruit+Spice": "You prefer rich, dessert-like whiskies mixing dried fruits with cinnamon.",
+    "Oak+Spice": "You prefer structured profiles with dry tannins, dark chocolate, and winter spices.",
+    "Oak+Floral": "You prefer sophisticated whiskies where old wood grounds lighter, fragrant aromas.",
+    "Floral+Spice": "You prefer aromatic whiskies where herbal notes meet zesty ginger heat."
+  };
+  
+  if (isPure) {
+    return pureTexts[primary] || `You prefer ${primary.toLowerCase()}-forward whiskies.`;
+  }
+  
+  // Try both orderings for combo lookup
+  const key1 = `${primary}+${secondary}`;
+  const key2 = `${secondary}+${primary}`;
+  
+  return comboTexts[key1] || comboTexts[key2] || `You prefer ${primary.toLowerCase()} and ${secondary.toLowerCase()} notes.`;
 };
 
 const WhiskyProfileTeaser = ({ flavorProfile, tastingsCount }: WhiskyProfileTeaserProps) => {
