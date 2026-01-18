@@ -23,27 +23,33 @@ const getTopFlavors = (profile: FlavorProfile): string[] => {
     .map(([flavor]) => flavor.charAt(0).toUpperCase() + flavor.slice(1));
 };
 
+// Tie-breaker priority: Smoke > Spice > Fruit > Oak > Floral
+const TRAIT_PRIORITY: Record<string, number> = {
+  smoke: 1,
+  spice: 2,
+  fruit: 3,
+  oak: 4,
+  floral: 5
+};
+
 const getInsight = (profile: FlavorProfile): string => {
   const entries = Object.entries(profile) as [keyof FlavorProfile, number][];
-  const sorted = entries.sort((a, b) => b[1] - a[1]);
   
-  // Calculate variance to detect balanced profiles
-  const values = entries.map(([, v]) => v);
-  const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+  // Sort by value descending, then by priority ascending for ties
+  const sorted = entries.sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    return TRAIT_PRIORITY[a[0]] - TRAIT_PRIORITY[b[0]];
+  });
   
-  // If variance is very low, it's a balanced profile
-  if (variance < 1) {
-    return "You prefer well-rounded spirits where no single flavor overpowers the rest.";
-  }
+  const maxValue = sorted[0][1];
+  const secondMaxValue = sorted[1][1];
+  const minValue = sorted[sorted.length - 1][1];
+  
+  const spread = maxValue - minValue;
+  const gap = maxValue - secondMaxValue;
   
   const primary = sorted[0][0].charAt(0).toUpperCase() + sorted[0][0].slice(1);
   const secondary = sorted[1][0].charAt(0).toUpperCase() + sorted[1][0].slice(1);
-  const primaryValue = sorted[0][1];
-  const secondaryValue = sorted[1][1];
-  
-  // Pure profile if primary is significantly higher (>2 points difference)
-  const isPure = (primaryValue - secondaryValue) > 2;
   
   // Text mappings
   const pureTexts: Record<string, string> = {
@@ -67,11 +73,17 @@ const getInsight = (profile: FlavorProfile): string => {
     "Floral+Spice": "You prefer aromatic whiskies where herbal notes meet zesty ginger heat."
   };
   
-  if (isPure) {
+  // 1. Check Balanced: Spread < 1.5
+  if (spread < 1.5) {
+    return "You prefer well-rounded spirits where no single flavor overpowers the rest.";
+  }
+  
+  // 2. Check Pure: Gap > 2.0
+  if (gap > 2.0) {
     return pureTexts[primary] || `You prefer ${primary.toLowerCase()}-forward whiskies.`;
   }
   
-  // Try both orderings for combo lookup
+  // 3. Default (Dual): Primary + Secondary combination
   const key1 = `${primary}+${secondary}`;
   const key2 = `${secondary}+${primary}`;
   
