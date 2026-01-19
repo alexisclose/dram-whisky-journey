@@ -228,34 +228,37 @@ export type Database = {
         Row: {
           created_at: string
           flavors: string[]
+          guest_session_id: string | null
           id: string
           intensity_ratings: Json | null
           note: string | null
           rating: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           whisky_id: string
         }
         Insert: {
           created_at?: string
           flavors?: string[]
+          guest_session_id?: string | null
           id?: string
           intensity_ratings?: Json | null
           note?: string | null
           rating?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           whisky_id: string
         }
         Update: {
           created_at?: string
           flavors?: string[]
+          guest_session_id?: string | null
           id?: string
           intensity_ratings?: Json | null
           note?: string | null
           rating?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           whisky_id?: string
         }
         Relationships: [
@@ -623,6 +626,10 @@ export type Database = {
         Returns: string
       }
       is_admin: { Args: never; Returns: boolean }
+      migrate_guest_data: {
+        Args: { guest_id: string; new_user_id: string }
+        Returns: number
+      }
       validate_activation_code: {
         Args: { _code: string }
         Returns: {
