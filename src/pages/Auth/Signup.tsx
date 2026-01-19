@@ -6,10 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useGuestDataMigration } from "@/hooks/useGuestDataMigration";
+import { GUEST_SESSION_KEY } from "@/hooks/useGuestSession";
 
 const countries = [
   "Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
@@ -27,6 +29,7 @@ const countries = [
 const Signup = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/signup` : "/signup";
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -40,11 +43,23 @@ const Signup = () => {
     agreedToPrivacy: false
   });
   const { user } = useAuthSession();
+  const { migrateGuestData } = useGuestDataMigration();
 
-  if (user) {
-    // Already logged in, send to dashboard
-    navigate("/dashboard");
-  }
+  // Check if there's guest data to migrate
+  const hasGuestData = typeof window !== "undefined" && !!localStorage.getItem(GUEST_SESSION_KEY);
+
+  // Handle user becoming authenticated (including OAuth redirects)
+  useEffect(() => {
+    const handleAuth = async () => {
+      if (user) {
+        // Migrate guest data if any exists
+        await migrateGuestData(user.id);
+        // Navigate to their tasting box
+        navigate("/my-tasting-box", { replace: true });
+      }
+    };
+    handleAuth();
+  }, [user, migrateGuestData, navigate]);
 
   const handleOAuthSignup = async (provider: 'google' | 'facebook') => {
     setOauthLoading(provider);
@@ -127,9 +142,11 @@ const Signup = () => {
         return;
       }
       
-      if (data.session) {
+      if (data.session && data.user) {
+        // Migrate guest data immediately
+        await migrateGuestData(data.user.id);
         toast.success("Account created! You're logged in.");
-        navigate("/dashboard");
+        navigate("/my-tasting-box", { replace: true });
       } else {
         toast.info("Account created. Check your email to confirm your address.");
         navigate("/login");
@@ -150,7 +167,14 @@ const Signup = () => {
       </Helmet>
 
       <div className="max-w-md mx-auto">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-center">Create your account</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-center">Create your account</h1>
+        
+        {/* Show message if user has guest data */}
+        {hasGuestData && (
+          <p className="text-center text-sm text-primary mb-6">
+            ✨ Your tasting notes will be saved when you sign up!
+          </p>
+        )}
 
         {/* OAuth Buttons */}
         <div className="space-y-3 mb-6">
@@ -326,7 +350,7 @@ const Signup = () => {
           </div>
 
           <Button type="submit" variant="brand" size="lg" className="w-full min-h-[44px]" disabled={loading}>
-            {loading ? "Creating account..." : "Create Account"}
+            {loading ? "Creating account..." : hasGuestData ? "Create Account & Save Tastings" : "Create Account"}
           </Button>
         </form>
 
