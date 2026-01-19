@@ -109,7 +109,7 @@ const WhiskyProfileTeaser = ({ flavorProfile, tastingsCount }: WhiskyProfileTeas
                 <span className="text-xs font-medium text-primary uppercase tracking-wide">Your Profile So Far</span>
               </div>
               
-              <p className="text-sm sm:text-base font-medium text-foreground mb-2 truncate">
+              <p className="text-sm sm:text-base font-medium text-foreground mb-2 leading-relaxed">
                 {insight}
               </p>
               
