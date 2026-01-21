@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 const SetEntry = () => {
   const { setCode } = useParams<{ setCode: string }>();
   const navigate = useNavigate();
-  const { setActiveSet } = useActiveSet();
+  const { addSet } = useActiveSet();
   const [status, setStatus] = useState<"loading" | "error" | "success">("loading");
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const SetEntry = () => {
 
       if (activationData && activationData.length > 0 && activationData[0].valid) {
         // Valid activation code - use the associated set_code
-        setActiveSet(activationData[0].set_code);
+        addSet(activationData[0].set_code);
         setStatus("success");
         setTimeout(() => navigate("/welcome", { replace: true }), 500);
         return;
@@ -39,7 +39,7 @@ const SetEntry = () => {
 
       if (setData && setData.length > 0) {
         // Valid set_code - activate directly
-        setActiveSet(setData[0].set_code);
+        addSet(setData[0].set_code);
         setStatus("success");
         setTimeout(() => navigate("/welcome", { replace: true }), 500);
         return;
@@ -50,7 +50,7 @@ const SetEntry = () => {
     };
 
     validateAndActivate();
-  }, [setCode, setActiveSet, navigate]);
+  }, [setCode, addSet, navigate]);
 
   if (status === "loading") {
     return (
