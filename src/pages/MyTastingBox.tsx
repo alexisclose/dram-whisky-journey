@@ -3,11 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, CheckCircle, ArrowLeft } from "lucide-react";
-import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import WhiskyMap from "@/components/Map";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getGuestClient } from "@/integrations/supabase/guestClient";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useGuestSession } from "@/hooks/useGuestSession";
 import { toast } from "sonner";
@@ -54,11 +55,7 @@ const MyTastingBox = () => {
   const isAuthenticated = !!user;
   const effectiveId = isAuthenticated ? user.id : guestSessionId;
   const isGuest = !isAuthenticated;
-
-  // If no sets, redirect to MySets page
-  if (allSets.length === 0) {
-    return <Navigate to="/my-sets" replace />;
-  }
+  const noSets = allSets.length === 0;
 
   const { data: whiskies } = useQuery({
     queryKey: ["db-whiskies-set", activeSet],
@@ -109,15 +106,15 @@ const MyTastingBox = () => {
     enabled: !!user && whiskyIds.length > 0
   });
 
-  // Fetch ratings for guest users (using custom header for RLS)
+  // Fetch ratings for guest users (using guest client with proper header for RLS)
   const { data: guestRatings } = useQuery({
     queryKey: ["guest-ratings", guestSessionId, whiskyIds.join(",")],
     queryFn: async () => {
       if (!guestSessionId || whiskyIds.length === 0) return {} as Record<string, number>;
       
-      // For guests, we need to fetch via a custom approach since RLS uses headers
-      // We'll query directly with the guest session filter
-      const { data, error } = await supabase
+      // Use guest client with x-guest-session-id header for RLS
+      const guestClient = getGuestClient(guestSessionId);
+      const { data, error } = await guestClient
         .from("tasting_notes")
         .select("whisky_id, rating")
         .eq("guest_session_id", guestSessionId)
@@ -149,12 +146,13 @@ const MyTastingBox = () => {
     enabled: !!user
   });
 
-  // Fetch tasting notes for guests
+  // Fetch tasting notes for guests (using guest client with proper header)
   const { data: guestTastingNotes } = useQuery({
     queryKey: ["guest-tasting-notes-profile", guestSessionId],
     queryFn: async () => {
       if (!guestSessionId) return [] as TastingNote[];
-      const { data, error } = await supabase
+      const guestClient = getGuestClient(guestSessionId);
+      const { data, error } = await guestClient
         .from("tasting_notes")
         .select("id, rating, intensity_ratings, whisky_id")
         .eq("guest_session_id", guestSessionId);
@@ -243,10 +241,11 @@ const MyTastingBox = () => {
           if (error) throw error;
         }
       } else {
-        // Guest user flow - create/get guest session ID
+        // Guest user flow - create/get guest session ID and use guest client
         const sessionId = getOrCreateGuestSessionId();
+        const guestClient = getGuestClient(sessionId);
 
-        const { data: existing, error: selErr } = await supabase
+        const { data: existing, error: selErr } = await guestClient
           .from("tasting_notes")
           .select("id")
           .eq("guest_session_id", sessionId)
@@ -256,13 +255,13 @@ const MyTastingBox = () => {
         if (selErr) throw selErr;
 
         if (existing) {
-          const { error } = await supabase
+          const { error } = await guestClient
             .from("tasting_notes")
             .update({ rating: n })
             .eq("id", existing.id);
           if (error) throw error;
         } else {
-          const { error } = await supabase
+          const { error } = await guestClient
             .from("tasting_notes")
             .insert({
               guest_session_id: sessionId,
@@ -310,6 +309,11 @@ const MyTastingBox = () => {
   const guestRatingsCount = useMemo(() => {
     return Object.keys(ratings).length;
   }, [ratings]);
+
+  // If no sets, redirect to MySets page - must be after all hooks
+  if (noSets) {
+    return <Navigate to="/my-sets" replace />;
+  }
 
   return (
     <main className={`container mx-auto px-4 sm:px-6 py-8 sm:py-10 ${isGuest ? 'pb-24' : ''}`}>
