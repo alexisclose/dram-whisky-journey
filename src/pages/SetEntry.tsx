@@ -18,23 +18,35 @@ const SetEntry = () => {
         return;
       }
 
-      // Use the public RPC function to validate the code
-      const { data, error } = await supabase
+      // First, try to validate as an activation code
+      const { data: activationData } = await supabase
         .rpc("validate_activation_code", { _code: setCode });
 
-      if (error || !data || data.length === 0 || !data[0].valid) {
-        setStatus("error");
+      if (activationData && activationData.length > 0 && activationData[0].valid) {
+        // Valid activation code - use the associated set_code
+        setActiveSet(activationData[0].set_code);
+        setStatus("success");
+        setTimeout(() => navigate("/welcome", { replace: true }), 500);
         return;
       }
 
-      // Valid code - store the associated set_code and redirect to welcome
-      setActiveSet(data[0].set_code);
-      setStatus("success");
-      
-      // Brief delay to show success, then redirect
-      setTimeout(() => {
-        navigate("/welcome", { replace: true });
-      }, 500);
+      // Fallback: Check if the code is a valid set_code directly (from whisky_sets)
+      const { data: setData } = await supabase
+        .from("whisky_sets")
+        .select("set_code")
+        .eq("set_code", setCode.toLowerCase())
+        .limit(1);
+
+      if (setData && setData.length > 0) {
+        // Valid set_code - activate directly
+        setActiveSet(setData[0].set_code);
+        setStatus("success");
+        setTimeout(() => navigate("/welcome", { replace: true }), 500);
+        return;
+      }
+
+      // Neither activation code nor set_code found
+      setStatus("error");
     };
 
     validateAndActivate();
