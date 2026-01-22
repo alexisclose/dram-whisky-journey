@@ -13,7 +13,9 @@ import { Slider } from "@/components/ui/slider";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Star, ArrowLeft, Heart, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getGuestClient } from "@/integrations/supabase/guestClient";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useGuestSession } from "@/hooks/useGuestSession";
 import { toast } from "sonner";
 import { AdminImageOverlay } from "@/components/AdminImageOverlay";
 import { TastingFlowExperience } from "@/components/TastingFlowExperience";
@@ -74,7 +76,9 @@ const WhiskyDossier = () => {
   const whiskyId = (id as string) || "";
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting/${whiskyId}` : `/tasting/${whiskyId}`;
   const { user, loading: authLoading } = useAuthSession();
+  const { guestSessionId, getOrCreateGuestSessionId } = useGuestSession(!!user);
   const queryClient = useQueryClient();
+  const isGuest = !user;
 
   // State to force showing regular dossier after completing tasting flow
   const [showFullDossier, setShowFullDossier] = useState(false);
@@ -183,19 +187,33 @@ const WhiskyDossier = () => {
 
   // Load existing user note (only for regular whiskies, not user-submitted ones)
   const { data: existingNote } = useQuery({
-    queryKey: ["user-note", dbWhisky?.id, user?.id],
+    queryKey: ["user-note", dbWhisky?.id, user?.id ?? null, guestSessionId ?? null],
     queryFn: async () => {
-      if (!dbWhisky?.id || !user || dbWhisky.is_user_submitted) return null;
-      const { data, error } = await supabase
+      if (!dbWhisky?.id || dbWhisky.is_user_submitted) return null;
+
+      if (user) {
+        const { data, error } = await supabase
+          .from("tasting_notes")
+          .select("*")
+          .eq("whisky_id", dbWhisky.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (error) throw error;
+        return data;
+      }
+
+      if (!guestSessionId) return null;
+      const guestClient = getGuestClient(guestSessionId);
+      const { data, error } = await guestClient
         .from("tasting_notes")
         .select("*")
         .eq("whisky_id", dbWhisky.id)
-        .eq("user_id", user.id)
+        .eq("guest_session_id", guestSessionId)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
-    enabled: !!dbWhisky?.id && !!user && !dbWhisky?.is_user_submitted,
+    enabled: !!dbWhisky?.id && !dbWhisky?.is_user_submitted && (!!user || !!guestSessionId),
   });
 
   // Load community flavor distribution
@@ -470,10 +488,40 @@ const WhiskyDossier = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!user || !dbWhisky?.id) throw new Error("Missing required data");
-      
+      if (!dbWhisky?.id) throw new Error("Missing required data");
+
+      // Authenticated
+      if (user) {
+        const noteData = {
+          user_id: user.id,
+          whisky_id: dbWhisky.id,
+          rating,
+          note: notes || null,
+          flavors: selectedFlavors,
+          intensity_ratings: intensityRatings,
+        };
+
+        if (existingNote) {
+          const { error } = await supabase
+            .from("tasting_notes")
+            .update(noteData)
+            .eq("id", existingNote.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("tasting_notes")
+            .insert(noteData);
+          if (error) throw error;
+        }
+        return;
+      }
+
+      // Guest
+      const sessionId = getOrCreateGuestSessionId();
+      const guestClient = getGuestClient(sessionId);
       const noteData = {
-        user_id: user.id,
+        user_id: null,
+        guest_session_id: sessionId,
         whisky_id: dbWhisky.id,
         rating,
         note: notes || null,
@@ -482,13 +530,13 @@ const WhiskyDossier = () => {
       };
 
       if (existingNote) {
-        const { error } = await supabase
+        const { error } = await guestClient
           .from("tasting_notes")
           .update(noteData)
           .eq("id", existingNote.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await guestClient
           .from("tasting_notes")
           .insert(noteData);
         if (error) throw error;
@@ -509,7 +557,19 @@ const WhiskyDossier = () => {
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!existingNote?.id) throw new Error("No note to delete");
-      const { error } = await supabase
+
+      if (user) {
+        const { error } = await supabase
+          .from("tasting_notes")
+          .delete()
+          .eq("id", existingNote.id);
+        if (error) throw error;
+        return;
+      }
+
+      const sessionId = guestSessionId || getOrCreateGuestSessionId();
+      const guestClient = getGuestClient(sessionId);
+      const { error } = await guestClient
         .from("tasting_notes")
         .delete()
         .eq("id", existingNote.id);
@@ -833,7 +893,6 @@ const WhiskyDossier = () => {
           <Button 
             size="lg" 
             className="w-full md:w-auto rounded-2xl px-6 py-4 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl border border-white/20 backdrop-blur-sm"
-            disabled={!user}
             onClick={() => {
               // Scroll to review section
               const reviewSection = document.getElementById('review-section');
@@ -842,7 +901,7 @@ const WhiskyDossier = () => {
               }
             }}
           >
-            {user ? 'Leave a review' : 'Log in to review'}
+            {user ? 'Leave a review' : 'Leave a note'}
           </Button>
         </div>
       )}
@@ -1094,40 +1153,37 @@ const WhiskyDossier = () => {
                 )}
               </div>
 
-              {/* Mobile-Optimized Save Button */}
-              {user ? (
-                <div className="space-y-3">
+              {/* Mobile-Optimized Save Button (supports guest mode) */}
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => saveMutation.mutate()} 
+                  disabled={saveMutation.isPending} 
+                  className="w-full h-12 text-base font-semibold"
+                  size="lg"
+                >
+                  {saveMutation.isPending ? "Saving..." : existingNote ? "Update note" : "Save note"}
+                </Button>
+                {existingNote && (
                   <Button 
-                    onClick={() => saveMutation.mutate()} 
-                    disabled={saveMutation.isPending} 
-                    className="w-full h-12 text-base font-semibold"
-                    size="lg"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm("Are you sure you want to delete your tasting note?")) {
+                        deleteMutation.mutate();
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
-                    {saveMutation.isPending ? "Saving..." : existingNote ? "Update note" : "Save note"}
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {deleteMutation.isPending ? "Deleting..." : "Delete my note"}
                   </Button>
-                  {existingNote && (
-                    <Button 
-                      variant="ghost"
-                      onClick={() => {
-                        if (confirm("Are you sure you want to delete your tasting note?")) {
-                          deleteMutation.mutate();
-                        }
-                      }}
-                      disabled={deleteMutation.isPending}
-                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {deleteMutation.isPending ? "Deleting..." : "Delete my review"}
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    <Link to="/login" className="underline font-medium">Log in</Link> to save your tasting notes.
+                )}
+                {isGuest && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Saved in Guest Mode. <Link to="/signup" className="underline font-medium">Create an account</Link> to keep it forever.
                   </p>
-                </div>
-              )}
+                )}
+              </div>
             </CardContent>
           </Card>
 
