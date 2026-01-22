@@ -1,24 +1,25 @@
 import { Helmet } from "react-helmet-async";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Star, ArrowLeft, Heart, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getGuestClient } from "@/integrations/supabase/guestClient";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useGuestSession } from "@/hooks/useGuestSession";
+import { useAutoSave } from "@/hooks/useAutoSave";
 import { toast } from "sonner";
 import { AdminImageOverlay } from "@/components/AdminImageOverlay";
 import { TastingFlowExperience } from "@/components/TastingFlowExperience";
+import SaveStatusIndicator from "@/components/SaveStatusIndicator";
+import GuestSaveProgressBanner from "@/components/GuestSaveProgressBanner";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
@@ -216,7 +217,23 @@ const WhiskyDossier = () => {
     enabled: !!dbWhisky?.id && !dbWhisky?.is_user_submitted && (!!user || !!guestSessionId),
   });
 
-  // Load community flavor distribution
+  // Load guest ratings count (for the nudge banner)
+  const { data: guestRatingsCount = 0 } = useQuery({
+    queryKey: ["guest-ratings-count", guestSessionId],
+    queryFn: async () => {
+      if (!guestSessionId) return 0;
+      const guestClient = getGuestClient(guestSessionId);
+      const { count, error } = await guestClient
+        .from("tasting_notes")
+        .select("*", { count: "exact", head: true })
+        .eq("guest_session_id", guestSessionId)
+        .not("rating", "is", null);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: isGuest && !!guestSessionId,
+  });
+
   const { data: communityFlavors } = useQuery({
     queryKey: ["community-flavors", dbWhisky?.id],
     queryFn: async () => {
@@ -486,42 +503,14 @@ const WhiskyDossier = () => {
     }
   }, [existingNote]);
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (!dbWhisky?.id) throw new Error("Missing required data");
+  // Auto-save function
+  const performSave = useCallback(async () => {
+    if (!dbWhisky?.id) return;
 
-      // Authenticated
-      if (user) {
-        const noteData = {
-          user_id: user.id,
-          whisky_id: dbWhisky.id,
-          rating,
-          note: notes || null,
-          flavors: selectedFlavors,
-          intensity_ratings: intensityRatings,
-        };
-
-        if (existingNote) {
-          const { error } = await supabase
-            .from("tasting_notes")
-            .update(noteData)
-            .eq("id", existingNote.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase
-            .from("tasting_notes")
-            .insert(noteData);
-          if (error) throw error;
-        }
-        return;
-      }
-
-      // Guest
-      const sessionId = getOrCreateGuestSessionId();
-      const guestClient = getGuestClient(sessionId);
+    // Authenticated
+    if (user) {
       const noteData = {
-        user_id: null,
-        guest_session_id: sessionId,
+        user_id: user.id,
         whisky_id: dbWhisky.id,
         rating,
         note: notes || null,
@@ -530,29 +519,75 @@ const WhiskyDossier = () => {
       };
 
       if (existingNote) {
-        const { error } = await guestClient
+        const { error } = await supabase
           .from("tasting_notes")
           .update(noteData)
           .eq("id", existingNote.id);
         if (error) throw error;
       } else {
-        const { error } = await guestClient
+        const { error } = await supabase
           .from("tasting_notes")
           .insert(noteData);
         if (error) throw error;
       }
-    },
-    onSuccess: () => {
-      toast.success("Tasting note saved!");
       queryClient.invalidateQueries({ queryKey: ["user-note"] });
       queryClient.invalidateQueries({ queryKey: ["community-flavors"] });
       queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
-    },
-    onError: (error) => {
-      console.error("Save error:", error);
-      toast.error("Failed to save tasting note");
-    },
-  });
+      return;
+    }
+
+    // Guest
+    const sessionId = getOrCreateGuestSessionId();
+    const guestClient = getGuestClient(sessionId);
+    const noteData = {
+      user_id: null,
+      guest_session_id: sessionId,
+      whisky_id: dbWhisky.id,
+      rating,
+      note: notes || null,
+      flavors: selectedFlavors,
+      intensity_ratings: intensityRatings,
+    };
+
+    if (existingNote) {
+      const { error } = await guestClient
+        .from("tasting_notes")
+        .update(noteData)
+        .eq("id", existingNote.id);
+      if (error) throw error;
+    } else {
+      const { error } = await guestClient
+        .from("tasting_notes")
+        .insert(noteData);
+      if (error) throw error;
+    }
+    queryClient.invalidateQueries({ queryKey: ["user-note"] });
+    queryClient.invalidateQueries({ queryKey: ["community-flavors"] });
+    queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+  }, [dbWhisky?.id, user, rating, notes, selectedFlavors, intensityRatings, existingNote, queryClient, getOrCreateGuestSessionId]);
+
+  const { triggerSave, status: saveStatus } = useAutoSave(performSave, 500);
+
+  // Trigger auto-save when any rating field changes
+  const handleFlavorChange = useCallback((newFlavors: string[]) => {
+    setSelectedFlavors(newFlavors);
+    triggerSave();
+  }, [triggerSave]);
+
+  const handleRatingChange = useCallback((newRating: number | null) => {
+    setRating(newRating);
+    triggerSave();
+  }, [triggerSave]);
+
+  const handleIntensityChange = useCallback((axis: string, value: number) => {
+    setIntensityRatings(prev => ({ ...prev, [axis]: value }));
+    triggerSave();
+  }, [triggerSave]);
+
+  const handleNotesChange = useCallback((newNotes: string) => {
+    setNotes(newNotes);
+    triggerSave();
+  }, [triggerSave]);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -1054,7 +1089,7 @@ const WhiskyDossier = () => {
               {/* Mobile-Optimized Flavor Selection */}
               <div className="space-y-3">
                 <label className="text-sm font-medium">Select flavors you taste:</label>
-                <ToggleGroup type="multiple" value={selectedFlavors} onValueChange={setSelectedFlavors} className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
+                <ToggleGroup type="multiple" value={selectedFlavors} onValueChange={handleFlavorChange} className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-2">
                   {FLAVORS.map((f) => (
                     <ToggleGroupItem 
                       key={f.key} 
@@ -1088,7 +1123,7 @@ const WhiskyDossier = () => {
                 <Textarea
                   placeholder="Write what you perceive: e.g., green apple on the nose, pepper on the finish..."
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => handleNotesChange(e.target.value)}
                 />
               </div>
 
@@ -1107,7 +1142,7 @@ const WhiskyDossier = () => {
                       <div className="px-2">
                         <Slider
                           value={[intensityRatings[axis.key]]}
-                          onValueChange={(value) => setIntensityRatings(prev => ({ ...prev, [axis.key]: value[0] }))}
+                          onValueChange={(value) => handleIntensityChange(axis.key, value[0])}
                           max={4}
                           min={0}
                           step={1}
@@ -1134,7 +1169,7 @@ const WhiskyDossier = () => {
                       variant="ghost"
                       size="sm"
                       className="p-2 h-auto hover:bg-transparent touch-manipulation"
-                      onClick={() => setRating(rating === star ? null : star)}
+                      onClick={() => handleRatingChange(rating === star ? null : star)}
                     >
                       <Star
                         className={`w-10 h-10 ${
@@ -1153,16 +1188,9 @@ const WhiskyDossier = () => {
                 )}
               </div>
 
-              {/* Mobile-Optimized Save Button (supports guest mode) */}
+              {/* Auto-save Status & Delete */}
               <div className="space-y-3">
-                <Button 
-                  onClick={() => saveMutation.mutate()} 
-                  disabled={saveMutation.isPending} 
-                  className="w-full h-12 text-base font-semibold"
-                  size="lg"
-                >
-                  {saveMutation.isPending ? "Saving..." : existingNote ? "Update note" : "Save note"}
-                </Button>
+                <SaveStatusIndicator status={saveStatus} />
                 {existingNote && (
                   <Button 
                     variant="ghost"
@@ -1178,11 +1206,6 @@ const WhiskyDossier = () => {
                     {deleteMutation.isPending ? "Deleting..." : "Delete my note"}
                   </Button>
                 )}
-                {isGuest && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Saved in Guest Mode. <Link to="/signup" className="underline font-medium">Create an account</Link> to keep it forever.
-                  </p>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -1190,6 +1213,9 @@ const WhiskyDossier = () => {
         </article>
       </section>
       </div>
+
+      {/* Guest nudge banner */}
+      {isGuest && <GuestSaveProgressBanner ratingsCount={guestRatingsCount} />}
     </>
   );
 };
