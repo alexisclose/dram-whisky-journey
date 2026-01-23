@@ -5,15 +5,22 @@ export type SaveStatus = "idle" | "saving" | "saved";
 /**
  * A hook that provides auto-save functionality with status indicator.
  * Debounces saves by the specified delay.
+ * Uses a ref to always call the latest version of saveFn to avoid stale closures.
  */
-export function useAutoSave<T>(
+export function useAutoSave(
   saveFn: () => Promise<void>,
   delay: number = 500
 ) {
   const [status, setStatus] = useState<SaveStatus>("idle");
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSavingRef = useRef(false);
-  const savedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Always keep the latest saveFn in a ref to avoid stale closures
+  const saveFnRef = useRef(saveFn);
+  useEffect(() => {
+    saveFnRef.current = saveFn;
+  }, [saveFn]);
 
   const triggerSave = useCallback(() => {
     // Clear any pending save
@@ -32,7 +39,8 @@ export function useAutoSave<T>(
       
       isSavingRef.current = true;
       try {
-        await saveFn();
+        // Call the latest version of saveFn via the ref
+        await saveFnRef.current();
         setStatus("saved");
         // Reset to idle after 2 seconds
         savedTimeoutRef.current = setTimeout(() => {
@@ -45,7 +53,7 @@ export function useAutoSave<T>(
         isSavingRef.current = false;
       }
     }, delay);
-  }, [saveFn, delay]);
+  }, [delay]);
 
   // Cleanup on unmount
   useEffect(() => {
