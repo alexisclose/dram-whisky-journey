@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
-import { Star, ArrowLeft, Heart, Trash2 } from "lucide-react";
+import { Star, ArrowLeft, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getGuestClient } from "@/integrations/supabase/guestClient";
 import { useAuthSession } from "@/hooks/useAuthSession";
@@ -922,24 +922,6 @@ const WhiskyDossier = () => {
         </div>
       </div>
 
-      {/* Floating Review Button - Mobile Optimized - Only show if user hasn't reviewed yet */}
-      {!hasUserReviewed && (
-        <div className="fixed bottom-4 left-4 right-4 z-50 md:bottom-6 md:left-1/2 md:right-auto md:transform md:-translate-x-1/2">
-          <Button 
-            size="lg" 
-            className="w-full md:w-auto rounded-2xl px-6 py-4 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl border border-white/20 backdrop-blur-sm"
-            onClick={() => {
-              // Scroll to review section
-              const reviewSection = document.getElementById('review-section');
-              if (reviewSection) {
-                reviewSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-          >
-            {user ? 'Leave a review' : 'Leave a note'}
-          </Button>
-        </div>
-      )}
 
       {/* Additional Content Below - Mobile-First Layout */}
       <div className="container mx-auto px-4 py-8">
@@ -1188,25 +1170,8 @@ const WhiskyDossier = () => {
                 )}
               </div>
 
-              {/* Auto-save Status & Delete */}
-              <div className="space-y-3">
-                <SaveStatusIndicator status={saveStatus} />
-                {existingNote && (
-                  <Button 
-                    variant="ghost"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete your tasting note?")) {
-                        deleteMutation.mutate();
-                      }
-                    }}
-                    disabled={deleteMutation.isPending}
-                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {deleteMutation.isPending ? "Deleting..." : "Delete my note"}
-                  </Button>
-                )}
-              </div>
+              {/* Auto-save Status */}
+              <SaveStatusIndicator status={saveStatus} />
             </CardContent>
           </Card>
 
