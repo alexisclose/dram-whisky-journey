@@ -10,6 +10,7 @@ import { Star, Sparkles, TrendingUp, Users, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IntensityRadarChart } from "@/components/IntensityRadarChart";
+import { useActiveSet } from "@/context/ActiveSetContext";
 
 const FLAVORS = [
   { key: "green_apple", label: "Green Apple" },
@@ -66,6 +67,7 @@ export const TastingFlowExperience = ({
 }: TastingFlowExperienceProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { activeSet } = useActiveSet();
   const [step, setStep] = useState<"review" | "reveal">("review");
   
   // Form state
@@ -421,7 +423,7 @@ export const TastingFlowExperience = ({
           )}
           
           <Button 
-            onClick={() => navigate("/tasting")}
+            onClick={() => navigate(`/set/${activeSet}`)}
             className="w-full h-14 text-lg font-semibold"
             size="lg"
           >
