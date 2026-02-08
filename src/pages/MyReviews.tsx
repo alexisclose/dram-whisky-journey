@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { Trash2 } from "lucide-react";
+import { Trash2, Star, Heart, GlassWater } from "lucide-react";
 import { toast } from "sonner";
+import EmptyState from "@/components/EmptyState";
 
 type TastingNote = {
   id: string;
@@ -145,30 +146,51 @@ const MyReviews = () => {
       </header>
 
       {!loading && !user && (
-        <div className="max-w-lg">
-          <Card>
-            <CardHeader>
-              <CardTitle>Please log in</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>You need to be logged in to see your reviews.</p>
-              <div className="flex gap-2">
-                <Button asChild variant="brand" size="sm"><Link to="/login">Log in</Link></Button>
-                <Button asChild variant="outline" size="sm"><Link to="/signup">Sign up</Link></Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-0">
+            <EmptyState
+              icon={Star}
+              title="Sign in to see your reviews"
+              description="Create an account or log in to track your whisky tastings and build your flavor profile."
+              action={{
+                label: "Log in",
+                href: "/login",
+              }}
+              secondaryAction={{
+                label: "Sign up",
+                href: "/signup",
+              }}
+              className="py-12"
+            />
+          </CardContent>
+        </Card>
       )}
 
       {user && (
         <>
           <section className="mb-10">
             <h2 className="text-xl font-semibold mb-3">My Wishlist</h2>
-            {wlLoading && <p className="text-muted-foreground">Loading wishlist…</p>}
+            {wlLoading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            )}
             {wlError && <p className="text-destructive">Failed to load wishlist.</p>}
             {!wlLoading && (wishlist?.length ?? 0) === 0 && (
-              <p className="text-muted-foreground">Your wishlist is empty.</p>
+              <Card className="max-w-md">
+                <CardContent className="p-0">
+                  <EmptyState
+                    icon={Heart}
+                    title="Your wishlist is empty"
+                    description="Save whiskies you'd like to try. They'll appear here for easy access."
+                    action={{
+                      label: "Explore Whiskies",
+                      href: "/my-tasting-box",
+                    }}
+                    size="sm"
+                  />
+                </CardContent>
+              </Card>
             )}
             <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {(wishlist ?? []).map((item: any) => (
@@ -189,10 +211,27 @@ const MyReviews = () => {
             </div>
           </section>
 
-          {isLoading && <p className="text-muted-foreground">Loading your reviews…</p>}
+          {isLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
           {error && <p className="text-destructive">Failed to load reviews.</p>}
           {!isLoading && empty && (
-            <p className="text-muted-foreground">You haven't added any reviews yet.</p>
+            <Card className="max-w-md">
+              <CardContent className="p-0">
+                <EmptyState
+                  icon={GlassWater}
+                  title="No reviews yet"
+                  description="Start tasting whiskies and rating them to build your collection of tasting notes."
+                  action={{
+                    label: "Start Tasting",
+                    href: "/my-tasting-box",
+                  }}
+                  size="sm"
+                />
+              </CardContent>
+            </Card>
           )}
           <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {(data ?? []).map((tn) => {
