@@ -1,12 +1,13 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Package, ChevronRight, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useActiveSet } from "@/context/ActiveSetContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import EmptyState from "@/components/EmptyState";
+import OnboardingSteps from "@/components/OnboardingSteps";
 
 const MySets = () => {
   const { allSets, setActiveSet, loading } = useActiveSet();
@@ -54,19 +55,33 @@ const MySets = () => {
       </p>
 
       {loading ? (
-        <div className="text-muted-foreground">Loading your sets...</div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
       ) : hasNoSets ? (
-        <Card className="max-w-lg">
-          <CardHeader>
-            <CardTitle>No Sets Activated</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>You haven't activated any tasting sets yet. Enter your activation code to unlock your whiskies.</p>
-            <Button asChild>
-              <Link to="/activate">Activate a Set</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="max-w-xl mx-auto">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-8">
+                <EmptyState
+                  icon={Package}
+                  title="Start Your Whisky Journey"
+                  description="Activate your tasting set to unlock a curated collection of whiskies waiting to be explored."
+                  action={{
+                    label: "Activate a Set",
+                    href: "/activate",
+                  }}
+                  size="lg"
+                  className="py-4"
+                />
+              </div>
+              <div className="p-6 border-t">
+                <h3 className="font-medium text-sm text-muted-foreground mb-4 uppercase tracking-wider">What's Next</h3>
+                <OnboardingSteps currentStep={0} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <>
           <section className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
