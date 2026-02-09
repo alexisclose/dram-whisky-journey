@@ -13,18 +13,20 @@ import { toast } from "sonner";
 
 const Tasting = () => {
   const canonical = typeof window !== "undefined" ? `${window.location.origin}/tasting` : "/tasting";
-  const { activeSet, loading, setActiveSet } = useActiveSet();
+  const { allSets, loading, setActiveSet } = useActiveSet();
   const { user } = useAuthSession();
   const [showActivation, setShowActivation] = useState(false);
   const [code, setCode] = useState("");
   const [activating, setActivating] = useState(false);
 
-  // Reset showActivation when activeSet changes (successful activation)
+  const noSets = !loading && allSets.length === 0;
+
+  // Reset showActivation when sets become available (successful activation or scan)
   useEffect(() => {
-    if (activeSet && activeSet !== "classic") {
+    if (allSets.length > 0) {
       setShowActivation(false);
     }
-  }, [activeSet]);
+  }, [allSets.length]);
 
   const handleActivate = async () => {
     if (!code.trim()) {
@@ -61,8 +63,8 @@ const Tasting = () => {
     }
   };
 
-  // If user is not logged in or hasn't activated a set, show activation page
-  if (!user || (!loading && activeSet === "classic") || showActivation) {
+  // Only show activation UI when explicitly requested, or when a logged-in user has no sets yet
+  if (showActivation || (user && noSets)) {
     return (
       <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <Helmet>
@@ -181,16 +183,18 @@ const Tasting = () => {
         </Card>
       </section>
 
-      <div className="mt-8 sm:mt-12 text-center">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-muted-foreground hover:text-foreground text-sm"
-          onClick={() => setShowActivation(true)}
-        >
-          Activate Another Set
-        </Button>
-      </div>
+      {user && (
+        <div className="mt-8 sm:mt-12 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground text-sm"
+            onClick={() => setShowActivation(true)}
+          >
+            Activate Another Set
+          </Button>
+        </div>
+      )}
     </main>
   );
 };
