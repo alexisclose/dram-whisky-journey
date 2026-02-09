@@ -423,7 +423,7 @@ export const TastingFlowExperience = ({
           )}
           
           <Button 
-            onClick={() => navigate(`/set/${activeSet}`)}
+            onClick={() => navigate("/my-tasting-box")}
             className="w-full h-14 text-lg font-semibold"
             size="lg"
           >
