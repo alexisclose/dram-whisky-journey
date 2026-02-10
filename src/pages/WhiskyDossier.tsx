@@ -831,7 +831,7 @@ const WhiskyDossier = () => {
         {/* Navigation Bar */}
         <div className="relative z-20 flex items-center justify-between p-4">
           <Button variant="ghost" size="icon" className="rounded-full bg-black/30 backdrop-blur-sm hover:bg-black/50 border border-white/20" asChild>
-            <Link to="/tasting" aria-label="Back to Tasting Journey">
+            <Link to="/my-tasting-box" aria-label="Back to My Tasting Box">
               <ArrowLeft className="h-5 w-5 text-white" />
             </Link>
           </Button>
