@@ -15,6 +15,7 @@ import { getGuestClient } from "@/integrations/supabase/guestClient";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useGuestSession } from "@/hooks/useGuestSession";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { useActiveSet } from "@/context/ActiveSetContext";
 import { toast } from "sonner";
 import { AdminImageOverlay } from "@/components/AdminImageOverlay";
 import { TastingFlowExperience } from "@/components/TastingFlowExperience";
@@ -412,22 +413,29 @@ const WhiskyDossier = () => {
     enabled: !!dbWhisky?.id && !!user,
   });
 
-  // Check if whisky is in user's activated tasting box
+  // Check if whisky is in user's activated tasting box (works for both logged-in and guest users)
+  const { allSets } = useActiveSet();
   const { data: isInUserTastingBox } = useQuery({
-    queryKey: ["whisky-in-tasting-box", dbWhisky?.id, user?.id],
+    queryKey: ["whisky-in-tasting-box", dbWhisky?.id, user?.id, allSets.map(s => s.set_code).join(",")],
     queryFn: async () => {
-      if (!dbWhisky?.id || !user) return false;
-      
-      // Get user's activated sets
-      const { data: userSets, error: setsError } = await supabase
-        .from("user_sets")
-        .select("set_code")
-        .eq("user_id", user.id);
-      
-      if (setsError) throw setsError;
-      if (!userSets || userSets.length === 0) return false;
-      
-      const setCodes = userSets.map(s => s.set_code);
+      if (!dbWhisky?.id) return false;
+
+      let setCodes: string[] = [];
+
+      if (user) {
+        // Logged-in: fetch from DB
+        const { data: userSets, error: setsError } = await supabase
+          .from("user_sets")
+          .select("set_code")
+          .eq("user_id", user.id);
+        if (setsError) throw setsError;
+        setCodes = (userSets || []).map(s => s.set_code);
+      } else {
+        // Guest: use sets from context (localStorage-backed)
+        setCodes = allSets.map(s => s.set_code);
+      }
+
+      if (setCodes.length === 0) return false;
       
       // Check if this whisky is in any of those sets
       const { data: whiskySet, error: whiskySetError } = await supabase
@@ -440,7 +448,7 @@ const WhiskyDossier = () => {
       if (whiskySetError && whiskySetError.code !== 'PGRST116') throw whiskySetError;
       return !!whiskySet;
     },
-    enabled: !!dbWhisky?.id && !!user,
+    enabled: !!dbWhisky?.id && (!!user || allSets.length > 0),
   });
 
   // Determine if community content should be visible
@@ -454,13 +462,13 @@ const WhiskyDossier = () => {
     setShowTastingFlow(false);
   }, [whiskyId]);
 
-  // If this whisky is in the tasting box and not yet reviewed, start the tasting flow.
+  // If this whisky is in the tasting box and not yet reviewed, start the tasting flow (logged-in OR guest).
   // After saving, hasUserReviewed becomes true, but we keep showTastingFlow=true so the reveal can render.
   useEffect(() => {
-    if (user && isInUserTastingBox && !hasUserReviewed && !showFullDossier) {
+    if ((user || guestSessionId) && isInUserTastingBox && !hasUserReviewed && !showFullDossier) {
       setShowTastingFlow(true);
     }
-  }, [user?.id, isInUserTastingBox, hasUserReviewed, showFullDossier]);
+  }, [user?.id, guestSessionId, isInUserTastingBox, hasUserReviewed, showFullDossier]);
 
   const toggleWishlist = useMutation({
     mutationFn: async () => {
@@ -760,9 +768,10 @@ const WhiskyDossier = () => {
     );
   }
 
-  // Show tasting flow for tasting box whiskies.
+  // Show tasting flow for tasting box whiskies (logged-in OR guest).
   // IMPORTANT: once the flow starts we keep showing it (via showTastingFlow) so the reveal step isn't replaced by the dossier.
-  const shouldShowTastingFlow = isInUserTastingBox && user && !showFullDossier && (showTastingFlow || !hasUserReviewed);
+  const effectiveUserId = user?.id || guestSessionId;
+  const shouldShowTastingFlow = isInUserTastingBox && effectiveUserId && !showFullDossier && (showTastingFlow || !hasUserReviewed);
   
   if (shouldShowTastingFlow) {
     return (
@@ -779,7 +788,8 @@ const WhiskyDossier = () => {
             region: whisky.region,
             image_url: whisky.image_url,
           }}
-          userId={user.id}
+          userId={user?.id || null}
+          guestSessionId={!user ? guestSessionId || getOrCreateGuestSessionId() : null}
           communityFlavors={community}
           communityIntensity={communityIntensityRatings || { fruit: 2, floral: 2, oak: 2, smoke: 2, spice: 2 }}
           ratingStats={communityRatingStats}
