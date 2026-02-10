@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Star, Sparkles, TrendingUp, Users, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getGuestClient } from "@/integrations/supabase/guestClient";
 import { toast } from "sonner";
 import { IntensityRadarChart } from "@/components/IntensityRadarChart";
 import { useActiveSet } from "@/context/ActiveSetContext";
@@ -50,7 +51,8 @@ interface TastingFlowExperienceProps {
     region: string;
     image_url: string | null;
   };
-  userId: string;
+  userId: string | null;
+  guestSessionId?: string | null;
   communityFlavors: Record<string, number>;
   communityIntensity: Record<string, number>;
   ratingStats: { averageRating: number | null; totalReviews: number };
@@ -60,6 +62,7 @@ interface TastingFlowExperienceProps {
 export const TastingFlowExperience = ({
   whisky,
   userId,
+  guestSessionId,
   communityFlavors,
   communityIntensity,
   ratingStats,
@@ -88,19 +91,34 @@ export const TastingFlowExperience = ({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const noteData = {
-        user_id: userId,
-        whisky_id: whisky.id,
-        rating,
-        note: notes || null,
-        flavors: selectedFlavors,
-        intensity_ratings: intensityRatings,
-      };
-
-      const { error } = await supabase
-        .from("tasting_notes")
-        .insert(noteData);
-      if (error) throw error;
+      if (userId) {
+        // Logged-in user save
+        const noteData = {
+          user_id: userId,
+          whisky_id: whisky.id,
+          rating,
+          note: notes || null,
+          flavors: selectedFlavors,
+          intensity_ratings: intensityRatings,
+        };
+        const { error } = await supabase.from("tasting_notes").insert(noteData);
+        if (error) throw error;
+      } else if (guestSessionId) {
+        // Guest save
+        const client = getGuestClient(guestSessionId);
+        const noteData = {
+          guest_session_id: guestSessionId,
+          whisky_id: whisky.id,
+          rating,
+          note: notes || null,
+          flavors: selectedFlavors,
+          intensity_ratings: intensityRatings,
+        };
+        const { error } = await client.from("tasting_notes").insert(noteData);
+        if (error) throw error;
+      } else {
+        throw new Error("No user or guest session");
+      }
     },
     onSuccess: () => {
       toast.success("Tasting note saved!");
@@ -121,19 +139,11 @@ export const TastingFlowExperience = ({
     if (step === "reveal") {
       const timers: NodeJS.Timeout[] = [];
       
-      // Step 1: Your rating (immediate)
       timers.push(setTimeout(() => setRevealStep(1), 300));
-      
-      // Step 2: Community rating
       timers.push(setTimeout(() => setRevealStep(2), 1200));
-      
-      // Step 3: Your flavors
       timers.push(setTimeout(() => setRevealStep(3), 2100));
-      
-      // Step 4: Community comparison bars (animated)
       timers.push(setTimeout(() => {
         setRevealStep(4);
-        // Animate bars one by one
         selectedFlavors.forEach((flavor, index) => {
           setTimeout(() => {
             setAnimatedBars(prev => ({
@@ -143,8 +153,6 @@ export const TastingFlowExperience = ({
           }, index * 200);
         });
       }, 3000));
-      
-      // Step 5: Final summary
       timers.push(setTimeout(() => setRevealStep(5), 4500));
 
       return () => timers.forEach(t => clearTimeout(t));
