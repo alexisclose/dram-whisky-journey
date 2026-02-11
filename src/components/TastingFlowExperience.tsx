@@ -127,6 +127,7 @@ export const TastingFlowExperience = ({
       queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
       queryClient.invalidateQueries({ queryKey: ["whisky-in-tasting-box"] });
       setStep("reveal");
+      window.scrollTo({ top: 0, behavior: "instant" });
     },
     onError: (error) => {
       console.error("Save error:", error);
