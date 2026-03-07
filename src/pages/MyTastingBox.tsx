@@ -356,22 +356,22 @@ const MyTastingBox = () => {
             <Link to={`/whisky-dossier/${w.id}`} className="block">
               <Card className={`relative overflow-hidden hover:shadow-lg transition-all cursor-pointer ${ratings[w.id] ? 'ring-2 ring-primary/40' : ''}`}>
                 <div className="flex">
-                  {/* Square whisky image */}
-                  <div className="w-40 h-40 sm:w-48 sm:h-48 flex-shrink-0 bg-muted relative">
+                  {/* Bottle thumbnail */}
+                  <div className="w-16 sm:w-20 flex-shrink-0 flex items-center justify-center py-3 pl-3 relative">
                     {w.image_url ? (
-                      <img 
-                        src={w.image_url} 
+                      <img
+                        src={w.image_url}
                         alt={`${w.distillery} ${w.name}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-auto max-h-24 sm:max-h-28 object-contain drop-shadow-md"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        <span className="text-4xl">🥃</span>
+                      <div className="w-full h-20 flex items-center justify-center text-muted-foreground">
+                        <span className="text-2xl">🥃</span>
                       </div>
                     )}
                     {ratings[w.id] && (
-                      <div className="absolute bottom-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5">
-                        <CheckCircle className="h-4 w-4" />
+                      <div className="absolute bottom-1 right-0 bg-primary text-primary-foreground rounded-full p-1">
+                        <CheckCircle className="h-3 w-3" />
                       </div>
                     )}
                   </div>

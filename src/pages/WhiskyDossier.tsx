@@ -18,60 +18,10 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { useActiveSet } from "@/context/ActiveSetContext";
 import { toast } from "sonner";
 import { AdminImageOverlay } from "@/components/AdminImageOverlay";
-import { TastingFlowExperience } from "@/components/TastingFlowExperience";
+import { TastingFlowStepped } from "@/components/tasting-flow/TastingFlowStepped";
 import SaveStatusIndicator from "@/components/SaveStatusIndicator";
 import GuestSaveProgressBanner from "@/components/GuestSaveProgressBanner";
-
-const FLAVORS = [
-  { key: "green_apple", label: "Green Apple" },
-  { key: "vanilla", label: "Vanilla" },
-  { key: "smoke", label: "Smoke" },
-  { key: "peat", label: "Peat" },
-  { key: "honey", label: "Honey" },
-  { key: "spice", label: "Spice" },
-  { key: "citrus", label: "Citrus" },
-  { key: "chocolate", label: "Chocolate" },
-  { key: "oak", label: "Oak" },
-  { key: "caramel", label: "Caramel" },
-  { key: "dried_fruit", label: "Dried Fruit" },
-  { key: "floral", label: "Floral" },
-  { key: "nutty", label: "Nutty" },
-  { key: "pepper", label: "Pepper" },
-  { key: "malt", label: "Malt" },
-  { key: "tropical", label: "Tropical" },
-  { key: "berries", label: "Berries" },
-] as const;
-
-const INTENSITY_AXES = [
-  { key: "fruit", label: "Fruit" },
-  { key: "floral", label: "Floral" },
-  { key: "oak", label: "Oak" },
-  { key: "smoke", label: "Smoke" },
-  { key: "spice", label: "Spice" },
-] as const;
-
-const INTENSITY_LABELS = ["none", "", "medium", "", "pronounced"];
-
-// Simple community palate distribution used as a preview for all whiskies
-const DEFAULT_COMMUNITY: Record<string, number> = {
-  green_apple: 62,
-  vanilla: 71,
-  smoke: 54,
-  peat: 49,
-  honey: 58,
-  spice: 52,
-  citrus: 41,
-  chocolate: 27,
-  oak: 65,
-  caramel: 46,
-  dried_fruit: 39,
-  floral: 22,
-  nutty: 28,
-  pepper: 31,
-  malt: 44,
-  tropical: 19,
-  berries: 24,
-};
+import { FLAVORS, INTENSITY_AXES, INTENSITY_LABELS, DEFAULT_COMMUNITY } from "@/constants/tasting";
 
 const WhiskyDossier = () => {
   const { id } = useParams();
@@ -780,7 +730,7 @@ const WhiskyDossier = () => {
           <title>{`Taste — ${whisky.distillery} ${whisky.name}`}</title>
           <meta name="robots" content="noindex" />
         </Helmet>
-        <TastingFlowExperience
+        <TastingFlowStepped
           whisky={{
             id: whisky.id,
             distillery: whisky.distillery,
@@ -867,7 +817,7 @@ const WhiskyDossier = () => {
               <AdminImageOverlay
                 src={whisky.image_url || "/placeholder.svg"}
                 alt={`${whisky.distillery} ${whisky.name} bottle`}
-                className="w-32 h-auto max-h-48 object-contain drop-shadow-2xl"
+                className="w-64 h-auto max-h-96 object-contain drop-shadow-2xl"
                 onImageChange={handleProfileImageChange}
               />
             </div>
