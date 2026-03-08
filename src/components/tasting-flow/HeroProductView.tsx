@@ -111,7 +111,7 @@ export const HeroProductView = ({
       <div className="relative z-10 -mt-8 flex-1">
         <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-44 pb-8 px-6 min-h-[50vh]">
           {/* Whisky info — centered */}
-          <div className="text-center -mt-[15px]">
+          <div className="text-center -mt-[20px]">
             <p className="text-sm text-muted-foreground tracking-wide uppercase">
               {whisky.distillery}
             </p>
@@ -124,7 +124,7 @@ export const HeroProductView = ({
           </div>
 
           {/* CTA Button — Vivino-style pill */}
-          <div className="mt-5 flex justify-center">
+          <div className="mt-[25px] flex justify-center">
             <button
               onClick={onRate}
               className="flex items-center gap-2.5 px-6 py-3 rounded-full border border-foreground bg-transparent hover:bg-foreground/5 transition-colors duration-200"
