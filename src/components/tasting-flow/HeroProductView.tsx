@@ -28,7 +28,7 @@ export const HeroProductView = ({
       {/* ===== LANDSCAPE SECTION ===== */}
       <div
         className="relative w-full shrink-0"
-        style={{ height: "38vh", minHeight: "240px", maxHeight: "340px" }}
+        style={{ height: "42vh", minHeight: "260px", maxHeight: "400px" }}
       >
         {/* Gradient fallback — always visible behind photo */}
         <div
@@ -86,10 +86,10 @@ export const HeroProductView = ({
             <img
               src={whisky.image_url}
               alt={`${whisky.distillery} ${whisky.name}`}
-              className="h-56 object-contain drop-shadow-2xl"
+              className="h-[28rem] object-contain drop-shadow-2xl"
             />
           ) : (
-            <div className="h-56 w-28 bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="h-[28rem] w-28 bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
               <span className="text-muted-foreground text-xs">No image</span>
             </div>
           )}
@@ -98,7 +98,7 @@ export const HeroProductView = ({
 
       {/* ===== CARD SECTION ===== */}
       <div className="relative z-10 -mt-8 flex-1">
-        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-32 pb-8 px-6 min-h-[50vh]">
+        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-56 pb-8 px-6 min-h-[50vh]">
           {/* Whisky info — centered */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground tracking-wide uppercase">
@@ -112,16 +112,17 @@ export const HeroProductView = ({
             </p>
           </div>
 
-          {/* CTA Button */}
-          <div className="mt-8">
-            <Button
+          {/* CTA Button — Vivino-style pill */}
+          <div className="mt-8 flex justify-center">
+            <button
               onClick={onRate}
-              className="w-full h-14 rounded-2xl text-base font-semibold gap-2"
-              size="lg"
+              className="group flex items-center gap-3 px-8 py-4 rounded-full border-2 border-primary bg-transparent hover:bg-primary transition-colors duration-200 shadow-md hover:shadow-lg"
             >
-              <Star className="w-5 h-5 fill-current" />
-              Rate this dram
-            </Button>
+              <Star className="w-6 h-6 text-primary fill-primary group-hover:text-primary-foreground group-hover:fill-primary-foreground transition-colors duration-200" />
+              <span className="text-base font-bold tracking-wide text-primary group-hover:text-primary-foreground transition-colors duration-200">
+                Rate this dram
+              </span>
+            </button>
           </div>
         </div>
       </div>
