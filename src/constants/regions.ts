@@ -1,6 +1,5 @@
 export type LandscapeCategory =
-  | "scotland-highlands"
-  | "scotland-coast"
+  | "scotland"
   | "japan"
   | "ireland"
   | "american"
@@ -15,15 +14,16 @@ export interface RegionLandscape {
 
 /** Map normalized region strings to landscape categories */
 const REGION_TO_CATEGORY: Record<string, LandscapeCategory> = {
-  speyside: "scotland-highlands",
-  highlands: "scotland-highlands",
-  highland: "scotland-highlands",
-  lowlands: "scotland-highlands",
-  lowland: "scotland-highlands",
-  campbeltown: "scotland-highlands",
-  islay: "scotland-coast",
-  islands: "scotland-coast",
-  island: "scotland-coast",
+  speyside: "scotland",
+  highlands: "scotland",
+  highland: "scotland",
+  lowlands: "scotland",
+  lowland: "scotland",
+  campbeltown: "scotland",
+  islay: "scotland",
+  islands: "scotland",
+  island: "scotland",
+  scotland: "scotland",
   japan: "japan",
   japanese: "japan",
   ireland: "ireland",
@@ -38,15 +38,10 @@ const REGION_TO_CATEGORY: Record<string, LandscapeCategory> = {
 };
 
 const LANDSCAPE_IMAGES: Record<LandscapeCategory, RegionLandscape> = {
-  "scotland-highlands": {
-    category: "scotland-highlands",
-    imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=500&fit=crop&q=75",
+  scotland: {
+    category: "scotland",
+    imageUrl: "/landscapes/scotland.png",
     gradientFallback: "linear-gradient(135deg, #2d5016 0%, #4a7c23 40%, #6b8e3f 100%)",
-  },
-  "scotland-coast": {
-    category: "scotland-coast",
-    imageUrl: "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=800&h=500&fit=crop&q=75",
-    gradientFallback: "linear-gradient(135deg, #1a3a4a 0%, #2d6a7a 40%, #4a8a9a 100%)",
   },
   japan: {
     category: "japan",
