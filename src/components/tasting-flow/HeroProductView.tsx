@@ -92,15 +92,15 @@ export const HeroProductView = ({
         )}
 
         {/* Bottle — straddles the landscape/card edge */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[35%] z-20">
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[35%] z-20 w-[188px] h-[28rem]">
           {whisky.image_url ? (
             <img
               src={whisky.image_url}
               alt={`${whisky.distillery} ${whisky.name}`}
-              className="h-[28rem] object-contain drop-shadow-2xl"
+              className="w-full h-full object-contain drop-shadow-2xl"
             />
           ) : (
-            <div className="h-[28rem] w-28 bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="h-full w-full bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
               <span className="text-muted-foreground text-xs">No image</span>
             </div>
           )}
