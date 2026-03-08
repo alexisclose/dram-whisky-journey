@@ -50,7 +50,12 @@ const App = () => (
               {/* Entry flow routes (no header) */}
               <Route path="/set/:setCode" element={<SetEntry />} />
               <Route path="/welcome" element={<Welcome />} />
-              
+
+              {/* Immersive routes (no header — full-screen experience) */}
+              <Route path="/tasting/:id" element={<WhiskyDossier />} />
+              <Route path="/whisky-dossier/:id" element={<WhiskyDossier />} />
+              <Route path="/dossier/:id" element={<WhiskyDossier />} />
+
               {/* Main app routes (with header) */}
               <Route path="/*" element={
                 <>
@@ -67,10 +72,6 @@ const App = () => (
                     <Route path="/my-tasting-box" element={<MyTastingBox />} />
                     {/* MVP Hidden: <Route path="/explore" element={<Explore />} /> */}
                     <Route path="/whisky-upload" element={<WhiskyUpload />} />
-                    {/* MVP Hidden: <Route path="/whisky-info/:id" element={<WhiskyInfo />} /> */}
-                    <Route path="/tasting/:id" element={<WhiskyDossier />} />
-                    <Route path="/whisky-dossier/:id" element={<WhiskyDossier />} />
-                    <Route path="/dossier/:id" element={<WhiskyDossier />} />
                     
                     <Route path="/reviews" element={<MyReviews />} />
                     <Route path="/profile" element={<Profile />} />

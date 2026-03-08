@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import { Star, ArrowLeft } from "lucide-react";
 import { getRegionLandscape } from "@/constants/regions";
 
 interface HeroProductViewProps {
@@ -20,6 +21,7 @@ export const HeroProductView = ({
   ratingStats,
   onRate,
 }: HeroProductViewProps) => {
+  const navigate = useNavigate();
   const landscape = getRegionLandscape(whisky.region);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -51,6 +53,15 @@ export const HeroProductView = ({
 
         {/* Dark scrim at bottom for smooth transition into card */}
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
+
+        {/* Back button — top left */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-background transition-colors"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
 
         {/* Community rating badge — top right */}
         {ratingStats.averageRating !== null && (
