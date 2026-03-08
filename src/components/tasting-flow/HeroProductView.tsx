@@ -1,37 +1,82 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowLeft } from "lucide-react";
 import { getRegionLandscape } from "@/constants/regions";
 
-/** Target: match the Glenfiddich 12 baseline (≈ 80% content ratio). Only scale UP smaller bottles. */
-const TARGET_CONTENT_RATIO = 0.8;
-const MAX_SCALE = 1.4;
+/**
+ * Auto-crop transparent padding from a bottle image.
+ * Returns a blob URL of the trimmed image, or null on failure.
+ * Adds a small uniform padding (PAD_PCT) so the bottle doesn't touch the edges.
+ */
+const PAD_PCT = 0.04; // 4% padding around content
 
-function measureContentRatio(img: HTMLImageElement): number | null {
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.drawImage(img, 0, 0);
-    const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    let top = canvas.height;
-    let bottom = 0;
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        if (d[(y * canvas.width + x) * 4 + 3] > 10) {
-          if (y < top) top = y;
-          if (y > bottom) bottom = y;
+function autoCropImage(src: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+        const d = ctx.getImageData(0, 0, w, h).data;
+
+        // Find bounding box of non-transparent pixels
+        let top = h, bottom = 0, left = w, right = 0;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (d[(y * w + x) * 4 + 3] > 10) {
+              if (y < top) top = y;
+              if (y > bottom) bottom = y;
+              if (x < left) left = x;
+              if (x > right) right = x;
+            }
+          }
         }
+
+        if (bottom <= top || right <= left) {
+          resolve(null);
+          return;
+        }
+
+        // Add uniform padding
+        const cw = right - left;
+        const ch = bottom - top;
+        const padX = Math.round(cw * PAD_PCT);
+        const padY = Math.round(ch * PAD_PCT);
+        const cropL = Math.max(0, left - padX);
+        const cropT = Math.max(0, top - padY);
+        const cropR = Math.min(w, right + padX);
+        const cropB = Math.min(h, bottom + padY);
+        const cropW = cropR - cropL;
+        const cropH = cropB - cropT;
+
+        // Create cropped canvas
+        const out = document.createElement("canvas");
+        out.width = cropW;
+        out.height = cropH;
+        out.getContext("2d")!.drawImage(
+          canvas,
+          cropL, cropT, cropW, cropH,
+          0, 0, cropW, cropH
+        );
+
+        out.toBlob(
+          (blob) => resolve(blob ? URL.createObjectURL(blob) : null),
+          "image/png"
+        );
+      } catch {
+        resolve(null); // CORS or other error
       }
-    }
-    const ratio = (bottom - top) / canvas.height;
-    return ratio > 0.1 ? ratio : null;
-  } catch {
-    return null; // CORS or other error — skip
-  }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
 }
 
 interface HeroProductViewProps {
@@ -54,19 +99,39 @@ export const HeroProductView = ({
   const navigate = useNavigate();
   const landscape = getRegionLandscape(whisky.region);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [bottleScale, setBottleScale] = useState(1);
-  const [bottleReady, setBottleReady] = useState(false);
+  const [bottleSrc, setBottleSrc] = useState<string | null>(null);
+  const blobRef = useRef<string | null>(null);
 
-  const handleBottleLoad = useCallback(
-    (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const ratio = measureContentRatio(e.currentTarget);
-      if (ratio && ratio < TARGET_CONTENT_RATIO) {
-        setBottleScale(Math.min(TARGET_CONTENT_RATIO / ratio, MAX_SCALE));
+  // Auto-crop the bottle image on mount / when whisky changes
+  useEffect(() => {
+    if (!whisky.image_url) return;
+
+    let cancelled = false;
+    autoCropImage(whisky.image_url).then((croppedUrl) => {
+      if (cancelled) {
+        if (croppedUrl) URL.revokeObjectURL(croppedUrl);
+        return;
       }
-      setBottleReady(true);
-    },
-    []
-  );
+      // Clean up previous blob
+      if (blobRef.current) URL.revokeObjectURL(blobRef.current);
+      if (croppedUrl) {
+        blobRef.current = croppedUrl;
+        setBottleSrc(croppedUrl);
+      } else {
+        // CORS failed or image had no transparent padding — use original
+        blobRef.current = null;
+        setBottleSrc(whisky.image_url);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      if (blobRef.current) {
+        URL.revokeObjectURL(blobRef.current);
+        blobRef.current = null;
+      }
+    };
+  }, [whisky.image_url]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -138,14 +203,11 @@ export const HeroProductView = ({
         <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[35%] z-20">
           {whisky.image_url ? (
             <img
-              src={whisky.image_url}
+              src={bottleSrc || whisky.image_url}
               alt={`${whisky.distillery} ${whisky.name}`}
-              crossOrigin="anonymous"
-              onLoad={handleBottleLoad}
-              className={`h-[28rem] object-contain drop-shadow-2xl transition-all duration-300 ${
-                bottleReady ? "opacity-100" : "opacity-0"
+              className={`h-[28rem] object-contain drop-shadow-2xl transition-opacity duration-300 ${
+                bottleSrc ? "opacity-100" : "opacity-0"
               }`}
-              style={{ transform: `scale(${bottleScale})` }}
             />
           ) : (
             <div className="h-[28rem] w-28 bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
