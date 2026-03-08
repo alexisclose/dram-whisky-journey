@@ -92,7 +92,7 @@ export const HeroProductView = ({
         )}
 
         {/* Bottle — straddles the landscape/card edge */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[45%] z-20">
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[35%] z-20">
           {whisky.image_url ? (
             <img
               src={whisky.image_url}
@@ -109,7 +109,7 @@ export const HeroProductView = ({
 
       {/* ===== CARD SECTION ===== */}
       <div className="relative z-10 -mt-8 flex-1">
-        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-44 pb-8 px-6 min-h-[50vh]">
+        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-48 pb-8 px-6 min-h-[50vh]">
           {/* Whisky info — centered */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground tracking-wide uppercase">
