@@ -127,7 +127,7 @@ export const HeroProductView = ({
           <div className="mt-5 flex justify-center">
             <button
               onClick={onRate}
-              className="flex items-center gap-2.5 px-6 py-3 rounded-full border-2 border-foreground bg-transparent hover:bg-foreground/5 transition-colors duration-200"
+              className="flex items-center gap-2.5 px-6 py-3 rounded-full border border-foreground bg-transparent hover:bg-foreground/5 transition-colors duration-200"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <defs>
