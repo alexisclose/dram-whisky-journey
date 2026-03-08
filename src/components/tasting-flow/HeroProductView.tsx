@@ -127,10 +127,22 @@ export const HeroProductView = ({
           <div className="mt-5 flex justify-center">
             <button
               onClick={onRate}
-              className="group flex items-center gap-3 px-8 py-4 rounded-full border-2 border-primary bg-transparent hover:bg-primary transition-colors duration-200 shadow-md hover:shadow-lg"
+              className="flex items-center gap-2.5 px-6 py-3 rounded-full border-2 border-foreground bg-transparent hover:bg-foreground/5 transition-colors duration-200"
             >
-              <Star className="w-6 h-6 text-primary fill-primary group-hover:text-primary-foreground group-hover:fill-primary-foreground transition-colors duration-200" />
-              <span className="text-base font-bold tracking-wide text-primary group-hover:text-primary-foreground transition-colors duration-200">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="rateStarGrad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#FFB800" />
+                    <stop offset="100%" stopColor="#FF6200" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26Z"
+                  fill="url(#rateStarGrad)"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="text-base font-bold tracking-wide text-foreground">
                 Rate this dram
               </span>
             </button>
