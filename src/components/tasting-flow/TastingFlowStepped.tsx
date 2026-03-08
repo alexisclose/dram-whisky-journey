@@ -54,10 +54,10 @@ export const TastingFlowStepped = ({
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Progress dots — hidden during dial+review overlay (step 1) and reveal (step 3) */}
+    <div className="relative min-h-screen bg-background">
+      {/* Progress dots — floating overlay, hidden during dial+review (step 1) and reveal (step 3) */}
       {flow.currentStep !== 1 && flow.currentStep !== 3 && (
-        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg">
+        <div className="absolute top-3 left-0 right-0 z-40">
           <StepProgressDots current={flow.currentStep} total={flow.totalSteps} />
         </div>
       )}
