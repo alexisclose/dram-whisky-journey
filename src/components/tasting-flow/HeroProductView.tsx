@@ -205,12 +205,12 @@ export const HeroProductView = ({
             <img
               src={bottleSrc || whisky.image_url}
               alt={`${whisky.distillery} ${whisky.name}`}
-              className={`h-[28rem] object-contain drop-shadow-2xl transition-opacity duration-300 ${
+              className={`h-[22.4rem] object-contain drop-shadow-2xl transition-opacity duration-300 ${
                 bottleSrc ? "opacity-100" : "opacity-0"
               }`}
             />
           ) : (
-            <div className="h-[28rem] w-28 bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="h-[22.4rem] w-28 bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
               <span className="text-muted-foreground text-xs">No image</span>
             </div>
           )}
@@ -219,7 +219,7 @@ export const HeroProductView = ({
 
       {/* ===== CARD SECTION ===== */}
       <div className="relative z-10 -mt-8 flex-1">
-        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-44 pb-8 px-6 min-h-[50vh]">
+        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-[10rem] pb-8 px-6 min-h-[50vh]">
           {/* Whisky info — centered */}
           <div className="text-center -mt-[20px]">
             <p className="text-sm text-muted-foreground tracking-wide uppercase">
