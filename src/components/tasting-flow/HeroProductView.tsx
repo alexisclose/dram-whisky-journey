@@ -109,7 +109,7 @@ export const HeroProductView = ({
 
       {/* ===== CARD SECTION ===== */}
       <div className="relative z-10 -mt-8 flex-1">
-        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-48 pb-8 px-6 min-h-[50vh]">
+        <div className="bg-card rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pt-44 pb-8 px-6 min-h-[50vh]">
           {/* Whisky info — centered */}
           <div className="text-center">
             <p className="text-sm text-muted-foreground tracking-wide uppercase">
