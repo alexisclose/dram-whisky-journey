@@ -1,8 +1,38 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowLeft } from "lucide-react";
 import { getRegionLandscape } from "@/constants/regions";
+
+/** Target: match the Glenfiddich 12 baseline (≈ 80% content ratio). Only scale UP smaller bottles. */
+const TARGET_CONTENT_RATIO = 0.8;
+const MAX_SCALE = 1.4;
+
+function measureContentRatio(img: HTMLImageElement): number | null {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0);
+    const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let top = canvas.height;
+    let bottom = 0;
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        if (d[(y * canvas.width + x) * 4 + 3] > 10) {
+          if (y < top) top = y;
+          if (y > bottom) bottom = y;
+        }
+      }
+    }
+    const ratio = (bottom - top) / canvas.height;
+    return ratio > 0.1 ? ratio : null;
+  } catch {
+    return null; // CORS or other error — skip
+  }
+}
 
 interface HeroProductViewProps {
   whisky: {
@@ -24,6 +54,19 @@ export const HeroProductView = ({
   const navigate = useNavigate();
   const landscape = getRegionLandscape(whisky.region);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [bottleScale, setBottleScale] = useState(1);
+  const [bottleReady, setBottleReady] = useState(false);
+
+  const handleBottleLoad = useCallback(
+    (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const ratio = measureContentRatio(e.currentTarget);
+      if (ratio && ratio < TARGET_CONTENT_RATIO) {
+        setBottleScale(Math.min(TARGET_CONTENT_RATIO / ratio, MAX_SCALE));
+      }
+      setBottleReady(true);
+    },
+    []
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -92,15 +135,20 @@ export const HeroProductView = ({
         )}
 
         {/* Bottle — straddles the landscape/card edge */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[35%] z-20 w-[188px] h-[28rem]">
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-[35%] z-20">
           {whisky.image_url ? (
             <img
               src={whisky.image_url}
               alt={`${whisky.distillery} ${whisky.name}`}
-              className="w-full h-full object-contain drop-shadow-2xl"
+              crossOrigin="anonymous"
+              onLoad={handleBottleLoad}
+              className={`h-[28rem] object-contain drop-shadow-2xl transition-all duration-300 ${
+                bottleReady ? "opacity-100" : "opacity-0"
+              }`}
+              style={{ transform: `scale(${bottleScale})` }}
             />
           ) : (
-            <div className="h-full w-full bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="h-[28rem] w-28 bg-muted/60 rounded-lg flex items-center justify-center shadow-lg">
               <span className="text-muted-foreground text-xs">No image</span>
             </div>
           )}
